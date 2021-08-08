@@ -1,1 +1,5 @@
-/home/micahosborne/Documents/gSnap/concat.sh
+#!/bin/sh
+
+out=$1
+shift
+cat "$@" > $out
