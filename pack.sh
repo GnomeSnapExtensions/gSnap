@@ -13,5 +13,5 @@ gnome-extensions pack -f \
 --extra-source LICENSE \
 --extra-source README.md
 
-unzip -l gSnap@vibou.shell-extension.zip
+unzip -l gSnap@micahosborne.shell-extension.zip
 

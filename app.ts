@@ -6,6 +6,7 @@ import {ShellVersion} from './shellversion';
 import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
 import {snapToNeighbors} from './snaptoneighbors';
 import * as tilespec from "./tilespec";
+
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 import {
@@ -28,7 +29,7 @@ import {BoolSettingName, NumberSettingName, StringSettingName} from './settings_
 
 /*****************************************************************
 
- This extension has been developed by vibou
+ This extension has been developed by micahosborne
 
  With the help of the gnome-shell community
 
@@ -52,6 +53,9 @@ const Meta = imports.gi.Meta;
 const Clutter = imports.gi.Clutter;
 const Signals = imports.signals;
 const Workspace = imports.ui.workspace;
+const GLib = imports.gi.GLib;
+
+
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
 const WorkspaceManager: WorkspaceManagerInterface = (
     global.screen || global.workspace_manager);
@@ -169,6 +173,38 @@ let monitorsChangedConnect: any = false;
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
 
+function getCurrentPath() {
+    let stack = new Error().stack.split('\n');
+    let extensionStackLine;
+
+    // Search for an occurrence of an extension stack frame
+    // Start at 1 because 0 is the stack frame of this function
+    for (let i = 1; i < stack.length; i++) {
+        if (stack[i].includes('/gnome-shell/extensions/')) {
+            extensionStackLine = stack[i];
+            break;
+        }
+    }
+    if (!extensionStackLine)
+        return null;
+
+    // The stack line is like:
+    //   init([object Object])@/home/user/data/gnome-shell/extensions/u@u.id/prefs.js:8
+    //
+    // In the case that we're importing from
+    // module scope, the first field is blank:
+    //   @/home/user/data/gnome-shell/extensions/u@u.id/prefs.js:8
+    let match = new RegExp('@(.+):\\d+').exec(extensionStackLine);
+    if (!match)
+        return null;
+
+    // local import, as the module is used from outside the gnome-shell process
+    // as well (not this function though)
+    let extensionManager = imports.ui.main.extensionManager;
+
+    let path = match[1];
+    return path.split(":")[0];
+}
 interface ResizeActionInfo {
     variantIndex: number;
     lastCallTime: Date;
@@ -440,6 +476,8 @@ const keyBindingGlobalResizes: Bindings = new Map([
 class App {
     private gridShowing: boolean = false;
     private widgets : StBoxLayout[] = [];
+    private layoutsFile : any[] = [];
+    
     private currentLayout =
         {
             type: 0, // 1 for col
@@ -461,15 +499,15 @@ class App {
             type: 0, // 1 for col
             length: 100,
             items: [
-                {type: 1, length: 40},
+                {type: 1, length: 42},
                 {
-                    type: 1, length: 20, items: [
+                    type: 1, length: 16, items: [
                         {type: 0, length: 33},
                         {type: 0, length: 34},
                         {type: 0, length: 33},
                     ]
                 },
-                {type: 1, length: 40}
+                {type: 1, length: 42}
             ]
         },
         {
@@ -576,86 +614,94 @@ class App {
         }
     }
     enable() {
+        let file_info = getCurrentPath();
+        log("FILE INFO " + file_info)
         this.gridShowing = false;
         tracker = Shell.WindowTracker.get_default();
 
-        initSettings();
-
-        this.setLayout(this.currentLayout);
-        
-        //var display = getFocusWindow().get_display();
-        global.display.connect('grab-op-begin', (_display, win, op) => {
-            log("Drag Operation Begin");
-            if (win != null) {
-                let [x, y] = global.get_pointer();
-                for (let i = 0; i < this.widgets.length; i++) {
-                    this.widgets[i].visible = true;
-                    this.widgets[i].add_style_pseudo_class('activate');
-                }    
+            let [ok, contents] = GLib.file_get_contents(getCurrentPath().replace("/extension.js", "/layouts.json"));
+            if (ok) {
+                this.layouts = JSON.parse(contents);
             }
-            
-        });
-        
-        global.display.connect('grab-op-end', (_display, win, op) => {
-            log("Drag Operation End");
-            if (win != null) {
-                let [x, y] = global.get_pointer();
-                for (let i = 0; i < this.widgets.length; i++) {
-                    this.widgets[i].visible = false;
-                    this.widgets[i].remove_style_pseudo_class('activate');
-                    if (this.contains(this.widgets[i], x, y)) {
-                        moveResizeWindowWithMargins(win, this.widgets[i].x, this.widgets[i].y, this.widgets[i].width, this.widgets[i].height);
+            initSettings();
+            this.setLayout(this.layouts[0]);
+
+            //var display = getFocusWindow().get_display();
+            global.display.connect('grab-op-begin', (_display, win, op) => {
+                log("Drag Operation Begin");
+                if (win != null) {
+                    let [x, y] = global.get_pointer();
+                    for (let i = 0; i < this.widgets.length; i++) {
+                        this.widgets[i].visible = true;
+                        this.widgets[i].add_style_pseudo_class('activate');
                     }
                 }
+
+            });
+
+            global.display.connect('grab-op-end', (_display, win, op) => {
+                log("Drag Operation End");
+                if (win != null) {
+                    let [x, y] = global.get_pointer();
+                    for (let i = 0; i < this.widgets.length; i++) {
+                        this.widgets[i].visible = false;
+                        this.widgets[i].remove_style_pseudo_class('activate');
+                        if (this.contains(this.widgets[i], x, y)) {
+                            moveResizeWindowWithMargins(win, this.widgets[i].x, this.widgets[i].y, this.widgets[i].width, this.widgets[i].height);
+                        }
+                    }
+                }
+            });
+
+
+            log("Create Button on Panel");
+            launcher = new GSnapStatusButton('tiling-icon');
+
+            if (gridSettings[SETTINGS_SHOW_ICON]) {
+                Main.panel.addToStatusArea("GSnapStatusButton", launcher);
+                let statusMenu = Main.panel._statusmenu;
+
+
+                for(let i = 0 ; i < this.layouts.length; i++) {
+                    let item = new PopupMenu.PopupSeparatorMenuItem();
+                    (<any>launcher).menu.addMenuItem(item);
+                    item = new PopupMenu.PopupMenuItem(_("Layout " + i));
+                    item.connect('activate', Lang.bind(this, ()=>{
+                        this.setLayout(this.layouts[i]);
+                    }));
+                    item.actor.connect('enter-event', Lang.bind(this, ()=>{
+                        this.showLayoutPreview(this.layouts[i]);
+                    }));
+                    item.actor.connect('leave-event', Lang.bind(this, ()=>{
+                        this.hideLayoutPreview();
+                    }));
+                    (<any>launcher).menu.addMenuItem(item);
+                }
+
+
+
+
+                //Read more: https://blog.fpmurphy.com/2011/04/gnome-3-shell-extensions.html#ixzz72zuomfH3
             }
-        });
 
 
-        log("Create Button on Panel");
-        launcher = new GSnapStatusButton('tiling-icon');
-
-        if (gridSettings[SETTINGS_SHOW_ICON]) {
-            Main.panel.addToStatusArea("GSnapStatusButton", launcher);
-            let statusMenu = Main.panel._statusmenu;
-            
-
-            for(let i = 0 ; i < this.layouts.length; i++) {
-                let item = new PopupMenu.PopupSeparatorMenuItem();
-                (<any>launcher).menu.addMenuItem(item);
-                item = new PopupMenu.PopupMenuItem(_("Layout " + i));
-                item.connect('activate', Lang.bind(this, ()=>{
-                    this.setLayout(this.layouts[i]);
-                }));
-                item.actor.connect('enter-event', Lang.bind(this, ()=>{
-                    this.showLayoutPreview(this.layouts[i]);
-                }));
-                item.actor.connect('leave-event', Lang.bind(this, ()=>{
-                    this.hideLayoutPreview();
-                }));
-                (<any>launcher).menu.addMenuItem(item);
+            bindHotkeys(keyBindings);
+            if (gridSettings[SETTINGS_GLOBAL_PRESETS]) {
+                bindHotkeys(key_bindings_presets);
             }
-            
-            
+            if (gridSettings[SETTINGS_MOVERESIZE_ENABLED]) {
+                bindHotkeys(keyBindingGlobalResizes);
+            }
+
+            if (monitorsChangedConnect) {
+                Main.layoutManager.disconnect(monitorsChangedConnect);
+            }
+
+            enabled = true;
+            log("Extention enable completed");
 
 
-            //Read more: https://blog.fpmurphy.com/2011/04/gnome-3-shell-extensions.html#ixzz72zuomfH3
-        }
         
-
-        bindHotkeys(keyBindings);
-        if (gridSettings[SETTINGS_GLOBAL_PRESETS]) {
-            bindHotkeys(key_bindings_presets);
-        }
-        if (gridSettings[SETTINGS_MOVERESIZE_ENABLED]) {
-            bindHotkeys(keyBindingGlobalResizes);
-        }
-
-        if (monitorsChangedConnect) {
-            Main.layoutManager.disconnect(monitorsChangedConnect);
-        }
-
-        enabled = true;
-        log("Extention enable completed");
 
     }
 
@@ -819,6 +865,7 @@ function getIntSetting(settingsValue: NumberSettingName) {
 }
 
 function initSettings() {
+
     log("Init settings");
     const gridSizes = settings.get_string(SETTINGS_GRID_SIZES) || '';
     log(SETTINGS_GRID_SIZES + " set to " + gridSizes);

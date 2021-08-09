@@ -16,7 +16,7 @@ git clone https://github.com/gSnap/gSnap.git
 You will need to [install
 Bazel](https://docs.bazel.build/versions/master/install-ubuntu.html) on your
 system to run the build tool. Then, you can run the installation script to
-install to `$HOME/.local/share/gnome-shell/extensions/gSnap@vibou`.
+install to `$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne`.
 
 ```shell
 bazel run :install-extension

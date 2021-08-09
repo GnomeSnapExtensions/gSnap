@@ -26,7 +26,7 @@ You can alternatively manually install the latest version from GitHub master bra
    You will need to [install
    Bazel](https://docs.bazel.build/versions/master/install-ubuntu.html) on your
    system to run the build tool. Then, you can run the installation script to
-   install to `$HOME/.local/share/gnome-shell/extensions/gSnap@vibou`.
+   install to `$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne`.
 
    ```shell
    bazel run :install-extension
@@ -53,7 +53,61 @@ For configuration, please use the built-in preferences dialog (Gnome Tweak Tool 
 * Keyboard shortcuts:
   * Currently you can switch between preconfigured layouts
   * You can set the margins between the windows as well
-    
+   
+## Edit Layouts:
+```shell
+gedit ~/.local/share/gnome-shell/extensions/gSnap@micahosborne/layouts.json 
+```
+After editing layouts disable and re-enable the plugin
+
+Layouts are defined via json here is a 50% 50% split layout
+```json
+  {
+    "type": 0, // 0 for horizontal, 1 for vertical
+    "length": 100, // Percentage of screen
+    "items": [
+      {
+        "length": 50 // Percentage of parent
+      },
+      {
+        "length": 50
+      }
+    ]
+  }
+```
+Here is a 3 split configuration, with the column in the middle split into 3 zones
+```json
+  {
+    "length": 100, // 100% of screen
+    "items": [
+       // Column 1
+      {
+        "length": 42 // 42% of parent
+      },
+       // Column 2
+      {
+        "type": 1, // Layout items in vertical
+        "length": 16, // 16% of parent
+        "items": [
+          {
+            "length": 33
+          },
+          {
+            "length": 34
+          },
+          {
+            "length": 33
+          }
+        ]
+      },
+       // Column 3
+      {
+        "length": 42 // 42% of parent
+      }
+    ]
+  }
+```
+
 ## Usage with interface
 
 1. Make sure the window you want to resize has focus
@@ -82,7 +136,7 @@ This extension is developed at [GitHub](https://github.com/micahosborne/gSnap).
 
 This extension is started from was developed at [GitHub](https://github.com/gTile/gtile).
 
-gTile was originally developed by [vibou](https://github.com/vibou) with help from multiple contributors, and is now community supported.
+gTile was originally developed by [micahosborne](https://github.com/micahosborne) with help from multiple contributors, and is now community supported.
 
 gSnap is licensed under the [GPL v2+](https://www.gnu.org/licenses/gpl-2.0.html)
 

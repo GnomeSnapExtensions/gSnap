@@ -1,8 +1,8 @@
 {
-  "uuid": "gSnap@vibou",
+  "uuid": "gSnap@micahosborne",
   "name": "gSnap",
   "description": "Tile windows on a grid.",
-  "version": 45,
+  "version": 1,
   "shell-version": [
     "3.30",
     "3.32",
@@ -14,5 +14,5 @@
   ],
   "url": "https://github.com/gSnap",
   "settings-schema": "org.gnome.shell.extensions.gsnap",
-  "gettext-domain": "gsnap@vibou"
+  "gettext-domain": "gsnap@micahosborne"
 }

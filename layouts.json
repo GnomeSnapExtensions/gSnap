@@ -1,0 +1,48 @@
+[
+  {
+    "type": 0,
+    "length": 100,
+    "items": [
+      {
+        "type": 1,
+        "length": 50
+      },
+      {
+        "type": 1,
+        "length": 50
+      }
+    ]
+  },
+  {
+    "type": 0,
+    "length": 100,
+    "items": [
+      {
+        "type": 1,
+        "length": 42
+      },
+      {
+        "type": 1,
+        "length": 16,
+        "items": [
+          {
+            "type": 0,
+            "length": 33
+          },
+          {
+            "type": 0,
+            "length": 34
+          },
+          {
+            "type": 0,
+            "length": 33
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "length": 42
+      }
+    ]
+  }
+]
