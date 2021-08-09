@@ -1,10 +1,1 @@
-{
-  "compilerOptions": {
-    "target": "es3",
-    "module": "system",
-    "lib": ["es2019"],
-
-    "strict": false,
-    "downlevelIteration": true,
-  }
-}
+/home/micahosborne/Documents/gSnap/tsconfig-app.json
