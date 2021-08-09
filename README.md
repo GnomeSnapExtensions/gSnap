@@ -134,9 +134,7 @@ Shortcut | Description
 
 This extension is developed at [GitHub](https://github.com/micahosborne/gSnap).
 
-This extension is started from was developed at [GitHub](https://github.com/gTile/gtile).
-
-gTile was originally developed by [micahosborne](https://github.com/micahosborne) with help from multiple contributors, and is now community supported.
+gTile was the basis for which I started at [GitHub](https://github.com/gTile/gtile).
 
 gSnap is licensed under the [GPL v2+](https://www.gnu.org/licenses/gpl-2.0.html)
 
