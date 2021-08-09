@@ -1,1 +1,4 @@
-/home/micahosborne/Documents/gSnap/.gitignore
+/node_modules/
+/.idea/.idea.gSnap.dir/.idea/
+/bazel-gSnap/*
+/bazel-gSnap/
