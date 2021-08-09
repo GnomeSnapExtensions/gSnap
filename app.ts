@@ -478,60 +478,17 @@ class App {
     private widgets : StBoxLayout[] = [];
     private layoutsFile : any[] = [];
     
-    private currentLayout =
-        {
-            type: 0, // 1 for col
-            length: 100,
-            items: [
-                {type: 1, length: 40},
-                {
-                    type: 1, length: 20, items: [
-                        {type: 0, length: 33},
-                        {type: 0, length: 34},
-                        {type: 0, length: 33},
-                    ]
-                },
-                {type: 1, length: 40}
-            ]
-        };
+    private currentLayout = null;
     public layouts = [
         {
-            type: 0, // 1 for col
+            name: "2 Column",
             length: 100,
             items: [
-                {type: 1, length: 42},
-                {
-                    type: 1, length: 16, items: [
-                        {type: 0, length: 33},
-                        {type: 0, length: 34},
-                        {type: 0, length: 33},
-                    ]
-                },
-                {type: 1, length: 42}
+                {length: 42},
+                {length: 42}
             ]
         },
-        {
-            type: 0, // 1 for col
-            length: 100,
-            items: [
-                {type: 1, length: 40},
-                {
-                    type: 1, length: 20, items: [
-                        {type: 0, length: 50},
-                        {type: 0, length: 50},
-                    ]
-                },
-                {type: 1, length: 40}
-            ]
-        },
-        {
-            type: 0, // 1 for col
-            length: 100,
-            items: [
-                {type: 1, length: 60},
-                {type: 1, length: 40}
-            ]
-        }
+        
     ];
     createLayout(layout: any, startX: number, startY: number, width:number, height:number) {
         
@@ -665,7 +622,7 @@ class App {
                 for(let i = 0 ; i < this.layouts.length; i++) {
                     let item = new PopupMenu.PopupSeparatorMenuItem();
                     (<any>launcher).menu.addMenuItem(item);
-                    item = new PopupMenu.PopupMenuItem(_("Layout " + i));
+                    item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
                     item.connect('activate', Lang.bind(this, ()=>{
                         this.setLayout(this.layouts[i]);
                     }));

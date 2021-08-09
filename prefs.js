@@ -35,78 +35,19 @@ const SETTINGS_INSETS_SECONDARY_TOP = 'insets-secondary-top';
 const SETTINGS_INSETS_SECONDARY_BOTTOM = 'insets-secondary-bottom';
 // Globals
 const pretty_names = {
-    'show-toggle-tiling': 'Display gSnap',
-    'show-toggle-tiling-alt': 'Display gSnap alternative',
-    'set-tiling'              : 'Set tiling',
-    'cancel-tiling'           : 'Cancel tiling',
-    'change-grid-size'        : 'Change grid size',
-    'autotile-main'           : 'Autotile Main',
-    'autotile-1'              : 'Autotile 1 cols',
-    'autotile-2'              : 'Autotile 2 cols',
-    'autotile-3'              : 'Autotile 3 cols',
-    'autotile-4'              : 'Autotile 4 cols',
-    'autotile-5'              : 'Autotile 5 cols',
-    'autotile-6'              : 'Autotile 6 cols',
-    'autotile-7'              : 'Autotile 7 cols',
-    'autotile-8'              : 'Autotile 8 cols',
-    'autotile-9'              : 'Autotile 9 cols',
-    'autotile-10'             : 'Autotile 10 cols',
-    'show-areas-bind'         : 'Show Areas',
-    'hide-areas-bind'              : 'Hide Areas',
-    'autotile-10'             : 'Autotile 10 cols',
-    'snap-to-neighbors'       : 'Snap window size to neighbors',
-    'preset-resize-1'         : 'Preset resize 1',
-    'preset-resize-2'         : 'Preset resize 2',
-    'preset-resize-3'         : 'Preset resize 3',
-    'preset-resize-4'         : 'Preset resize 4',
-    'preset-resize-5'         : 'Preset resize 5',
-    'preset-resize-6'         : 'Preset resize 6',
-    'preset-resize-7'         : 'Preset resize 7',
-    'preset-resize-8'         : 'Preset resize 8',
-    'preset-resize-9'         : 'Preset resize 9',
-    'preset-resize-10'        : 'Preset resize 10',
-    'preset-resize-11'        : 'Preset resize 11',
-    'preset-resize-12'        : 'Preset resize 12',
-    'preset-resize-13'        : 'Preset resize 13',
-    'preset-resize-14'        : 'Preset resize 14',
-    'preset-resize-15'        : 'Preset resize 15',
-    'preset-resize-16'        : 'Preset resize 16',
-    'preset-resize-17'        : 'Preset resize 17',
-    'preset-resize-18'        : 'Preset resize 18',
-    'preset-resize-19'        : 'Preset resize 19',
-    'preset-resize-20'        : 'Preset resize 20',
-    'preset-resize-21'        : 'Preset resize 21',
-    'preset-resize-22'        : 'Preset resize 22',
-    'preset-resize-23'        : 'Preset resize 23',
-    'preset-resize-24'        : 'Preset resize 24',
-    'preset-resize-25'        : 'Preset resize 25',
-    'preset-resize-26'        : 'Preset resize 26',
-    'preset-resize-27'        : 'Preset resize 27',
-    'preset-resize-28'        : 'Preset resize 28',
-    'preset-resize-29'        : 'Preset resize 29',
-    'preset-resize-30'        : 'Preset resize 30',
-    'action-change-tiling'    : 'Global change grid size',
-    'action-contract-bottom'  : 'Global contract bottom edge',
-    'action-contract-left'    : 'Global contract left edge',
-    'action-contract-right'   : 'Global contract right edge',
-    'action-contract-top'     : 'Global contract top edge',
-    'action-expand-bottom'    : 'Global expand bottom edge',
-    'action-expand-left'      : 'Global expand left edge',
-    'action-expand-right'     : 'Global expand right edge',
-    'action-expand-top'       : 'Global expand top edge',
-    'action-move-down'        : 'Global move window down',
-    'action-move-left'        : 'Global move window left',
-    'action-move-right'       : 'Global move window right',
-    'action-move-up'          : 'Global move window up',
-    'action-move-next-monitor': 'Global move window to next monitor',
-    'move-left-vi'            : 'Vi-style move left',
-    'move-right-vi'           : 'Vi-style move right',
-    'move-up-vi'              : 'Vi-style move up',
-    'move-down-vi'            : 'Vi-style move down',
-    'resize-left-vi'          : 'Vi-style resize narrower',
-    'resize-right-vi'         : 'Vi-style resize wider',
-    'resize-up-vi'            : 'Vi-style resize taller',
-    'resize-down-vi'          : 'Vi-style resize shorter'
+    'preset-resize-1'         : 'Layout 1',
+    'preset-resize-2'         : 'Layout 2',
+    'preset-resize-3'         : 'Layout 3',
+    'preset-resize-4'         : 'Layout 4',
+    'preset-resize-5'         : 'Layout 5',
+    'preset-resize-6'         : 'Layout 6',
+    'preset-resize-7'         : 'Layout 7',
+    'preset-resize-8'         : 'Layout 8',
+    'preset-resize-9'         : 'Layout 9',
+    'preset-resize-10'        : 'Layout 10',
+    'preset-resize-11'        : 'Layout 11',
+    'preset-resize-12'        : 'Layout 12',
+  
 }
 
 function set_child(widget, child) {
@@ -250,19 +191,9 @@ function basics_tab(notebook) {
     bs_grid.set_margin_start(24);
     bs_grid.set_margin_top(24);
 
-    add_check("Auto close", SETTINGS_AUTO_CLOSE, bs_grid, settings);
-    add_check("Animation",  SETTINGS_ANIMATION,  bs_grid, settings);
+
     add_check("Show icon",  SETTINGS_SHOW_ICON,  bs_grid, settings);
-
-    add_text ("Grid sizes (like 6x4,8x6,21x11)", SETTINGS_GRID_SIZES, bs_grid, settings, 30);
-    add_check("Global resize presets (works without gSnap activated)", SETTINGS_GLOBAL_PRESETS  , bs_grid, settings);
-
     add_check("Enable accelerators for moving and resizing windows", SETTINGS_MOVERESIZE_ENABLED  , bs_grid, settings);
-
-    add_int("Maximum timeout for preset cycling (ms)", SETTINGS_MAX_TIMEOUT, bs_grid, settings, 500, 10000, 100, 1000);
-
-    add_text ("Autotile Main window sizes\n(Ratio of the screen to take up. Can be a decimal or a ratio)", SETTINGS_MAIN_WINDOW_SIZES, bs_grid, settings, 30);
-
     add_check("Debug", SETTINGS_DEBUG    , bs_grid, settings);
     let text = "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f";
     bs_grid.attach_next_to(new Gtk.Label({
@@ -283,38 +214,6 @@ function basics_tab(notebook) {
     notebook.append_page(bs_window, bs_label);
 }
 
-function presets_tab(notebook) {
-    let settings = Settings.get();
-    let pr_grid = new Gtk.Grid({
-        column_spacing: 10,
-        orientation: Gtk.Orientation.VERTICAL,
-        row_spacing: 10,
-    });
-
-    pr_grid.set_margin_start(24);
-    pr_grid.set_margin_top(24);
-
-    let text = "Resize presets (grid size and 2 corner tiles - 0:0 is top left tile, columns first, e.g. '4x2 2:1 3:1' is right bottom quarter of screen)";
-    pr_grid.attach_next_to(new Gtk.Label({
-        label: text,
-        halign: Gtk.Align.START,
-        justify: Gtk.Justification.LEFT,
-        use_markup: false,
-        wrap: true,
-    }), null, Gtk.PositionType.BOTTOM, 1, 1)
-
-    for (var ind = 1; ind <= 30; ind++) {
-        add_text ("Preset resize " + ind, SETTINGS_PRESET_RESIZE + ind, pr_grid, settings, 20);
-    }
-    let pr_window = new Gtk.ScrolledWindow({'vexpand': true});
-    set_child(pr_window, pr_grid);
-    let pr_label = new Gtk.Label({
-        label: "Resize presets",
-        halign: Gtk.Align.START,
-        use_markup: false,
-    });
-    notebook.append_page(pr_window, pr_label);
-}
 
 function margins_tab(notebook) {
     let settings = Settings.get();
@@ -335,16 +234,8 @@ function margins_tab(notebook) {
         use_markup: false,
         wrap: true,
     }), null, Gtk.PositionType.BOTTOM, 1, 1)
-    add_check("Apply margin to fullscreen windows", SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED, mg_grid, settings);
+    
     add_int ("Window margin"            , SETTINGS_WINDOW_MARGIN           , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets primary left"      , SETTINGS_INSETS_PRIMARY_LEFT     , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets primary right"     , SETTINGS_INSETS_PRIMARY_RIGHT    , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets primary top"       , SETTINGS_INSETS_PRIMARY_TOP      , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets primary bottom"    , SETTINGS_INSETS_PRIMARY_BOTTOM   , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets secondary left"    , SETTINGS_INSETS_SECONDARY_LEFT   , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets secondary right"   , SETTINGS_INSETS_SECONDARY_RIGHT  , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets secondary top"     , SETTINGS_INSETS_SECONDARY_TOP    , mg_grid, settings, 0, 240, 1, 10);
-    add_int ("Insets secondary bottom"  , SETTINGS_INSETS_SECONDARY_BOTTOM , mg_grid, settings, 0, 240, 1, 10);
 
     let mg_window = new Gtk.ScrolledWindow({'vexpand': true});
     set_child(mg_window, mg_grid);
@@ -378,7 +269,7 @@ function buildPrefsWidget() {
 
     basics_tab(notebook);
     accel_tab(notebook);
-    presets_tab(notebook);
+    //presets_tab(notebook);
     margins_tab(notebook);
     help_tab(notebook);
 
