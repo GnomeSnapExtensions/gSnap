@@ -208,6 +208,7 @@ function getCurrentPath() {
     let path = match[1];
     return path.split(":")[0];
 }
+
 interface ResizeActionInfo {
     variantIndex: number;
     lastCallTime: Date;
@@ -229,10 +230,10 @@ let excludedApplications = new Array(
 
 const keyBindings: Bindings = new Map([
     ['show-toggle-tiling', () => {
-        
+
     }],
     ['show-toggle-tiling-alt', () => {
-      
+
     }],
 ]);
 
@@ -256,7 +257,7 @@ const key_bindings_tiling: Bindings = new Map([
 
     }],
     ['resize-up', () => {
-  
+
     }],
     ['resize-down', () => {
 
@@ -292,34 +293,34 @@ const key_bindings_tiling: Bindings = new Map([
 
     }],
     ['change-grid-size', () => {
-    
+
     }],
     ['autotile-main', () => {
-       
+
     }],
     ['autotile-1', () => {
-       
+
     }],
     ['autotile-2', () => {
-       
+
     }],
     ['autotile-3', () => {
-     
+
     }],
     ['autotile-4', () => {
-      
+
     }],
     ['autotile-5', () => {
-    
+
     }],
     ['autotile-6', () => {
-        
+
     }],
     ['autotile-7', () => {
-    
+
     }],
     ['autotile-8', () => {
-       
+
     }],
     ['autotile-9', () => {
 
@@ -331,10 +332,10 @@ const key_bindings_tiling: Bindings = new Map([
         snapToNeighborsBind();
     }],
     ['show-areas-bind', () => {
-     
+
     }],
     ['hide-areas-bind', () => {
-      
+
     }]
 ]);
 
@@ -379,55 +380,55 @@ const key_bindings_presets: Bindings = new Map([
         globalApp.setLayout(globalApp.layouts[12]);
     }],
     ['preset-resize-14', () => {
-        
+
     }],
     ['preset-resize-15', () => {
-        
+
     }],
     ['preset-resize-16', () => {
-        
+
     }],
     ['preset-resize-17', () => {
-        
+
     }],
     ['preset-resize-18', () => {
-        
+
     }],
     ['preset-resize-19', () => {
-        
+
     }],
     ['preset-resize-20', () => {
-        
+
     }],
     ['preset-resize-21', () => {
-        
+
     }],
     ['preset-resize-22', () => {
-        
+
     }],
     ['preset-resize-23', () => {
-        
+
     }],
     ['preset-resize-24', () => {
-        
+
     }],
     ['preset-resize-25', () => {
-        
+
     }],
     ['preset-resize-26', () => {
-        
+
     }],
     ['preset-resize-27', () => {
-        
+
     }],
     ['preset-resize-28', () => {
-        
+
     }],
     ['preset-resize-29', () => {
-        
+
     }],
     ['preset-resize-30', () => {
-        
+
     }],
 ]);
 
@@ -478,11 +479,11 @@ const keyBindingGlobalResizes: Bindings = new Map([
 
 class App {
     private gridShowing: boolean = false;
-    private widgets : StWidget[] = [];
-    private layoutsFile : any[] = [];
-    private editor : ZoneEditor | null = null;
-    private preview : ZonePreview | null = null;
-    
+    private widgets: StWidget[] = [];
+    private layoutsFile: any[] = [];
+    private editor: ZoneEditor | null = null;
+    private preview: ZonePreview | null = null;
+
     private currentLayout = null;
     public layouts = [
         {
@@ -493,147 +494,177 @@ class App {
                 {length: 42}
             ]
         },
-        
+
     ];
 
-    setLayout(layout:any) {
+    setLayout(layout: any) {
         this.currentLayout = layout;
     }
-    showLayoutPreview(layout:any) {
+
+    showLayoutPreview(layout: any) {
         if (this.preview) {
             this.preview.destroy();
             this.preview = null;
         }
         this.preview = new ZonePreview(layout, gridSettings[SETTINGS_WINDOW_MARGIN]);
     }
+
     hideLayoutPreview() {
         if (this.preview) {
             this.preview.destroy();
             this.preview = null;
         }
     }
+
     enable() {
         let file_info = getCurrentPath();
         log("FILE INFO " + file_info)
         this.gridShowing = false;
         tracker = Shell.WindowTracker.get_default();
 
-            let [ok, contents] = GLib.file_get_contents(getCurrentPath().replace("/extension.js", "/layouts.json"));
-            if (ok) {
-                this.layouts = JSON.parse(contents);
+        let [ok, contents] = GLib.file_get_contents(getCurrentPath().replace("/extension.js", "/layouts.json"));
+        if (ok) {
+            this.layouts = JSON.parse(contents);
+        }
+        initSettings();
+        this.setLayout(this.layouts[0]);
+
+        //var display = getFocusWindow().get_display();
+        global.display.connect('grab-op-begin', (_display, win, op) => {
+            log("Drag Operation Begin");
+            if (win != null) {
+                if (this.preview) {
+                    this.preview.destroy();
+                    this.preview = null;
+                }
+                this.preview = new ZonePreview(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
             }
-            initSettings();
-            this.setLayout(this.layouts[0]);
 
-            //var display = getFocusWindow().get_display();
-            global.display.connect('grab-op-begin', (_display, win, op) => {
-                log("Drag Operation Begin");
-                if (win != null) {
-                    if (this.preview) {
-                        this.preview.destroy();
-                        this.preview = null;
-                    }
-                    this.preview = new ZonePreview(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+        });
+
+
+        global.display.connect('grab-op-end', (_display, win, op) => {
+
+            log("Drag Operation End");
+            if (win != null) {
+                if (this.preview) {
+                    this.preview.moveWindowToWidgetAtCursor(win);
                 }
-
-            });
-           
-            
-            global.display.connect('grab-op-end', (_display, win, op) => {
-                
-                log("Drag Operation End");
-                if (win != null) {
-                   if (this.preview) {
-                       this.preview.moveWindowToWidgetAtCursor(win);
-                   }
-                }
-            });
+            }
+        });
 
 
-            log("Create Button on Panel");
-            launcher = new GSnapStatusButton('tiling-icon');
+        log("Create Button on Panel");
+        launcher = new GSnapStatusButton('tiling-icon');
 
-            if (gridSettings[SETTINGS_SHOW_ICON]) {
-                Main.panel.addToStatusArea("GSnapStatusButton", launcher);
-                let statusMenu = Main.panel._statusmenu;
+        if (gridSettings[SETTINGS_SHOW_ICON]) {
+            Main.panel.addToStatusArea("GSnapStatusButton", launcher);
+            let statusMenu = Main.panel._statusmenu;
 
 
-                for(let i = 0 ; i < this.layouts.length; i++) {
-                
-                    let item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
-                    item.connect('activate', Lang.bind(this, ()=>{
-                        this.setLayout(this.layouts[i]);
-                        this.hideLayoutPreview();
-                    }));
-                    item.actor.connect('enter-event', Lang.bind(this, ()=>{
-                        this.showLayoutPreview(this.layouts[i]);
-                    }));
-                    item.actor.connect('leave-event', Lang.bind(this, ()=>{
-                        this.hideLayoutPreview();
-                    }));
-                    (<any>launcher).menu.addMenuItem(item);
-                }
-                let sep = new PopupMenu.PopupSeparatorMenuItem();
-                (<any>launcher).menu.addMenuItem(sep);
-                
-                let item = new PopupMenu.PopupMenuItem(_("Edit Layout"));
-                let item2 = new PopupMenu.PopupMenuItem(_("Stop Editing"));
-                
+            for (let i = 0; i < this.layouts.length; i++) {
+
+                let item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
+                item.connect('activate', Lang.bind(this, () => {
+                    this.setLayout(this.layouts[i]);
+                    this.hideLayoutPreview();
+                }));
+                item.actor.connect('enter-event', Lang.bind(this, () => {
+                    this.showLayoutPreview(this.layouts[i]);
+                }));
+                item.actor.connect('leave-event', Lang.bind(this, () => {
+                    this.hideLayoutPreview();
+                }));
                 (<any>launcher).menu.addMenuItem(item);
-                (<any>launcher).menu.addMenuItem(item2);
-                item.connect('activate', Lang.bind(this, ()=>{
-                    
-                    if (this.editor) {
-                        this.editor.destroy();
-                    }
-                    this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+            }
+            let sep = new PopupMenu.PopupSeparatorMenuItem();
+            (<any>launcher).menu.addMenuItem(sep);
 
-                    log("Created editor " + this.editor.totalWidth() + ", " + this.editor.totalHeight());
+            let item3 = new PopupMenu.PopupMenuItem(_("Reset Layout"));
+            let item = new PopupMenu.PopupMenuItem(_("Edit Layout"));
+            let item2 = new PopupMenu.PopupMenuItem(_("Save Layout"));
+            let item4 = new PopupMenu.PopupMenuItem(_("Cancel Editing"));
+
+
+            (<any>launcher).menu.addMenuItem(item4);
+            (<any>launcher).menu.addMenuItem(item3);
+            (<any>launcher).menu.addMenuItem(item);
+            (<any>launcher).menu.addMenuItem(item2);
+            item.connect('activate', Lang.bind(this, () => {
+
+                if (this.editor) {
+                    this.editor.destroy();
+                }
+                this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+
+                log("Created editor " + this.editor.totalWidth() + ", " + this.editor.totalHeight());
+                var windows = WorkspaceManager.get_active_workspace().list_windows();
+                for (let i = 0; i < windows.length; i++) {
+                    windows[i].minimize();
+                }
+            }));
+            item2.connect('activate', Lang.bind(this, () => {
+                if (this.editor) {
+                    this.editor.apply();
+                    GLib.file_set_contents(getCurrentPath().replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
+                    this.editor.destroy();
+                    this.editor = null;
                     var windows = WorkspaceManager.get_active_workspace().list_windows();
                     for (let i = 0; i < windows.length; i++) {
-                        windows[i].minimize();
+                        windows[i].unminimize();
                     }
-                }));     
-                item2.connect('activate', Lang.bind(this, ()=>{
-                    if (this.editor) {
-                        this.editor.apply();
-                        GLib.file_set_contents(getCurrentPath().replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
-                        this.editor.destroy();
-                        this.editor = null;
-                        var windows = WorkspaceManager.get_active_workspace().list_windows();
-                        for (let i = 0; i < windows.length; i++) {
-                            windows[i].unminimize();
-                        }
+                }
+                //(<any>launcher).menu.removeMenuItem(item2);
+            }));
+            item3.connect('activate', Lang.bind(this, () => {
+                if (this.editor) {
+                    this.editor.destroy();
+                    this.editor.layoutItem = {
+                        type: 0,
+                        length: 100,
+                        items: [
+                            {
+                                length: 100
+                            }
+                        ]
                     }
-                    //(<any>launcher).menu.removeMenuItem(item2);
-                }));
-
-                //Read more: https://blog.fpmurphy.com/2011/04/gnome-3-shell-extensions.html#ixzz72zuomfH3
-            }
-
-
-            bindHotkeys(keyBindings);
-            if (gridSettings[SETTINGS_GLOBAL_PRESETS]) {
-                bindHotkeys(key_bindings_presets);
-            }
-            if (gridSettings[SETTINGS_MOVERESIZE_ENABLED]) {
-                bindHotkeys(keyBindingGlobalResizes);
-            }
-
-            if (monitorsChangedConnect) {
-                Main.layoutManager.disconnect(monitorsChangedConnect);
-            }
-
-            enabled = true;
-            log("Extention enable completed");
+                    this.editor.applyLayout(this.editor);
+                }
+                //(<any>launcher).menu.removeMenuItem(item2);
+            }));
+            item4.connect('activate', Lang.bind(this, () => {
+                if (this.editor) {
+                    this.editor.destroy();
+                    this.editor = null;
+                }
+                var windows = WorkspaceManager.get_active_workspace().list_windows();
+                for (let i = 0; i < windows.length; i++) {
+                    windows[i].unminimize();
+                }
+                
+                //(<any>launcher).menu.removeMenuItem(item2);
+            }));
+            //Read more: https://blog.fpmurphy.com/2011/04/gnome-3-shell-extensions.html#ixzz72zuomfH3
+        }
 
 
-        
+        bindHotkeys(keyBindings);
+        if (gridSettings[SETTINGS_GLOBAL_PRESETS]) {
+            bindHotkeys(key_bindings_presets);
+        }
+        if (gridSettings[SETTINGS_MOVERESIZE_ENABLED]) {
+            bindHotkeys(keyBindingGlobalResizes);
+        }
+
+        if (monitorsChangedConnect) {
+            Main.layoutManager.disconnect(monitorsChangedConnect);
+        }
+
+        enabled = true;
+        log("Extention enable completed");
+
 
     }
-
-
-
 
 
     disable() {
@@ -667,11 +698,11 @@ class App {
         resetFocusMetaWindow();
         const window = getFocusApp();
 
-       
+
     }
 
     showMenu() {
-        
+
     }
 }
 
@@ -697,7 +728,7 @@ interface GSnapStatusButtonInterface {
 const GSnapStatusButton = new Lang.Class({
     Name: 'GSnapStatusButton',
     Extends: PanelMenu.Button,
-   
+
     _init: function (classname: string) {
         this.parent(0.0, "gSnap", false);
         //Done by default in PanelMenuButton - Just need to override the method

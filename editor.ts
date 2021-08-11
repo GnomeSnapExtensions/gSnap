@@ -51,11 +51,13 @@ const Settings = Me.imports.settings;
 
 export class ZoneBase {
     public parent: ZoneGroup | null = null;
-    public outerX: number = 0;
-    public outerY: number = 0;
-    public outerWidth: number = 0;
-    public outerHeight: number = 0;
-
+    public _x: number = 0;
+    public _y: number = 0;
+    public _width: number = 0;
+    public _height: number = 0;
+    
+    
+    
     public contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
         return (
             this.x() <= x &&
@@ -75,33 +77,65 @@ export class ZoneBase {
     public totalHeight() {
         return (this.margin * 2) + this.height();
     }
+    
+    public positionChanged() {
 
+    }
+    public sizeChanged() {
+
+    }
+    
+    public innerX(): number {
+        return this.x() + this.margin;
+    }
+    
+    public innerY() : number {
+        return this.y() + this.margin;
+    }
+    public innerWidth(): number {
+        return this.width() - (this.margin * 2);
+    }
+    public innerHeight(): number {
+        return this.height() - (this.margin * 2);
+    }
     public x(v: number | null = null): number {
-        return 0;
+        if (v == null) return this._x;
+        this._x = v;
+        this.positionChanged();
+        return this._x;
     }
 
     public y(v: number | null = null): number {
-        return 0;
-    }
-
-    public applyPercentages() {
-        if (this.parent.layoutItem.type == 0) {
-            let factor = this.parent.width() / this.totalWidth();
-            this.layoutItem.length = 100 / factor;
-        } else {
-            let factor = this.parent.height() / this.totalHeight();
-            this.layoutItem.length = 100 / factor;
-        }
+        if (v == null) return this._y;
+        this._y = v;
+        this.positionChanged();
+        return this._y;
     }
 
     public width(v: number | null = null): number {
-        return 0;
+        if (v == null) return this._width;
+        
+        this._width = v;
+        this.sizeChanged();
+        return this._width;
     }
 
     public height(v: number | null = null): number {
-        return 0;
+        if (v == null) return this._height;
+        this._height = v;
+        this.sizeChanged();
+        return this._height;
     }
-
+    public applyPercentages() {
+        if (this.parent.layoutItem.type == 0) {
+            
+            let factor = this.parent.width() / this.width();
+            this.layoutItem.length = 100 / factor;
+        } else {
+            let factor = this.parent.height() / this.height();
+            this.layoutItem.length = 100 / factor;
+        }
+    }
     public destroy() {
 
     }
@@ -146,32 +180,15 @@ export class Zone extends ZoneBase {
         this.widget = new St.BoxLayout({style_class: styleClass});
     }
 
-    public x(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.x = v;
-        }
-        return this.widget.x;
+    positionChanged() {
+        super.positionChanged();
+        this.widget.x = this.innerX();
+        this.widget.y = this.innerY();
     }
-
-    public y(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.y = v;
-        }
-        return this.widget.y;
-    }
-
-    public width(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.width = v;
-        }
-        return this.widget.width;
-    }
-
-    public height(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.height = v;
-        }
-        return this.widget.height;
+    sizeChanged() {
+        super.sizeChanged();
+        this.widget.height = this.innerHeight();
+        this.widget.width = this.innerWidth();
     }
 
     public hide() {
@@ -242,10 +259,7 @@ export class EditableZone extends Zone {
 
 export class ZoneGroup extends ZoneBase {
     public children: ZoneBase[] = [];
-    public _x: number = 0;
-    public _y: number = 0;
-    public _width: number = 0;
-    public _height: number = 0;
+
     public root: ZoneDisplay;
 
     constructor(parent: ZoneGroup | null = null) {
@@ -257,16 +271,10 @@ export class ZoneGroup extends ZoneBase {
         return false;
     }
 
-    totalHeight(): number {
-        return this.outerHeight;
-    }
-
-    totalWidth(): number {
-        return this.outerWidth;
-    }
-
     public splitOtherDirection(zone: Zone) {
         zone.layoutItem.items = [];
+        
+        zone.layoutItem.type = this.layoutItem.type == 1 ? 0 : 1;
         
         zone.layoutItem.items.push(
             {
@@ -315,13 +323,8 @@ export class ZoneGroup extends ZoneBase {
             if (item.items) {
 
                 let z = new ZoneGroup(this);
-                z.margin = this.margin;
+                //z.margin = this.margin;
                 z.layoutItem = item;
-                z.outerX = x;
-                z.outerY = y;
-                z.outerWidth = w;
-                z.outerHeight = h;
-
                 z.x(x);
                 z.y(y);
                 z.width(w);
@@ -333,15 +336,11 @@ export class ZoneGroup extends ZoneBase {
             } else {
                 let zone = root.createZone();
                 zone.layoutItem = item;
-                zone.margin = this.margin;
-                zone.outerX = x;
-                zone.outerY = y;
-                zone.outerWidth = w;
-                zone.outerHeight = h;
-                zone.x(x + this.margin);
-                zone.y(y + this.margin);
-                zone.width(w - (this.margin * 2));
-                zone.height(h - (this.margin * 2));
+                zone.margin = root.margin;
+                zone.x(x);
+                zone.y(y);
+                zone.width(w);
+                zone.height(h);
                 zone.parent = this;
                 this.children.push(zone);
                 root.zoneCreated(zone);
@@ -364,29 +363,6 @@ export class ZoneGroup extends ZoneBase {
 
     protected zoneCreated(zone: Zone) {
 
-    }
-
-    public x(v: number | null = null): number {
-        if (v == null) return this._x;
-
-        return this._x = v;
-    }
-
-    public y(v: number | null = null): number {
-        if (v == null) return this._y;
-        return this._y = v;
-    }
-
-    public width(v: number | null = null): number {
-        if (v == null) return this._width;
-        this.outerWidth = v + (this.margin * 2);
-        return this._width = v;
-    }
-
-    public height(v: number | null = null): number {
-        if (v == null) return this._height;
-        this.outerHeight = v + (this.margin * 2);
-        return this._height = v;
     }
 
     public destroy() {
@@ -488,17 +464,17 @@ export class ZoneAnchor {
 
     public adjustSizes() {
         if (this.zoneGroup.layoutItem.type == 0) {
-            this.widget.x = this.zoneA.x() + this.zoneA.width();
-            this.widget.y = this.zoneA.y();
+            this.widget.x = this.zoneA.x() + this.zoneA.width() - this.margin;
+            this.widget.y = this.zoneA.y() + this.margin;
             this.widget.width = this.margin * 2;
-            this.widget.height = this.zoneA.height();
+            this.widget.height = this.zoneA.height() - (this.margin * 2);
 
 
         } else {
-            this.widget.y = this.zoneA.y() + this.zoneA.height();
-            this.widget.x = this.zoneA.x();
+            this.widget.y = this.zoneA.y() + this.zoneA.height() - this.margin;
+            this.widget.x = this.zoneA.x() + this.margin;
             this.widget.height = this.margin * 2;
-            this.widget.width = this.zoneA.width();
+            this.widget.width = this.zoneA.width() - (this.margin * 2);
 
         }
     }
@@ -567,8 +543,7 @@ export class ZoneAnchor {
 
 export class ZoneDisplay extends ZoneGroup {
     protected motionConnection: any;
-
-
+    
     constructor(layout: any, margin: number) {
         super();
         this.margin = margin;
@@ -590,8 +565,8 @@ export class ZoneDisplay extends ZoneGroup {
         for (let i = 0; i < c.length; i++) {
             c[i].hide();
             if (c[i].contains(x, y)) {
-                win.move_frame(true, c[i].x(), c[i].y());
-                win.move_resize_frame(true, c[i].x(), c[i].y(), c[i].width(), c[i].height());
+                win.move_frame(true, c[i].innerX(), c[i].innerY());
+                win.move_resize_frame(true, c[i].innerX(), c[i].innerY(), c[i].innerWidth(), c[i].innerHeight());
             }
         }
     }
@@ -603,24 +578,15 @@ export class ZoneDisplay extends ZoneGroup {
     public createZoneWidget(layout: any, layoutItem: any, x: number, y: number, width: number, height: number) {
 
     }
-
-    public totalWidth(): number {
-        return this.width() + (this.margin * 2);
-    }
-
-    public totalHeight(): number {
-        return this.height() + (this.margin * 2) + 30;
-    }
+    
 
     public init() {
         let [displayWidth, displayHeight] = global.display.get_size();
         this.x(this.margin);
-        this.y(this.margin + 30);
+        this.y(30 + this.margin);
 
         this.width(displayWidth - (this.margin * 2));
         this.height(displayHeight - 30 - (this.margin * 2));
-        this.outerHeight = this.height();
-        this.outerWidth = this.width();
         this.applyLayout(this);
 
     }
