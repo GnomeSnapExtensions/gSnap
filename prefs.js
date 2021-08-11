@@ -264,7 +264,7 @@ function help_tab(notebook) {
 }
 
 function buildPrefsWidget() {
-
+   
     let notebook = new Gtk.Notebook();
 
     basics_tab(notebook);

@@ -75,10 +75,24 @@ ts_library(
         ":settings_data_lib",
         ":shellversion_lib",
         ":snaptoneighbors_lib",
+        ":editor_lib",
         ":tilespec_lib",
     ],
 )
-
+ts_library(
+    name = "editor_lib",
+    srcs = ["editor.ts"],
+    tsconfig = "//:tsconfig-app.json",
+    deps = [
+            ":gnometypes_lib",
+            ":hotkeys_lib",
+            ":logging_lib",
+            ":settings_data_lib",
+            ":shellversion_lib",
+            ":snaptoneighbors_lib",
+            ":tilespec_lib",
+        ],
+)
 ts_library(
     name = "gnometypes_lib",
     srcs = ["gnometypes.ts"],

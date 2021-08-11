@@ -6,6 +6,7 @@ import {ShellVersion} from './shellversion';
 import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
 import {snapToNeighbors} from './snaptoneighbors';
 import * as tilespec from "./tilespec";
+import {ZoneEditor, ZoneDisplay, ZonePreview} from "./editor";
 
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
@@ -46,6 +47,8 @@ import {BoolSettingName, NumberSettingName, StringSettingName} from './settings_
 const St = imports.gi.St;
 const Main = imports.ui.main;
 const Shell = imports.gi.Shell;
+const GObject = imports.gi.GObject;
+const Gtk = imports.gi.Gtk;
 const Lang = imports.lang;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
@@ -475,8 +478,10 @@ const keyBindingGlobalResizes: Bindings = new Map([
 
 class App {
     private gridShowing: boolean = false;
-    private widgets : StBoxLayout[] = [];
+    private widgets : StWidget[] = [];
     private layoutsFile : any[] = [];
+    private editor : ZoneEditor | null = null;
+    private preview : ZonePreview | null = null;
     
     private currentLayout = null;
     public layouts = [
@@ -490,84 +495,21 @@ class App {
         },
         
     ];
-    createLayout(layout: any, startX: number, startY: number, width:number, height:number) {
-        
-        let x = startX;
-        let y = startY;
-        
-        let margin = gridSettings[SETTINGS_WINDOW_MARGIN];
-        
-        for (let i = 0 ; i < layout.items.length; i++) {
-            let item = layout.items[i];
-         
-            let factor = layout.type == 0 ? width : height;
-            
-            let length = (factor / 100) * item.length;
-            let w = 0;
-            let h = 0;
-            if (layout.type == 0) {
-                w = length;
-                h = height;
-            } else {
-                h = length;
-                w = width;
-            }
-            
-            if (item.items) 
-            {
-                this.createLayout( item, x, y, w, h);
-            } 
-            else {
-                let widget: StBoxLayout = (new St.BoxLayout({style_class: 'grid-preview'}));
-                widget.x = x + margin;
-                widget.y = y + margin;
-                widget.width = w - (margin * 2);
-                widget.height = h - (margin * 2);
-                log("Created widget " + widget.x + ", " + widget.y + "," + w + ", " + h );
-                Main.uiGroup.add_actor(widget);
-                this.widgets.push(widget);
-            }
-            if (layout.type == 0) {
-                x += length;
-            } else {
-                y += length;
-            }
-            
-        }
-    }
 
     setLayout(layout:any) {
-        let [displayWidth, displayHeight] = global.display.get_size();
-        for (var i = 0; i < this.widgets.length; i++) {
-            Main.uiGroup.remove_actor(this.widgets[i]);
-        }
-        this.widgets = [];
-        this.createLayout(layout, 0,35, displayWidth, displayHeight - 35);
         this.currentLayout = layout;
     }
     showLayoutPreview(layout:any) {
-        let [displayWidth, displayHeight] = global.display.get_size();
-        for (var i = 0; i < this.widgets.length; i++) {
-            Main.uiGroup.remove_actor(this.widgets[i]);
+        if (this.preview) {
+            this.preview.destroy();
+            this.preview = null;
         }
-        this.widgets = [];
-        this.createLayout(layout, 0,35, displayWidth, displayHeight - 35);
-        
-        for (let i = 0; i < this.widgets.length; i++) {
-            this.widgets[i].visible = true;
-            this.widgets[i].add_style_pseudo_class('activate');
-        }
+        this.preview = new ZonePreview(layout, gridSettings[SETTINGS_WINDOW_MARGIN]);
     }
     hideLayoutPreview() {
-        let [displayWidth, displayHeight] = global.display.get_size();
-        for (var i = 0; i < this.widgets.length; i++) {
-            Main.uiGroup.remove_actor(this.widgets[i]);
-        }
-        this.widgets = [];
-        this.createLayout(this.currentLayout, 0,35, displayWidth, displayHeight - 35);
-        for (let i = 0; i < this.widgets.length; i++) {
-            this.widgets[i].visible = false;
-            this.widgets[i].remove_style_pseudo_class('activate');
+        if (this.preview) {
+            this.preview.destroy();
+            this.preview = null;
         }
     }
     enable() {
@@ -581,32 +523,29 @@ class App {
                 this.layouts = JSON.parse(contents);
             }
             initSettings();
-            this.setLayout(this.layouts[0]);
+            this.setLayout(this.layouts[3]);
 
             //var display = getFocusWindow().get_display();
             global.display.connect('grab-op-begin', (_display, win, op) => {
                 log("Drag Operation Begin");
                 if (win != null) {
-                    let [x, y] = global.get_pointer();
-                    for (let i = 0; i < this.widgets.length; i++) {
-                        this.widgets[i].visible = true;
-                        this.widgets[i].add_style_pseudo_class('activate');
+                    if (this.preview) {
+                        this.preview.destroy();
+                        this.preview = null;
                     }
+                    this.preview = new ZonePreview(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
                 }
 
             });
-
+           
+            
             global.display.connect('grab-op-end', (_display, win, op) => {
+                
                 log("Drag Operation End");
                 if (win != null) {
-                    let [x, y] = global.get_pointer();
-                    for (let i = 0; i < this.widgets.length; i++) {
-                        this.widgets[i].visible = false;
-                        this.widgets[i].remove_style_pseudo_class('activate');
-                        if (this.contains(this.widgets[i], x, y)) {
-                            moveResizeWindowWithMargins(win, this.widgets[i].x, this.widgets[i].y, this.widgets[i].width, this.widgets[i].height);
-                        }
-                    }
+                   if (this.preview) {
+                       this.preview.moveWindowToWidgetAtCursor(win);
+                   }
                 }
             });
 
@@ -625,6 +564,7 @@ class App {
                     item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
                     item.connect('activate', Lang.bind(this, ()=>{
                         this.setLayout(this.layouts[i]);
+                        this.hideLayoutPreview();
                     }));
                     item.actor.connect('enter-event', Lang.bind(this, ()=>{
                         this.showLayoutPreview(this.layouts[i]);
@@ -634,9 +574,28 @@ class App {
                     }));
                     (<any>launcher).menu.addMenuItem(item);
                 }
+                let item = new PopupMenu.PopupMenuItem(_("Edit Layout"));
+                let item2 = new PopupMenu.PopupMenuItem(_("Stop Editing"));
+                
+                (<any>launcher).menu.addMenuItem(item);
+                (<any>launcher).menu.addMenuItem(item2);
+                item.connect('activate', Lang.bind(this, ()=>{
+                    
+                    if (this.editor) {
+                        this.editor.destroy();
+                    }
+                    this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
 
-
-
+                    
+             
+                }));     
+                item2.connect('activate', Lang.bind(this, ()=>{
+                    if (this.editor) {
+                        this.editor.destroy();
+                        this.editor = null;
+                    }
+                    //(<any>launcher).menu.removeMenuItem(item2);
+                }));
 
                 //Read more: https://blog.fpmurphy.com/2011/04/gnome-3-shell-extensions.html#ixzz72zuomfH3
             }
@@ -662,14 +621,7 @@ class App {
 
     }
 
-    contains(gridWidget: any, x: number, y: number, width: number = 1, height: number = 1): boolean {
-        return (
-            gridWidget.x <= x &&
-            gridWidget.y <= y &&
-            gridWidget.x + gridWidget.width >= x + width &&
-            gridWidget.y + gridWidget.height >= y + height
-        );
-    }
+
 
 
 
@@ -695,7 +647,7 @@ class App {
         resetFocusMetaWindow();
     }
 
-   
+
     /**
      * onFocus is called when the global focus changes.
      */
@@ -1234,4 +1186,5 @@ function snapToNeighborsBind() {
 
     snapToNeighbors(window);
 }
+
 

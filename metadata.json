@@ -1,7 +1,7 @@
 {
   "uuid": "gSnap@micahosborne",
   "name": "gSnap",
-  "description": "Tile windows on a grid.",
+  "description": "Organize windows in customizable snap zones like FancyZones on windows.",
   "version": 1,
   "shell-version": [
     "3.30",
@@ -12,7 +12,7 @@
     "3.38",
     "40"
   ],
-  "url": "https://github.com/gSnap",
+  "url": "https://github.com/micahosborne/gSnap",
   "settings-schema": "org.gnome.shell.extensions.gsnap",
   "gettext-domain": "gsnap@micahosborne"
 }

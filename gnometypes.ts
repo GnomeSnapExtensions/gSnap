@@ -644,6 +644,7 @@ export interface StBin extends ClutterContainer, ClutterActor, StWidget {
  * @see https://gjs-docs.gnome.org/st10~1.0_api/st.button
  */
 export interface StButton extends ClutterContainer, ClutterActor, StWidget, StBin {
+    label :string;
 }
 
 
