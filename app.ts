@@ -559,9 +559,8 @@ class App {
 
 
                 for(let i = 0 ; i < this.layouts.length; i++) {
-                    let item = new PopupMenu.PopupSeparatorMenuItem();
-                    (<any>launcher).menu.addMenuItem(item);
-                    item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
+                
+                    let item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
                     item.connect('activate', Lang.bind(this, ()=>{
                         this.setLayout(this.layouts[i]);
                         this.hideLayoutPreview();
@@ -574,6 +573,9 @@ class App {
                     }));
                     (<any>launcher).menu.addMenuItem(item);
                 }
+                let sep = new PopupMenu.PopupSeparatorMenuItem();
+                (<any>launcher).menu.addMenuItem(sep);
+                
                 let item = new PopupMenu.PopupMenuItem(_("Edit Layout"));
                 let item2 = new PopupMenu.PopupMenuItem(_("Stop Editing"));
                 
