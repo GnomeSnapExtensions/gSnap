@@ -523,7 +523,7 @@ class App {
                 this.layouts = JSON.parse(contents);
             }
             initSettings();
-            this.setLayout(this.layouts[3]);
+            this.setLayout(this.layouts[0]);
 
             //var display = getFocusWindow().get_display();
             global.display.connect('grab-op-begin', (_display, win, op) => {
@@ -586,13 +586,22 @@ class App {
                     }
                     this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
 
-                    
-             
+                    log("Created editor " + this.editor.totalWidth() + ", " + this.editor.totalHeight());
+                    var windows = WorkspaceManager.get_active_workspace().list_windows();
+                    for (let i = 0; i < windows.length; i++) {
+                        windows[i].minimize();
+                    }
                 }));     
                 item2.connect('activate', Lang.bind(this, ()=>{
                     if (this.editor) {
+                        this.editor.apply();
+                        GLib.file_set_contents(getCurrentPath().replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
                         this.editor.destroy();
                         this.editor = null;
+                        var windows = WorkspaceManager.get_active_workspace().list_windows();
+                        for (let i = 0; i < windows.length; i++) {
+                            windows[i].unminimize();
+                        }
                     }
                     //(<any>launcher).menu.removeMenuItem(item2);
                 }));

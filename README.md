@@ -5,6 +5,10 @@ Gnome-shell extension that allows you to move windows into specific regions simi
 This extension was built from gTile, stripped it down and changed it to work like FancyZones.  Thanks to all the folks
 that worked on gTile as it made my process of developing this much easier.
 
+This extensions is developed in freetime.  Developer got to eat, if you like it, consider buying me a coffee :)
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/micahosborne)
+
 ## Installation
 
 Currently you must install from source
@@ -55,6 +59,14 @@ For configuration, please use the built-in preferences dialog (Gnome Tweak Tool 
   * You can set the margins between the windows as well
    
 ## Edit Layouts:
+Editing layouts is currently being developed and somewhat buggy.  For now its recommend to just edit the file explained below.  But if you are daring, here are the methods for doing this.
+* Click "Edit Layout" (will edit the currently applied layout).
+* Left-Click to split the region
+* Middle-Click to flip orientation
+* Right-Click to remove
+
+When done click "Stop Editing"
+
 ```shell
 gedit ~/.local/share/gnome-shell/extensions/gSnap@micahosborne/layouts.json 
 ```
