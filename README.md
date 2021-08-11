@@ -59,10 +59,10 @@ For configuration, please use the built-in preferences dialog (Gnome Tweak Tool 
   * You can set the margins between the windows as well
    
 ## Edit Layouts:
-Editing layouts is currently being developed and somewhat buggy.  For now its recommend to just edit the file explained below.  But if you are daring, here are the methods for doing this.
+Editing layouts is currently being developed and somewhat buggy.
 * Click "Edit Layout" (will edit the currently applied layout).
 * Left-Click to split the region
-* Middle-Click to flip orientation
+* Middle-Click to split with opposite orientation
 * Right-Click to remove
 
 When done click "Stop Editing"
