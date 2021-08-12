@@ -556,11 +556,11 @@ class App {
 
         log("Create Button on Panel");
         launcher = new GSnapStatusButton('tiling-icon');
-
+        (<any>launcher).label = "Layouts";
         if (gridSettings[SETTINGS_SHOW_ICON]) {
             Main.panel.addToStatusArea("GSnapStatusButton", launcher);
             let statusMenu = Main.panel._statusmenu;
-
+            
 
             for (let i = 0; i < this.layouts.length; i++) {
 

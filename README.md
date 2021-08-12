@@ -59,7 +59,7 @@ For configuration, please use the built-in preferences dialog (Gnome Tweak Tool 
   * You can set the margins between the windows as well
    
 ## Edit Layouts:
-Editing layouts is currently being developed and somewhat buggy.
+To edit a layout follow the instructions below
 * Click "Edit Layout" (will edit the currently applied layout).
 * Left-Click to split the region
 * Middle-Click to split with opposite orientation
@@ -67,6 +67,7 @@ Editing layouts is currently being developed and somewhat buggy.
 
 When done click "Stop Editing"
 
+Layouts are stored in this file.
 ```shell
 gedit ~/.local/share/gnome-shell/extensions/gSnap@micahosborne/layouts.json 
 ```
