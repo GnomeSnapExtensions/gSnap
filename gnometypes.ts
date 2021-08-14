@@ -384,6 +384,14 @@ export interface MetaWindow {
  */
 export interface WorkspaceManager {
     get_active_workspace(): Workspace;
+
+    get_active_workspace_index(): number;
+
+    get_n_workspaces(): number;
+
+    connect(workspaceSwitched: string, param2: () => void): any;
+
+    disconnect(workspaceSwitchedConnect: any): void;
 }
 
 /**

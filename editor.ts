@@ -55,9 +55,8 @@ export class ZoneBase {
     public _y: number = 0;
     public _width: number = 0;
     public _height: number = 0;
-    
-    
-    
+
+
     public contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
         return (
             this.x() <= x &&
@@ -77,27 +76,31 @@ export class ZoneBase {
     public totalHeight() {
         return (this.margin * 2) + this.height();
     }
-    
+
     public positionChanged() {
 
     }
+
     public sizeChanged() {
 
     }
-    
+
     public innerX(): number {
         return this.x() + this.margin;
     }
-    
-    public innerY() : number {
+
+    public innerY(): number {
         return this.y() + this.margin;
     }
+
     public innerWidth(): number {
         return this.width() - (this.margin * 2);
     }
+
     public innerHeight(): number {
         return this.height() - (this.margin * 2);
     }
+
     public x(v: number | null = null): number {
         if (v == null) return this._x;
         this._x = v;
@@ -114,7 +117,7 @@ export class ZoneBase {
 
     public width(v: number | null = null): number {
         if (v == null) return this._width;
-        
+
         this._width = v;
         this.sizeChanged();
         return this._width;
@@ -126,9 +129,10 @@ export class ZoneBase {
         this.sizeChanged();
         return this._height;
     }
+
     public applyPercentages() {
         if (this.parent.layoutItem.type == 0) {
-            
+
             let factor = this.parent.width() / this.width();
             this.layoutItem.length = 100 / factor;
         } else {
@@ -136,6 +140,7 @@ export class ZoneBase {
             this.layoutItem.length = 100 / factor;
         }
     }
+
     public destroy() {
 
     }
@@ -165,6 +170,10 @@ export class ZoneBase {
     sizeBottom(delta: number) {
         this.height(this.height() + delta)
     }
+
+    public adjustWindows(windows: Window[]) {
+
+    }
 }
 
 export class Zone extends ZoneBase {
@@ -187,6 +196,7 @@ export class Zone extends ZoneBase {
         this.widget.x = this.innerX();
         this.widget.y = this.innerY();
     }
+
     sizeChanged() {
         super.sizeChanged();
         this.widget.height = this.innerHeight();
@@ -208,14 +218,124 @@ export class Zone extends ZoneBase {
         Main.uiGroup.remove_actor(this.widget);
     }
 
-  
+
+}
+
+export class TabbedZone extends Zone {
+    public tabHeight: number = 50;
+    public tabWidth: number = 200;
+    public tabs: ZoneTab[] = [];
+
+    innerX(): number {
+        return super.innerX();
+    }
+
+    innerY(): number {
+        if (this.tabs.length > 1) {
+            return super.innerY() + this.tabHeight;
+        }
+        return super.innerY();
+    }
+
+    innerHeight(): number {
+        if (this.tabs.length > 1) {
+            return super.innerHeight() - this.tabHeight;
+        }
+        return super.innerHeight();
+    }
+
+    createWidget(styleClass: string = 'grid-preview') {
+        this.widget = new St.BoxLayout({style_class: styleClass});
+        this.widget.visible = false;
+    }
+
+    layoutTabs() {
+
+    }
+
+    destroy() {
+        super.destroy();
+        while (this.tabs.length > 0) {
+            this.tabs[0].destroy();
+        }
+    }
+    
+    adjustWindows(windows: Window[]) {
+        super.adjustWindows(windows);
+        while (this.tabs.length > 0) {
+            this.tabs[0].destroy();
+        }
+        this.tabs = [];
+        let x = this.x() + this.margin;
+        for (let i = 0; i < windows.length; i++) {
+            let metaWindow = windows[i];
+            let outerRect = metaWindow.get_frame_rect();
+
+            if (this.contains(outerRect.x, outerRect.y)) {
+                let zoneTab = new ZoneTab(this, metaWindow);
+                zoneTab.buttonWidget.height = this.tabHeight - (this.margin * 2);
+                zoneTab.buttonWidget.width = this.tabWidth;
+                zoneTab.buttonWidget.x = x;
+                zoneTab.buttonWidget.y = this.y() + this.margin;
+                zoneTab.buttonWidget.visible = true;
+                x += zoneTab.buttonWidget.width + this.margin;
+            }
+        }
+        for (let i = 0; i < windows.length; i++) {
+            let metaWindow = windows[i];
+            let outerRect = metaWindow.get_frame_rect();
+
+            if (this.contains(outerRect.x, outerRect.y)) {
+                metaWindow.move_frame(true, this.innerX(), this.innerY());
+                metaWindow.move_resize_frame(true, this.innerX(), this.innerY(), this.innerWidth(), this.innerHeight());
+            }
+        }
+        if (this.tabs.length < 2) {
+            while (this.tabs.length > 0) {
+                this.tabs[0].destroy();
+            }
+            this.tabs = [];
+        }
+        // for (var i = 0; i < this.tabs.length; i++) {
+        //     var zoneTab = this.tabs[i];
+        //    
+        //  
+        // }
+        log("Adjusted zone with " + this.tabs.length + " with window count " + windows.length);
+    }
+
+}
+
+export class ZoneTab {
+    public window: Window | null = null;
+    public buttonWidget: StButton | null = null;
+
+    constructor(private tabZone: TabbedZone, metaWindow: Window) {
+        tabZone.tabs.push(this);
+        this.window = metaWindow;
+        this.buttonWidget = new St.Button({style_class: 'tab-button'});
+        this.buttonWidget.label = metaWindow.title;
+        this.buttonWidget.connect('button-press-event', Lang.bind(this, (actor, event) => {
+            Main.activateWindow(this.window);
+        }));
+        Main.uiGroup.add_child(this.buttonWidget);
+    }
+
+    destroy() {
+        this.tabZone.tabs.splice(this.tabZone.tabs.indexOf(this), 1);
+        this.buttonWidget.visible = false;
+        Main.uiGroup.remove_child(this.buttonWidget);
+    }
 }
 
 export class EditableZone extends Zone {
+
+
     positionChanged() {
         super.positionChanged();
         (<any>this.widget).label = this.layoutItem.length + "%";
     }
+
     sizeChanged() {
         super.sizeChanged();
         (<any>this.widget).label = this.layoutItem.length + "%";
@@ -233,7 +353,7 @@ export class EditableZone extends Zone {
             }
             if (btn == 2) {
                 this.parent.splitOtherDirection(this);
-                
+
 
             }
             if (btn == 3) {
@@ -259,12 +379,11 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public remove(zone: Zone) {
-        
+
         const index = this.layoutItem.items.indexOf(zone.layoutItem);
         if (index > -1) {
-            
-          
-            
+
+
             if (index + 1 < this.layoutItem.items.length) {
                 this.layoutItem.items[index + 1].length += zone.layoutItem.length;
                 this.layoutItem.items.splice(index, 1);
@@ -273,21 +392,22 @@ export class ZoneGroup extends ZoneBase {
                 this.layoutItem.items.splice(index, 1);
             }
             if (this.layoutItem.items.length < 2) {
-                
+
                 if (this.layoutItem != this.root.layoutItem) {
-                    this.layoutItem.items = null;    
+                    this.layoutItem.items = null;
                 }
-                
-            } 
+
+            }
         }
         this.root.reinit();
-        
+
     }
+
     public splitOtherDirection(zone: Zone) {
         zone.layoutItem.items = [];
-        
+
         zone.layoutItem.type = this.layoutItem.type == 1 ? 0 : 1;
-        
+
         zone.layoutItem.items.push(
             {
                 length: 50
@@ -301,6 +421,7 @@ export class ZoneGroup extends ZoneBase {
         log(JSON.stringify(this.root.layoutItem));
         this.root.reinit();
     }
+
     public split(zone: Zone) {
         let index = this.children.indexOf(zone);
 
@@ -311,13 +432,13 @@ export class ZoneGroup extends ZoneBase {
         log(JSON.stringify(this.root.layoutItem));
         this.root.reinit();
     }
-    
+
     public adjustLayout(root: ZoneDisplay) {
         this.root = root;
         let x = this.x();
         let y = this.y();
-        
-        for (let i = 0 ; i < this.children.length; i++) {
+
+        for (let i = 0; i < this.children.length; i++) {
             let child = this.children[i];
             let item = child.layoutItem;
             let factor = this.layoutItem.type == 0 ? this.width() : this.height();
@@ -353,10 +474,10 @@ export class ZoneGroup extends ZoneBase {
                 y += length;
             }
         }
-        
-     
+
 
     }
+
     public applyLayout(root: ZoneDisplay) {
         this.destroy();
         this.root = root;
@@ -379,7 +500,6 @@ export class ZoneGroup extends ZoneBase {
             }
         }
         root.zoneGroupCreated(this);
-        this.show();
     }
 
     protected zoneGroupCreated(z: ZoneGroup) {
@@ -470,7 +590,7 @@ export class ZoneAnchor {
             let a = this.zoneA instanceof ZoneGroup ? "zg" : "z";
             let b = this.zoneB instanceof ZoneGroup ? "zg" : "z";
             if (!this.isMoving) {
-                
+
             }
             log("sizing " + a + ", " + b);
         });
@@ -545,7 +665,7 @@ export class ZoneAnchor {
 
     mouseMoved(x: any, y: any) {
         if (this.isMoving) {
-           
+
             if (this.zoneGroup.layoutItem.type == 0) {
                 let delta = x - this.startX;
                 this.zoneA.sizeRight(delta);
@@ -565,12 +685,14 @@ export class ZoneAnchor {
 
 export class ZoneDisplay extends ZoneGroup {
     protected motionConnection: any;
+
     public apply() {
         var c = this.recursiveChildren();
         for (var i = 0; i < c.length; i++) {
             c[i].applyPercentages();
         }
     }
+
     constructor(layout: any, margin: number) {
         super();
         this.margin = margin;
@@ -605,7 +727,7 @@ export class ZoneDisplay extends ZoneGroup {
     public createZoneWidget(layout: any, layoutItem: any, x: number, y: number, width: number, height: number) {
 
     }
-    
+
 
     public init() {
         let [displayWidth, displayHeight] = global.display.get_size();
@@ -616,6 +738,7 @@ export class ZoneDisplay extends ZoneGroup {
         this.height(displayHeight - 30 - (this.margin * 2));
         this.applyLayout(this);
         this.adjustLayout(this);
+
     }
 
 
@@ -637,11 +760,10 @@ export class ZoneEditor extends ZoneDisplay {
     public anchors: ZoneAnchor[];
     public isMoving: boolean = false;
 
-    
 
     public createZone() {
         var zone = new EditableZone();
-      
+
         return zone;
     }
 
@@ -681,9 +803,8 @@ export class ZoneEditor extends ZoneDisplay {
             this.anchors[i].destroy();
         }
         this.anchors = [];
-        
+
         super.destroy();
-      
 
 
     }
@@ -717,26 +838,7 @@ export class ZoneEditor extends ZoneDisplay {
     }
 
     applyLayout(root: ZoneDisplay) {
-        //this.apply();
         super.applyLayout(root);
-        // let allChildren = this.recursiveChildren().filter(x => x instanceof ZoneGroup);
-        // if (this.anchors == null) {
-        //     this.anchors = [];
-        // }
-        // for (let i = 1; i < allChildren.length; i++) {
-        //         let before = allChildren[i - 1];
-        //         let after = allChildren[i];
-        //         if (before == null) {
-        //             log("--- --- BEFORE IS NULL --- ---" + i);
-        //             log(JSON.stringify(allChildren));
-        //         }
-        //         if (after == null) {
-        //             log("--- --- AFTER IS NULL --- ---" + i);
-        //             log(JSON.stringify(allChildren));
-        //         }
-        //     let zoneAnchor = new ZoneAnchor(allChildren[i], allChildren[i].children[i - 1], allChildren[i].children[i], this.margin);
-        //     this.anchors.push(zoneAnchor);
-        // }
     }
 
     public hide() {
@@ -765,4 +867,34 @@ export class ZonePreview extends ZoneDisplay {
 
 }
 
+export class TabbedZoneManager extends ZoneDisplay {
+    constructor(layout: any, margin: number) {
+        super(layout, margin);
+    }
 
+    public createZone() {
+        let zone = new TabbedZone();
+
+        return zone;
+    }
+
+    adjustLayout(root: ZoneDisplay) {
+        super.adjustLayout(root);
+        this.layoutWindows();
+    }
+
+    public layoutWindows() {
+        
+        let wsm: WorkspaceManagerInterface = (  global.workspace_manager);
+        let ws = wsm.get_n_workspaces();
+        log("Workspace Index " + ws );
+        let windows = wsm.get_active_workspace().list_windows();
+        
+        for (let c = 0; c < this.children.length; c++) {
+            let child = this.children[c];
+            child.adjustWindows(windows);
+    
+        }
+    }
+
+}

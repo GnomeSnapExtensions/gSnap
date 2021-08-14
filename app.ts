@@ -6,7 +6,7 @@ import {ShellVersion} from './shellversion';
 import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
 import {snapToNeighbors} from './snaptoneighbors';
 import * as tilespec from "./tilespec";
-import {ZoneEditor, ZoneDisplay, ZonePreview} from "./editor";
+import {ZoneEditor, ZoneDisplay, ZonePreview, TabbedZoneManager} from "./editor";
 
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
@@ -156,7 +156,9 @@ interface SettingsObject {
 
     get_int(name: NumberSettingName): number | undefined;
 
-    connect(eventName: string, callback: () => void): void;
+    connect(eventName: string, callback: () => void): any;
+
+    disconnect(c: any): void;
 };
 
 let launcher: GSnapStatusButtonInterface | null;
@@ -166,8 +168,7 @@ let nbRows = 0;
 let focusMetaWindow: Window | null = null;
 let focusConnect: any = false;
 
-let settings: SettingsObject = Settings.get();
-settings.connect('changed', changed_settings);
+let settings: SettingsObject;
 let keyControlBound: any = false;
 let enabled = false;
 let mainWindowSizes = new Array();
@@ -483,6 +484,7 @@ class App {
     private layoutsFile: any[] = [];
     private editor: ZoneEditor | null = null;
     private preview: ZonePreview | null = null;
+    private tabManager: TabbedZoneManager | null = null;
 
     private currentLayout = null;
     public layouts = [
@@ -496,9 +498,18 @@ class App {
         },
 
     ];
+    private _monitorsChangedId: any;
+    private restackConnection: any;
+    private workspaceSwitchedConnect: any;
 
     setLayout(layout: any) {
         this.currentLayout = layout;
+        if (this.tabManager) {
+            this.tabManager.destroy();
+            this.tabManager = null;
+        }
+        this.tabManager = new TabbedZoneManager(layout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+
     }
 
     showLayoutPreview(layout: any) {
@@ -526,34 +537,47 @@ class App {
         if (ok) {
             this.layouts = JSON.parse(contents);
         }
+        
+        
         initSettings();
         this.setLayout(this.layouts[0]);
+        monitorsChangedConnect = Main.layoutManager.connect(
+            'monitors-changed', ()=>{
+                this.tabManager.layoutWindows();
+            });
 
         //var display = getFocusWindow().get_display();
         global.display.connect('grab-op-begin', (_display, win, op) => {
             log("Drag Operation Begin");
             if (win != null) {
-                if (this.preview) {
-                    this.preview.destroy();
-                    this.preview = null;
+                // if (this.preview) {
+                //     this.preview.destroy();
+                //     this.preview = null;
+                // }
+                // this.preview = new ZonePreview(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+                if (this.tabManager) {
+                    this.tabManager.show();
                 }
-                this.preview = new ZonePreview(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
             }
-
+            
         });
 
 
         global.display.connect('grab-op-end', (_display, win, op) => {
-
-            log("Drag Operation End");
-            if (win != null) {
-                if (this.preview) {
-                    this.preview.moveWindowToWidgetAtCursor(win);
-                }
+            if (this.tabManager != null) {
+                this.tabManager.hide();
+                
+                this.tabManager.moveWindowToWidgetAtCursor(win);
+                this.tabManager.layoutWindows();
+                
             }
         });
-
-
+        this.restackConnection = global.display.connect('restacked', ()=>{
+            this.tabManager.layoutWindows();
+        });
+        this.workspaceSwitchedConnect = WorkspaceManager.connect( 'workspace-switched', ()=>{
+           this.tabManager.layoutWindows();
+        });
         log("Create Button on Panel");
         launcher = new GSnapStatusButton('tiling-icon');
         (<any>launcher).label = "Layouts";
@@ -661,6 +685,7 @@ class App {
         }
 
         enabled = true;
+     
         log("Extention enable completed");
 
 
@@ -670,7 +695,22 @@ class App {
     disable() {
         log("Extension disable begin");
         enabled = false;
-
+        if (this.preview) {
+            this.preview.destroy();
+            this.preview = null;
+        }
+        if (this.editor) {
+            this.editor.destroy();
+            this.editor = null;
+        }
+        if (this.workspaceSwitchedConnect) {
+            WorkspaceManager.disconnect(this.workspaceSwitchedConnect);
+            this.workspaceSwitchedConnect = false;
+        }
+        if (this.restackConnection) {
+            global.display.disconnect(this.restackConnection);
+            this.restackConnection = false;
+        }
         if (monitorsChangedConnect) {
             log("Disconnecting monitors-changed");
             Main.layoutManager.disconnect(monitorsChangedConnect);
@@ -899,8 +939,10 @@ function getMonitorInsets(tier: MonitorTier): Insets {
  *****************************************************************/
 function init() {
 }
-
+let settingsConnection : any = null;
 export function enable() {
+    settings = Settings.get();
+    settingsConnection = settings.connect('changed', changed_settings);
     setLoggingEnabled(getBoolSetting(SETTINGS_DEBUG));
     log("Extension enable begin");
     SHELL_VERSION.print_version();
@@ -909,7 +951,9 @@ export function enable() {
 }
 
 export function disable() {
+    settings.disconnect(settingsConnection);
     globalApp.disable();
+    
 }
 
 function resetFocusMetaWindow() {
