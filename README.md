@@ -11,7 +11,8 @@ This extensions is developed in freetime.  Developer got to eat, if you like it,
 
 ## Installation
 
-Currently you must install from source
+[Install From The Gnome Extensions Page](https://extensions.gnome.org/extension/4442/gsnap/)
+
 
 ### Installation from source
 You can alternatively manually install the latest version from GitHub master branch:
