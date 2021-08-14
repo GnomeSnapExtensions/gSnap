@@ -40,7 +40,9 @@ const Signals = imports.signals;
 const Workspace = imports.ui.workspace;
 const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
-
+const ModalDialog = imports.ui.modalDialog;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Gio = imports.gi.Gio;
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
 const WorkspaceManager: WorkspaceManagerInterface = (
     global.screen || global.workspace_manager);
@@ -905,3 +907,37 @@ export class TabbedZoneManager extends ZoneDisplay {
     }
 
 }
+
+export const EntryDialog = new Lang.Class({
+    Name: 'EntryDialog',
+    Extends: ModalDialog.ModalDialog,
+    label: "No Label Set",
+    text: "Change Me",
+    onOkay: null,
+    entry: null,
+    _init: function() {
+        this.parent({ styleClass: 'extension-dialog' });
+        
+        this.setButtons([{ label: "OK",
+            action: Lang.bind(this, this._onClose),
+            key:    Clutter.Escape
+        }]);
+
+        let box = new St.BoxLayout({ vertical: true});
+        this.contentLayout.add(box);
+        const MySelf = ExtensionUtils.getCurrentExtension();
+        let gicon = new Gio.FileIcon({ file: Gio.file_new_for_path(MySelf.path + "/icons/icon.png") });
+        let icon = new St.Icon({ gicon: gicon });
+        box.add(icon);
+        box.add(new St.Label({ text: this.label, x_align: Clutter.ActorAlign.CENTER }));
+
+        box.add(this.entry = new St.Entry({ text: this.text}));
+        
+        },
+
+    _onClose: function(button, event) {
+        this.onOkay(this.entry.text);
+        this.close(global.get_current_time());
+    },
+
+});

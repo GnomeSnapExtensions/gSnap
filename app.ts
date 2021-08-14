@@ -6,7 +6,7 @@ import {ShellVersion} from './shellversion';
 import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
 import {snapToNeighbors} from './snaptoneighbors';
 import * as tilespec from "./tilespec";
-import {ZoneEditor, ZoneDisplay, ZonePreview, TabbedZoneManager} from "./editor";
+import {ZoneEditor, ZoneDisplay, ZonePreview, TabbedZoneManager, EntryDialog} from "./editor";
 
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
@@ -489,6 +489,7 @@ class App {
     private currentLayout = null;
     public layouts = [
         {
+            type: 0,
             name: "2 Column",
             length: 100,
             items: [
@@ -510,7 +511,7 @@ class App {
         }
         this.tabManager = new TabbedZoneManager(layout, gridSettings[SETTINGS_WINDOW_MARGIN]);
         this.tabManager.layoutWindows();
-
+        this.reloadMenu();
     }
 
     showLayoutPreview(layout: any) {
@@ -538,12 +539,12 @@ class App {
         if (ok) {
             this.layouts = JSON.parse(contents);
         }
-        
-        
+
+
         initSettings();
         this.setLayout(this.layouts[0]);
         monitorsChangedConnect = Main.layoutManager.connect(
-            'monitors-changed', ()=>{
+            'monitors-changed', () => {
                 this.tabManager.layoutWindows();
             });
 
@@ -560,116 +561,31 @@ class App {
                     this.tabManager.show();
                 }
             }
-            
+
         });
 
 
         global.display.connect('grab-op-end', (_display, win, op) => {
             if (this.tabManager != null) {
                 this.tabManager.hide();
-                
+
                 this.tabManager.moveWindowToWidgetAtCursor(win);
                 this.tabManager.layoutWindows();
-                
+
             }
         });
-        this.restackConnection = global.display.connect('restacked', ()=>{
+        this.restackConnection = global.display.connect('restacked', () => {
             this.tabManager.layoutWindows();
         });
-        this.workspaceSwitchedConnect = WorkspaceManager.connect( 'workspace-switched', ()=>{
-           this.tabManager.layoutWindows();
+        this.workspaceSwitchedConnect = WorkspaceManager.connect('workspace-switched', () => {
+            this.tabManager.layoutWindows();
         });
         log("Create Button on Panel");
         launcher = new GSnapStatusButton('tiling-icon');
         (<any>launcher).label = "Layouts";
         if (gridSettings[SETTINGS_SHOW_ICON]) {
             Main.panel.addToStatusArea("GSnapStatusButton", launcher);
-            let statusMenu = Main.panel._statusmenu;
-            
-
-            for (let i = 0; i < this.layouts.length; i++) {
-
-                let item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
-                item.connect('activate', Lang.bind(this, () => {
-                    this.setLayout(this.layouts[i]);
-                    this.hideLayoutPreview();
-                }));
-                item.actor.connect('enter-event', Lang.bind(this, () => {
-                    this.showLayoutPreview(this.layouts[i]);
-                }));
-                item.actor.connect('leave-event', Lang.bind(this, () => {
-                    this.hideLayoutPreview();
-                }));
-                (<any>launcher).menu.addMenuItem(item);
-            }
-            let sep = new PopupMenu.PopupSeparatorMenuItem();
-            (<any>launcher).menu.addMenuItem(sep);
-
-            let item3 = new PopupMenu.PopupMenuItem(_("Reset Layout"));
-            let item = new PopupMenu.PopupMenuItem(_("Edit Layout"));
-            let item2 = new PopupMenu.PopupMenuItem(_("Save Layout"));
-            let item4 = new PopupMenu.PopupMenuItem(_("Cancel Editing"));
-
-
-            (<any>launcher).menu.addMenuItem(item4);
-            (<any>launcher).menu.addMenuItem(item3);
-            (<any>launcher).menu.addMenuItem(item);
-            (<any>launcher).menu.addMenuItem(item2);
-            item.connect('activate', Lang.bind(this, () => {
-
-                if (this.editor) {
-                    this.editor.destroy();
-                }
-                this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
-
-                log("Created editor " + this.editor.totalWidth() + ", " + this.editor.totalHeight());
-                var windows = WorkspaceManager.get_active_workspace().list_windows();
-                for (let i = 0; i < windows.length; i++) {
-                    windows[i].minimize();
-                }
-            }));
-            item2.connect('activate', Lang.bind(this, () => {
-                if (this.editor) {
-                    this.editor.apply();
-                    GLib.file_set_contents(getCurrentPath().replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
-                    this.editor.destroy();
-                    this.editor = null;
-                    var windows = WorkspaceManager.get_active_workspace().list_windows();
-                    for (let i = 0; i < windows.length; i++) {
-                        windows[i].unminimize();
-                    }
-                }
-                //(<any>launcher).menu.removeMenuItem(item2);
-            }));
-            item3.connect('activate', Lang.bind(this, () => {
-                if (this.editor) {
-                    this.editor.destroy();
-                    this.editor.layoutItem = {
-                        type: 0,
-                        length: 100,
-                        items: [
-                            {
-                                length: 100
-                            }
-                        ]
-                    }
-                    this.editor.applyLayout(this.editor);
-                }
-                //(<any>launcher).menu.removeMenuItem(item2);
-            }));
-            item4.connect('activate', Lang.bind(this, () => {
-                if (this.editor) {
-                    this.editor.destroy();
-                    this.editor = null;
-                }
-                var windows = WorkspaceManager.get_active_workspace().list_windows();
-                for (let i = 0; i < windows.length; i++) {
-                    windows[i].unminimize();
-                }
-                
-                //(<any>launcher).menu.removeMenuItem(item2);
-            }));
-            //Read more: https://blog.fpmurphy.com/2011/04/gnome-3-shell-extensions.html#ixzz72zuomfH3
+            this.reloadMenu();
         }
 
 
@@ -686,12 +602,154 @@ class App {
         }
 
         enabled = true;
-     
+
         log("Extention enable completed");
 
 
     }
+    reloadMenu() {
+        if (launcher == null) return;
+        (<any>launcher).menu.removeAll();
+        let resetLayoutButton = new PopupMenu.PopupMenuItem(_("Reset Layout"));
+        let editLayoutButton = new PopupMenu.PopupMenuItem(_("Edit Layout"));
+        let saveLayoutButton = new PopupMenu.PopupMenuItem(_("Save Layout"));
+        let cancelEditingButton = new PopupMenu.PopupMenuItem(_("Cancel Editing"));
+        let newLayoutButton = new PopupMenu.PopupMenuItem(_("Create New Layout"));
+        
+        let renameLayoutButton = new PopupMenu.PopupMenuItem(_("Rename: " + this.currentLayout.name));
+        
+        if (this.editor != null) {
+          
+            
+     
+            (<any>launcher).menu.addMenuItem(resetLayoutButton);
+            (<any>launcher).menu.addMenuItem(saveLayoutButton);
+            (<any>launcher).menu.addMenuItem(cancelEditingButton);
+        } else {
+            
+          
+            
+            for (let i = 0; i < this.layouts.length; i++) {
 
+                let item = new PopupMenu.PopupMenuItem(_(this.layouts[i].name == null ? "Layout " + i : this.layouts[i].name));
+                item.connect('activate', Lang.bind(this, () => {
+                    this.setLayout(this.layouts[i]);
+                    this.hideLayoutPreview();
+                    
+                }));
+                item.actor.connect('enter-event', Lang.bind(this, () => {
+                    this.showLayoutPreview(this.layouts[i]);
+                }));
+                item.actor.connect('leave-event', Lang.bind(this, () => {
+                    this.hideLayoutPreview();
+                }));
+                (<any>launcher).menu.addMenuItem(item);
+            }
+            let sep = new PopupMenu.PopupSeparatorMenuItem();
+            (<any>launcher).menu.addMenuItem(sep);
+            (<any>launcher).menu.addMenuItem(editLayoutButton);
+            (<any>launcher).menu.addMenuItem(renameLayoutButton);
+            (<any>launcher).menu.addMenuItem(newLayoutButton);
+        }
+
+
+
+        renameLayoutButton.connect('activate', Lang.bind(this, () => {
+            let dialog = new EntryDialog();
+            dialog.label = "Rename Layout " + this.currentLayout.name;
+            dialog.text = this.currentLayout.name;
+            dialog.onOkay = (text) => {
+                this.currentLayout.name = text;
+                this.saveLayouts();
+                this.reloadMenu();
+            }
+            dialog.open(global.get_current_time());
+
+        }));
+        newLayoutButton.connect('activate', Lang.bind(this, () => {
+            let dialog = new EntryDialog();
+            dialog.label = "Create New Layout";
+            dialog.onOkay = (text) => {
+                this.layouts.push({
+                    name: text,
+                    type: 0,
+                    length: 100,
+                    items: [
+                        {
+                            length: 100
+                        }
+                    ]
+                });
+                this.saveLayouts();
+                this.reloadMenu();
+            }
+            dialog.open(global.get_current_time());
+            
+        }));
+        editLayoutButton.connect('activate', Lang.bind(this, () => {
+
+            if (this.editor) {
+                this.editor.destroy();
+            }
+            this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+
+            log("Created editor " + this.editor.totalWidth() + ", " + this.editor.totalHeight());
+            var windows = WorkspaceManager.get_active_workspace().list_windows();
+            for (let i = 0; i < windows.length; i++) {
+                windows[i].minimize();
+            }
+            this.reloadMenu();
+        }));
+        saveLayoutButton.connect('activate', Lang.bind(this, () => {
+            this.saveLayouts();
+            this.reloadMenu();
+            //(<any>launcher).menu.removeMenuItem(item2);
+        }));
+        resetLayoutButton.connect('activate', Lang.bind(this, () => {
+            if (this.editor) {
+                this.editor.destroy();
+                this.editor.layoutItem = {
+                    type: 0,
+                    length: 100,
+                    items: [
+                        {
+                            length: 100
+                        }
+                    ]
+                }
+                this.editor.applyLayout(this.editor);
+                this.reloadMenu();
+            }
+            //(<any>launcher).menu.removeMenuItem(item2);
+        }));
+        cancelEditingButton.connect('activate', Lang.bind(this, () => {
+            if (this.editor) {
+                this.editor.destroy();
+                this.editor = null;
+            }
+            var windows = WorkspaceManager.get_active_workspace().list_windows();
+            for (let i = 0; i < windows.length; i++) {
+                windows[i].unminimize();
+            }
+            this.reloadMenu();
+            //(<any>launcher).menu.removeMenuItem(item2);
+        }));
+    }
+    saveLayouts() {
+        if (this.editor) {
+            this.editor.apply();
+            this.editor.destroy();
+
+        }
+        GLib.file_set_contents(getCurrentPath().replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
+
+        this.editor = null;
+        var windows = WorkspaceManager.get_active_workspace().list_windows();
+        for (let i = 0; i < windows.length; i++) {
+            windows[i].unminimize();
+        }
+
+    }
 
     disable() {
         log("Extension disable begin");
@@ -940,7 +998,9 @@ function getMonitorInsets(tier: MonitorTier): Insets {
  *****************************************************************/
 function init() {
 }
-let settingsConnection : any = null;
+
+let settingsConnection: any = null;
+
 export function enable() {
     settings = Settings.get();
     settingsConnection = settings.connect('changed', changed_settings);
@@ -954,7 +1014,7 @@ export function enable() {
 export function disable() {
     settings.disconnect(settingsConnection);
     globalApp.disable();
-    
+
 }
 
 function resetFocusMetaWindow() {

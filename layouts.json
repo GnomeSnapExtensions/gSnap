@@ -1,5 +1,24 @@
 [
   {
+    "name": "None",
+    "type": 0,
+    "length": 100,
+    "items": [
+     
+    ]
+  },
+  {
+    "name": "1 Column",
+    "type": 0,
+    "length": 100,
+    "items": [
+      {
+        "type": 1,
+        "length": 100
+      }
+    ]
+  },
+  {
     "name": "2 Column Split",
     "type": 0,
     "length": 100,
