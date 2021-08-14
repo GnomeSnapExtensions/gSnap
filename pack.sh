@@ -8,7 +8,6 @@ gnome-extensions pack -f \
 --extra-source logging.js \
 --extra-source shellversion.js \
 --extra-source snaptoneighbors.js \
---extra-source=settings.js \
 --extra-source images \
 --extra-source LICENSE \
 --extra-source README.md

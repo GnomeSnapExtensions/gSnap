@@ -37,10 +37,9 @@ filegroup(
         "extension.js",
         "metadata.json",
         "prefs.js",
-        "layouts.json",
+        "layouts-default.json",
         "//schemas:gschemas.compiled",
         "//schemas:org.gnome.shell.extensions.gsnap.gschema.xml",
-        "settings.js",
         "stylesheet.css",
         "LICENSE"
     ] + glob([

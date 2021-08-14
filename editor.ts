@@ -31,7 +31,6 @@ const St = imports.gi.St;
 const Main = imports.ui.main;
 const Shell = imports.gi.Shell;
 const GObject = imports.gi.GObject;
-const Lang = imports.lang;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Meta = imports.gi.Meta;
@@ -46,10 +45,6 @@ const Gio = imports.gi.Gio;
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
 const WorkspaceManager: WorkspaceManagerInterface = (
     global.screen || global.workspace_manager);
-
-// Extension imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Settings = Me.imports.settings;
 
 export class ZoneBase {
     public parent: ZoneGroup | null = null;
@@ -261,7 +256,7 @@ export class TabbedZone extends Zone {
             this.tabs[0].destroy();
         }
     }
-    
+
     adjustWindows(windows: Window[]) {
         super.adjustWindows(windows);
         while (this.tabs.length > 0) {
@@ -304,7 +299,7 @@ export class TabbedZone extends Zone {
         //  
         // }
         log("Adjusted zone with " + this.tabs.length + " with window count " + windows.length);
-        
+
     }
 
 }
@@ -318,9 +313,9 @@ export class ZoneTab {
         this.window = metaWindow;
         this.buttonWidget = new St.Button({style_class: 'tab-button'});
         this.buttonWidget.label = metaWindow.title;
-        this.buttonWidget.connect('button-press-event', Lang.bind(this, (actor, event) => {
+        this.buttonWidget.connect('button-press-event', (actor, event) => {
             Main.activateWindow(this.window);
-        }));
+        });
         Main.uiGroup.add_child(this.buttonWidget);
     }
 
@@ -346,7 +341,7 @@ export class EditableZone extends Zone {
 
     createWidget(styleClass: string = 'grid-preview') {
         this.widget = new St.Button({style_class: styleClass});
-        this.widget.connect('button-press-event', Lang.bind(this, (actor, event) => {
+        this.widget.connect('button-press-event', (actor, event) => {
             var btn = event.get_button();
             if (btn == 1) {
                 log("Splitting");
@@ -363,7 +358,7 @@ export class EditableZone extends Zone {
                 this.parent.remove(this);
 
             }
-        }));
+        });
     }
 }
 
@@ -380,9 +375,10 @@ export class ZoneGroup extends ZoneBase {
     contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
         return false;
     }
+
     adjustWindows(windows: Window[]) {
         super.adjustWindows(windows);
-        for (var i = 0 ; i < this.children.length; i++) {
+        for (var i = 0; i < this.children.length; i++) {
             this.children[i].adjustWindows(windows);
         }
     }
@@ -893,51 +889,68 @@ export class TabbedZoneManager extends ZoneDisplay {
     }
 
     public layoutWindows() {
-        
-        let wsm: WorkspaceManagerInterface = (  global.workspace_manager);
+
+        let wsm: WorkspaceManagerInterface = (global.workspace_manager);
         let ws = wsm.get_n_workspaces();
-        log("Workspace Index " + ws );
+        log("Workspace Index " + ws);
         let windows = wsm.get_active_workspace().list_windows();
-        
+
         for (let c = 0; c < this.children.length; c++) {
             let child = this.children[c];
             child.adjustWindows(windows);
-    
+
         }
     }
 
 }
 
-export const EntryDialog = new Lang.Class({
-    Name: 'EntryDialog',
-    Extends: ModalDialog.ModalDialog,
-    label: "No Label Set",
-    text: "Change Me",
-    onOkay: null,
-    entry: null,
-    _init: function() {
-        this.parent({ styleClass: 'extension-dialog' });
-        
-        this.setButtons([{ label: "OK",
-            action: Lang.bind(this, this._onClose),
-            key:    Clutter.Escape
+class EntryDialogClass extends ModalDialog.ModalDialog {
+
+    public entry : any | null;
+    public label : any | null;
+    public onOkay : any | null;
+
+    public _onClose(button, event) {
+      
+        try {
+            this.onOkay(this.entry.text);
+        } catch (e) {
+          
+            throw e;
+        }
+    }
+    constructor(params) {
+        super(params);
+        log(JSON.stringify(params));
+    }
+    public _init() {
+    
+        super._init({});
+        this.setButtons([{
+            label: "OK",
+            action: ()=>{
+                this.onOkay(this.entry.text);
+                this.close(global.get_current_time());
+            },
+            key: Clutter.Escape
         }]);
 
-        let box = new St.BoxLayout({ vertical: true});
+        let box = new St.BoxLayout({vertical: true});
         this.contentLayout.add(box);
-        const MySelf = ExtensionUtils.getCurrentExtension();
-        let gicon = new Gio.FileIcon({ file: Gio.file_new_for_path(MySelf.path + "/icons/icon.png") });
-        let icon = new St.Icon({ gicon: gicon });
-        box.add(icon);
-        box.add(new St.Label({ text: this.label, x_align: Clutter.ActorAlign.CENTER }));
 
-        box.add(this.entry = new St.Entry({ text: this.text}));
-        
-        },
+        // const MySelf = ExtensionUtils.getCurrentExtension();
+        // let gicon = new Gio.FileIcon({file: Gio.file_new_for_path(MySelf.path + "/icons/icon.png")});
+        // let icon = new St.Icon({gicon: gicon});
+        // box.add(icon);
 
-    _onClose: function(button, event) {
-        this.onOkay(this.entry.text);
-        this.close(global.get_current_time());
-    },
+        this.label = new St.Label({text: ""});
+        box.add(this.label);
+        box.add(this.entry = new St.Entry({text: ""}));
 
-});
+    }
+}
+
+export const EntryDialog = GObject.registerClass({
+        GTypeName: 'EntryDialogClass',
+    }, EntryDialogClass
+);

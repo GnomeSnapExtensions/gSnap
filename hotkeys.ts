@@ -11,11 +11,7 @@ const Shell = imports.gi.Shell;
 
 // Extension imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Settings = Me.imports.settings;
-
-// Globals
-const mySettings = Settings.get();
-
+const ExtensionUtils = imports.misc.extensionUtils;
 /**
  * Bindings is a dictionary that maps a hotkey name to a function that handles
  * the press of the key that is bound to that action.
@@ -25,13 +21,15 @@ export type Bindings = Map<KeyBindingSettingName, () => void>;
 export type BindingsOld = {[name in KeyBindingSettingName]: () => void};
 
 export function bind(keyBindings: Bindings) {
+    // Globals
+    let settings = ExtensionUtils.getSettings();
     log("Binding keys");
     keyBindings.forEach((callback: () => void, key: KeyBindingSettingName) => {
         //const key = keyString as KeyBindingSettingName;
         if (Main.wm.addKeybinding && Shell.ActionMode) { // introduced in 3.16
             Main.wm.addKeybinding(
                 key,
-                mySettings,
+                settings,
                 Meta.KeyBindingFlags.NONE,
                 Shell.ActionMode.NORMAL,
                 callback
@@ -40,7 +38,7 @@ export function bind(keyBindings: Bindings) {
         else if (Main.wm.addKeybinding && Shell.KeyBindingMode) { // introduced in 3.7.5
             Main.wm.addKeybinding(
                 key,
-                mySettings,
+                settings,
                 Meta.KeyBindingFlags.NONE,
                 Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.MESSAGE_TRAY,
                 callback
@@ -49,7 +47,7 @@ export function bind(keyBindings: Bindings) {
         else {
             global.display.add_keybinding(
                 key,
-                mySettings,
+                settings,
                 Meta.KeyBindingFlags.NONE,
                 callback
             );

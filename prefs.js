@@ -6,10 +6,6 @@ const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 
-// Extension imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Settings = Me.imports.settings;
-
 // Redefining globals from extension.js - do not know how to do it better :-(
 const SETTINGS_GRID_SIZES = 'grid-sizes';
 const SETTINGS_AUTO_CLOSE = 'auto-close';
@@ -71,7 +67,7 @@ function init() {
 }
 
 function accel_tab(notebook) {
-    let settings = Settings.get();
+    let settings = imports.misc.extensionUtils.getSettings();
     let ks_grid = new Gtk.Grid({
         column_spacing: 10,
         orientation: Gtk.Orientation.VERTICAL,
@@ -180,7 +176,7 @@ function accel_tab(notebook) {
 }
 
 function basics_tab(notebook) {
-    let settings = Settings.get();
+    let settings = imports.misc.extensionUtils.getSettings();
 
     let bs_grid = new Gtk.Grid({
         column_spacing: 10,
@@ -216,7 +212,7 @@ function basics_tab(notebook) {
 
 
 function margins_tab(notebook) {
-    let settings = Settings.get();
+    let settings = imports.misc.extensionUtils.getSettings();
     let mg_grid = new Gtk.Grid({
         column_spacing: 10,
         orientation: Gtk.Orientation.VERTICAL,
