@@ -6,7 +6,7 @@ import {ShellVersion} from './shellversion';
 import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
 import {snapToNeighbors} from './snaptoneighbors';
 import * as tilespec from "./tilespec";
-import {ZoneEditor, ZoneDisplay, ZonePreview, TabbedZoneManager, EntryDialog} from "./editor";
+import {ZoneEditor, ZoneDisplay, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager} from "./editor";
 
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
@@ -77,6 +77,7 @@ const SETTINGS_SHOW_ICON = 'show-icon';
 const SETTINGS_GLOBAL_PRESETS = 'global-presets';
 const SETTINGS_MOVERESIZE_ENABLED = 'moveresize-enabled';
 const SETTINGS_WINDOW_MARGIN = 'window-margin';
+const SETTINGS_SHOW_TABS = 'show-tabs';
 const SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED = 'window-margin-fullscreen-enabled';
 const SETTINGS_MAX_TIMEOUT = 'max-timeout';
 const SETTINGS_MAIN_WINDOW_SIZES = 'main-window-sizes';
@@ -99,13 +100,13 @@ interface ParsedSettings {
     [SETTINGS_AUTO_CLOSE]: any;
     [SETTINGS_ANIMATION]: any;
     [SETTINGS_SHOW_ICON]: any;
+    [SETTINGS_SHOW_TABS]: boolean;
     [SETTINGS_GLOBAL_PRESETS]: any;
     [SETTINGS_MOVERESIZE_ENABLED]: any;
     [SETTINGS_WINDOW_MARGIN]: number;
     [SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED]: boolean;
     [SETTINGS_MAX_TIMEOUT]: any;
     [SETTINGS_MAIN_WINDOW_SIZES]: Array<string>;
-
     [SETTINGS_INSETS_PRIMARY]: number;
     [SETTINGS_INSETS_PRIMARY_LEFT]: number;
     [SETTINGS_INSETS_PRIMARY_RIGHT]: number;
@@ -124,13 +125,14 @@ const gridSettings: ParsedSettings = {
     [SETTINGS_AUTO_CLOSE]: null,
     [SETTINGS_ANIMATION]: null,
     [SETTINGS_SHOW_ICON]: null,
+    [SETTINGS_SHOW_TABS]: null,
     [SETTINGS_GLOBAL_PRESETS]: null,
     [SETTINGS_MOVERESIZE_ENABLED]: null,
     [SETTINGS_WINDOW_MARGIN]: 0,
     [SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED]: false,
     [SETTINGS_MAX_TIMEOUT]: null,
     [SETTINGS_MAIN_WINDOW_SIZES]: [],
-
+    [SETTINGS_SHOW_TABS]: true,
     [SETTINGS_INSETS_PRIMARY]: 0,
     [SETTINGS_INSETS_PRIMARY_LEFT]: 0,
     [SETTINGS_INSETS_PRIMARY_RIGHT]: 0,
@@ -479,7 +481,7 @@ class App {
     private layoutsFile: any[] = [];
     private editor: ZoneEditor | null = null;
     private preview: ZonePreview | null = null;
-    private tabManager: TabbedZoneManager | null = null;
+    private tabManager: ZoneManager | null = null;
 
     private currentLayout = null;
     public layouts = {
@@ -513,7 +515,12 @@ class App {
             this.tabManager.destroy();
             this.tabManager = null;
         }
-        this.tabManager = new TabbedZoneManager(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+        if (gridSettings[SETTINGS_SHOW_TABS]) {
+            this.tabManager = new TabbedZoneManager(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+        } else {
+            this.tabManager = new ZoneManager(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+        }
+       
         this.tabManager.layoutWindows();
         this.reloadMenu();
     }
@@ -566,6 +573,24 @@ class App {
             });
 
         //var display = getFocusWindow().get_display();
+        global.display.connect('window-created', (_display, win, op) => { 
+            if (this.tabManager) {
+                this.tabManager.layoutWindows();
+            }
+        });
+        
+        global.display.connect('in-fullscreen-changed', (_display, win, op) => {
+            if (global.display.get_monitor_in_fullscreen(0)) {
+                if (this.tabManager) {
+                    this.tabManager.destroy();
+                    this.tabManager = null;
+                }
+            } else {
+                this.setLayout(this.layouts.current);
+            }
+            
+        });
+        //in-fullscreen-changed
         global.display.connect('grab-op-begin', (_display, win, op) => {
             log("Drag Operation Begin");
             if (win != null) {
@@ -949,6 +974,7 @@ function initSettings() {
     getBoolSetting(SETTINGS_AUTO_CLOSE);
     getBoolSetting(SETTINGS_ANIMATION);
     getBoolSetting(SETTINGS_SHOW_ICON);
+    getBoolSetting(SETTINGS_SHOW_TABS);
     getBoolSetting(SETTINGS_GLOBAL_PRESETS);
     getBoolSetting(SETTINGS_MOVERESIZE_ENABLED);
 

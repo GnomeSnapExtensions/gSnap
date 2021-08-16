@@ -268,7 +268,10 @@ export class TabbedZone extends Zone {
             let metaWindow = windows[i];
             let outerRect = metaWindow.get_frame_rect();
 
-            if (this.contains(outerRect.x, outerRect.y)) {
+            let midX = outerRect.x + (outerRect.width / 2);
+            let midY = outerRect.y + (outerRect.height / 2);
+            
+            if (this.contains(midX,midY)) {
                 let zoneTab = new ZoneTab(this, metaWindow);
                 zoneTab.buttonWidget.height = this.tabHeight - (this.margin * 2);
                 zoneTab.buttonWidget.width = this.tabWidth;
@@ -281,8 +284,9 @@ export class TabbedZone extends Zone {
         for (let i = 0; i < windows.length; i++) {
             let metaWindow = windows[i];
             let outerRect = metaWindow.get_frame_rect();
-
-            if (this.contains(outerRect.x, outerRect.y)) {
+            let midX = outerRect.x + (outerRect.width / 2);
+            let midY = outerRect.y + (outerRect.height / 2);
+            if (this.contains(midX, midY)) {
                 metaWindow.move_frame(true, this.innerX(), this.innerY());
                 metaWindow.move_resize_frame(true, this.innerX(), this.innerY(), this.innerWidth(), this.innerHeight());
             }
@@ -871,8 +875,26 @@ export class ZonePreview extends ZoneDisplay {
     }
 
 }
+export class ZoneManager extends ZoneDisplay {
+    
+    adjustLayout(root: ZoneDisplay) {
+        super.adjustLayout(root);
+        this.layoutWindows();
+    }
 
-export class TabbedZoneManager extends ZoneDisplay {
+    public layoutWindows() {
+
+        let wsm: WorkspaceManagerInterface = (global.workspace_manager);
+        let windows = wsm.get_active_workspace().list_windows();
+
+        for (let c = 0; c < this.children.length; c++) {
+            let child = this.children[c];
+            child.adjustWindows(windows);
+
+        }
+    }
+}
+export class TabbedZoneManager extends ZoneManager {
     constructor(layout: any, margin: number) {
         super(layout, margin);
     }
@@ -883,24 +905,7 @@ export class TabbedZoneManager extends ZoneDisplay {
         return zone;
     }
 
-    adjustLayout(root: ZoneDisplay) {
-        super.adjustLayout(root);
-        this.layoutWindows();
-    }
-
-    public layoutWindows() {
-
-        let wsm: WorkspaceManagerInterface = (global.workspace_manager);
-        let ws = wsm.get_n_workspaces();
-        log("Workspace Index " + ws);
-        let windows = wsm.get_active_workspace().list_windows();
-
-        for (let c = 0; c < this.children.length; c++) {
-            let child = this.children[c];
-            child.adjustWindows(windows);
-
-        }
-    }
+   
 
 }
 

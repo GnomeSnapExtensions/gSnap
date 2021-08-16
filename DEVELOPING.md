@@ -8,7 +8,7 @@ easy:
 1. Clone the repository to a folder of your choice.
 
 ```shell
-git clone https://github.com/gSnap/gSnap.git
+git clone https://github.com/micahosborne/gSnap.git
 ```
 
 2. Build and install

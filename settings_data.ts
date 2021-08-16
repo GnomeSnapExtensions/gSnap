@@ -11,6 +11,7 @@ export type BoolSettingName = (
     "global-presets" |
     "moveresize-enabled" |
     "show-icon" |
+    "show-tabs" |
     "window-margin-fullscreen-enabled");
 
 // A setting name for a number-valued setting.
@@ -640,6 +641,7 @@ interface RawConfigObject {
 
     /** Show gSnap icon on a panel. */
     ["show-icon"]: boolean;
+    ["show-tabs"]: boolean;
 
     /** The key you want to activate gSnap. */
     ["show-toggle-tiling"]: string[];

@@ -4,13 +4,13 @@ const GObject = imports.gi.GObject;
 const Gdk = imports.gi.Gdk;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
-const Lang = imports.lang;
 
 // Redefining globals from extension.js - do not know how to do it better :-(
 const SETTINGS_GRID_SIZES = 'grid-sizes';
 const SETTINGS_AUTO_CLOSE = 'auto-close';
 const SETTINGS_ANIMATION = 'animation';
 const SETTINGS_SHOW_ICON = 'show-icon';
+const SETTINGS_SHOW_TABS = 'show-tabs';
 const SETTINGS_GLOBAL_PRESETS = 'global-presets';
 const SETTINGS_MOVERESIZE_ENABLED = 'moveresize-enabled';
 const SETTINGS_WINDOW_MARGIN = 'window-margin';
@@ -189,6 +189,7 @@ function basics_tab(notebook) {
 
 
     add_check("Show icon",  SETTINGS_SHOW_ICON,  bs_grid, settings);
+    add_check("Show tabs",  SETTINGS_SHOW_TABS,  bs_grid, settings);
     add_check("Enable accelerators for moving and resizing windows", SETTINGS_MOVERESIZE_ENABLED  , bs_grid, settings);
     add_check("Debug", SETTINGS_DEBUG    , bs_grid, settings);
     let text = "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f";
@@ -244,7 +245,7 @@ function margins_tab(notebook) {
 }
 
 function help_tab(notebook) {
-    let weblink = 'https://github.com/gSnap/gSnap/blob/master/README.md';
+    let weblink = 'https://github.com/micahosborne/gSnap/blob/master/README.md';
     let hl_link =  new Gtk.LinkButton({
         label: weblink,
         uri: weblink,
@@ -303,11 +304,8 @@ function add_text(text_label, SETTINGS, grid, settings, width) {
 }
 
 // grabbed from sysmonitor code
-
-const IntSelect = new Lang.Class({
-        Name: 'gSnap.IntSelect',
-
-    _init: function(name) {
+class IntSelect {
+    constructor(name) {
         this.label = new Gtk.Label({
             label: name + ":",
             halign: Gtk.Align.START
@@ -320,20 +318,19 @@ const IntSelect = new Lang.Class({
         box_append(this.actor, this.label)
         box_append(this.actor, this.spin)
         this.spin.set_numeric(true);
-    },
-    set_args: function(minv, maxv, incre, page){
+    }
+    set_args(minv, maxv, incre, page){
         this.spin.set_range(minv, maxv);
         this.spin.set_increments(incre, page);
-    },
-    set_value: function(value){
+    }
+    set_value(value){
         this.spin.set_value(value);
     }
-});
+}
 
-const TextEntry = new Lang.Class({
-        Name: 'gSnap.TextEntry',
+class TextEntry {
 
-    _init: function(name) {
+    constructor(name) {
         this.label = new Gtk.Label({label: name + ":"});
         this.textentry = new Gtk.Entry();
         this.actor = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 10});
@@ -341,14 +338,14 @@ const TextEntry = new Lang.Class({
         box_append(this.actor, this.label);
         box_append(this.actor, this.textentry);
         this.textentry.set_text("");
-    },
-    set_args: function(width){
+    }
+    set_args(width){
         this.textentry.set_width_chars(width);
-    },
-    set_value: function(value){
+    }
+    set_value(value){
         this.textentry.set_text(value);
     }
-});
+}
 
 
 function append_hotkey(model, settings, name, pretty_name) {
