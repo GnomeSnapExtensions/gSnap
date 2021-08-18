@@ -75,7 +75,7 @@ gedit ~/.local/share/gnome-shell/extensions/gSnap@micahosborne/layouts.json
 After editing layouts disable and re-enable the plugin
 
 Layouts are defined via json here is a 50% 50% split layout
-```json
+```jsonc
   {
     "type": 0, // 0 for horizontal, 1 for vertical
     "length": 100, // Percentage of screen
@@ -90,7 +90,7 @@ Layouts are defined via json here is a 50% 50% split layout
   }
 ```
 Here is a 3 split configuration, with the column in the middle split into 3 zones
-```json
+```jsonc
   {
     "length": 100, // 100% of screen
     "items": [
