@@ -885,7 +885,10 @@ export class ZoneManager extends ZoneDisplay {
     public layoutWindows() {
 
         let wsm: WorkspaceManagerInterface = (global.workspace_manager);
-        let windows = wsm.get_active_workspace().list_windows();
+        let windows = wsm
+            .get_active_workspace()
+            .list_windows()
+            .filter(w => w.get_window_type() == WindowType.NORMAL);
 
         for (let c = 0; c < this.children.length; c++) {
             let child = this.children[c];

@@ -572,10 +572,17 @@ class App {
                 this.tabManager.layoutWindows();
             });
 
+        function validWindow(window: Window): boolean {
+            return window != null
+                && window.get_window_type() == WindowType.NORMAL;
+        }
+
         //var display = getFocusWindow().get_display();
-        global.display.connect('window-created', (_display, win, op) => { 
-            if (this.tabManager) {
-                this.tabManager.layoutWindows();
+        global.display.connect('window-created', (_display, win, op) => {
+            if(validWindow(win)) {
+                if (this.tabManager) {
+                    this.tabManager.layoutWindows();
+                }
             }
         });
         
@@ -592,8 +599,8 @@ class App {
         });
         //in-fullscreen-changed
         global.display.connect('grab-op-begin', (_display, win, op) => {
-            log("Drag Operation Begin");
-            if (win != null) {
+            if(validWindow(win)) {
+                log("Drag Operation Begin");
                 // if (this.preview) {
                 //     this.preview.destroy();
                 //     this.preview = null;
@@ -608,12 +615,13 @@ class App {
 
 
         global.display.connect('grab-op-end', (_display, win, op) => {
-            if (this.tabManager != null) {
-                this.tabManager.hide();
+            if(validWindow(win)) {
+                if (this.tabManager != null) {
+                    this.tabManager.hide();
 
-                this.tabManager.moveWindowToWidgetAtCursor(win);
-                this.tabManager.layoutWindows();
-
+                    this.tabManager.moveWindowToWidgetAtCursor(win);
+                    this.tabManager.layoutWindows();
+                }
             }
         });
         this.restackConnection = global.display.connect('restacked', () => {
