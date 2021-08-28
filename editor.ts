@@ -181,7 +181,7 @@ export class Zone extends ZoneBase {
         super();
 
         this.createWidget(styleClass);
-        Main.uiGroup.add_child(this.widget);
+        Main.uiGroup.insert_child_above(this.widget, global.window_group);
     }
 
     public createWidget(styleClass: string = 'grid-preview') {
@@ -320,7 +320,7 @@ export class ZoneTab {
         this.buttonWidget.connect('button-press-event', (actor, event) => {
             Main.activateWindow(this.window);
         });
-        Main.uiGroup.add_child(this.buttonWidget);
+        Main.uiGroup.insert_child_above(this.buttonWidget, global.window_group);
     }
 
     destroy() {
@@ -609,7 +609,7 @@ export class ZoneAnchor {
         });
 
         //this.widgets.push(sizeButton);
-        Main.uiGroup.add_child(this.widget);
+        Main.uiGroup.insert_child_above(this.widget, global.window_group);
     }
 
     public adjustSizes() {
