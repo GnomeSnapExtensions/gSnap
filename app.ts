@@ -483,9 +483,9 @@ class App {
     private preview: ZonePreview | null = null;
     private tabManager: ZoneManager | null = null;
 
-    private currentLayout = null;
+    private currentLayout  : any = null;
     public layouts = {
-        current: 0,
+        workspaces: [{current: 0}, {current: 0}],
         definitions: [
             {
                 type: 0,
@@ -507,8 +507,16 @@ class App {
         if (this.layouts.definitions.length <= index) {
             return;
         }
+        
         this.currentLayout = this.layouts.definitions[index];
-        this.layouts.current = index;
+        if (this.layouts.workspaces == null) {
+            this.layouts.workspaces = [];
+        }
+        let workspaceIndex = WorkspaceManager.get_active_workspace().index();
+        while(this.layouts.workspaces.length < workspaceIndex) {
+            this.layouts.workspaces.push({current: index});
+        }
+        this.layouts.workspaces[workspaceIndex].current = index;
         this.saveLayouts();
         
         if (this.tabManager) {
@@ -542,7 +550,6 @@ class App {
 
     enable() {
         let file_info = getCurrentPath();
-        log("FILE INFO " + file_info)
         this.gridShowing = false;
         tracker = Shell.WindowTracker.get_default();
 
@@ -551,12 +558,12 @@ class App {
 
             let [ok, contents] = GLib.file_get_contents(getCurrentPath().replace("/extension.js", "/layouts.json"));
             if (ok) {
+                log("Loaded contents " + contents);
                 this.layouts = JSON.parse(contents);
-            }
-            if (this.layouts.current == null) {
-                throw 'Replace layouts file';
+                log(JSON.stringify(this.layouts));
             }
         } catch (exception) {
+            log(JSON.stringify(exception));
             let [ok, contents] = GLib.file_get_contents(getCurrentPath().replace("/extension.js", "/layouts-default.json"));
             if (ok) {
                 this.layouts = JSON.parse(contents);
@@ -566,7 +573,7 @@ class App {
 
 
         initSettings();
-        this.setLayout(this.layouts.current);
+        this.setToCurrentWorkspace();
         monitorsChangedConnect = Main.layoutManager.connect(
             'monitors-changed', () => {
                 this.tabManager.layoutWindows();
@@ -593,14 +600,13 @@ class App {
                     this.tabManager = null;
                 }
             } else {
-                this.setLayout(this.layouts.current);
+                this.setToCurrentWorkspace();
             }
             
         });
         //in-fullscreen-changed
         global.display.connect('grab-op-begin', (_display, win, op) => {
             if(validWindow(win)) {
-                log("Drag Operation Begin");
                 // if (this.preview) {
                 //     this.preview.destroy();
                 //     this.preview = null;
@@ -628,9 +634,12 @@ class App {
             this.tabManager.layoutWindows();
         });
         this.workspaceSwitchedConnect = WorkspaceManager.connect('workspace-switched', () => {
-            this.tabManager.layoutWindows();
+            if (this.tabManager != null) {
+                this.tabManager?.destroy();    
+            } 
+            this.setToCurrentWorkspace();
+            
         });
-        log("Create Button on Panel");
         launcher = new GSnapStatusButton('tiling-icon');
         (<any>launcher).label = "Layouts";
         if (gridSettings[SETTINGS_SHOW_ICON]) {
@@ -744,7 +753,6 @@ class App {
             }
             this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
 
-            log("Created editor " + this.editor.totalWidth() + ", " + this.editor.totalHeight());
             var windows = WorkspaceManager.get_active_workspace().list_windows();
             for (let i = 0; i < windows.length; i++) {
                 windows[i].minimize();
@@ -753,7 +761,7 @@ class App {
         });
         saveLayoutButton.connect('activate', () => {
             this.saveLayouts();
-            this.setLayout(this.layouts.current);
+            this.setToCurrentWorkspace();
             this.reloadMenu();
             //(<any>launcher).menu.removeMenuItem(item2);
         });
@@ -795,7 +803,7 @@ class App {
 
         }
         GLib.file_set_contents(getCurrentPath().replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
-
+        log(JSON.stringify(this.layouts));
         this.editor = null;
         var windows = WorkspaceManager.get_active_workspace().list_windows();
         for (let i = 0; i < windows.length; i++) {
@@ -859,6 +867,10 @@ class App {
 
     showMenu() {
 
+    }
+
+    private setToCurrentWorkspace() {
+        this.setLayout(this.layouts.workspaces[WorkspaceManager.get_active_workspace().index()].current);
     }
 }
 

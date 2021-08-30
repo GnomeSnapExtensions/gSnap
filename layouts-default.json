@@ -1,6 +1,13 @@
 {
-   "current": 3,
-   "definitions": [
+  "workspaces": [
+    {
+      "current": 3
+    },
+    {
+      "current": 2
+    }
+  ],
+  "definitions": [
     {
       "name": "None",
       "type": 0,
