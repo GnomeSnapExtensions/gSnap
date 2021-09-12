@@ -76,6 +76,8 @@ ts_library(
         ":snaptoneighbors_lib",
         ":editor_lib",
         ":tilespec_lib",
+        ":settings_lib",
+        ":monitors_lib",
     ],
 )
 ts_library(
@@ -90,6 +92,7 @@ ts_library(
             ":shellversion_lib",
             ":snaptoneighbors_lib",
             ":tilespec_lib",
+            ":monitors_lib",
         ],
 )
 ts_library(
@@ -174,6 +177,29 @@ ts_library(
         "@npm//chai",
         "@npm//jasmine",
     ],
+)
+
+ts_library(
+    name = "monitors_lib",
+    srcs = ["monitors.ts"],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":gnometypes_lib",
+        ":settings_lib",
+        ":tilespec_lib",
+        ":logging_lib"
+    ]
+)
+
+ts_library(
+    name = "settings_lib",
+    srcs = ["settings.ts"],
+    tsconfig = "//:tsconfig.json",
+        deps = [
+        ":logging_lib",
+        ":settings_data_lib",
+        ":tilespec_lib",
+    ]
 )
 
 jasmine_node_test(

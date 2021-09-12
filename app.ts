@@ -26,7 +26,23 @@ import {
     WindowType,
     WorkspaceManager as WorkspaceManagerInterface
 } from "./gnometypes";
-import {BoolSettingName, NumberSettingName, StringSettingName} from './settings_data';
+
+import { 
+    activeMonitors,
+    Monitor,
+    workAreaRectByMonitorIndex
+} from './monitors';
+
+import { 
+    deinitSettings, 
+    gridSettings, 
+    initSettings, 
+    SETTINGS_GLOBAL_PRESETS, 
+    SETTINGS_MOVERESIZE_ENABLED, 
+    SETTINGS_SHOW_ICON,
+    SETTINGS_SHOW_TABS,
+    SETTINGS_WINDOW_MARGIN
+} from './settings';
 
 /*****************************************************************
 
@@ -62,114 +78,13 @@ const GLib = imports.gi.GLib;
 const WorkspaceManager: WorkspaceManagerInterface = (
     global.screen || global.workspace_manager);
 
-interface WorkArea {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-// Globals
-const SETTINGS_GRID_SIZES = 'grid-sizes';
-const SETTINGS_AUTO_CLOSE = 'auto-close';
-const SETTINGS_ANIMATION = 'animation';
-const SETTINGS_SHOW_ICON = 'show-icon';
-const SETTINGS_GLOBAL_PRESETS = 'global-presets';
-const SETTINGS_MOVERESIZE_ENABLED = 'moveresize-enabled';
-const SETTINGS_WINDOW_MARGIN = 'window-margin';
-const SETTINGS_SHOW_TABS = 'show-tabs';
-const SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED = 'window-margin-fullscreen-enabled';
-const SETTINGS_MAX_TIMEOUT = 'max-timeout';
-const SETTINGS_MAIN_WINDOW_SIZES = 'main-window-sizes';
-
-const SETTINGS_INSETS_PRIMARY = 'insets-primary';
-const SETTINGS_INSETS_PRIMARY_LEFT = 'insets-primary-left';
-const SETTINGS_INSETS_PRIMARY_RIGHT = 'insets-primary-right';
-const SETTINGS_INSETS_PRIMARY_TOP = 'insets-primary-top';
-const SETTINGS_INSETS_PRIMARY_BOTTOM = 'insets-primary-bottom';
-const SETTINGS_INSETS_SECONDARY = 'insets-secondary';
-const SETTINGS_INSETS_SECONDARY_LEFT = 'insets-secondary-left';
-const SETTINGS_INSETS_SECONDARY_RIGHT = 'insets-secondary-right';
-const SETTINGS_INSETS_SECONDARY_TOP = 'insets-secondary-top';
-const SETTINGS_INSETS_SECONDARY_BOTTOM = 'insets-secondary-bottom';
-const SETTINGS_DEBUG = 'debug';
-
-
-interface ParsedSettings {
-    [SETTINGS_GRID_SIZES]: tilespec.GridSize[];
-    [SETTINGS_AUTO_CLOSE]: any;
-    [SETTINGS_ANIMATION]: any;
-    [SETTINGS_SHOW_ICON]: any;
-    [SETTINGS_SHOW_TABS]: boolean;
-    [SETTINGS_GLOBAL_PRESETS]: any;
-    [SETTINGS_MOVERESIZE_ENABLED]: any;
-    [SETTINGS_WINDOW_MARGIN]: number;
-    [SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED]: boolean;
-    [SETTINGS_MAX_TIMEOUT]: any;
-    [SETTINGS_MAIN_WINDOW_SIZES]: Array<string>;
-    [SETTINGS_INSETS_PRIMARY]: number;
-    [SETTINGS_INSETS_PRIMARY_LEFT]: number;
-    [SETTINGS_INSETS_PRIMARY_RIGHT]: number;
-    [SETTINGS_INSETS_PRIMARY_TOP]: number;
-    [SETTINGS_INSETS_PRIMARY_BOTTOM]: number;
-    [SETTINGS_INSETS_SECONDARY]: number;
-    [SETTINGS_INSETS_SECONDARY_LEFT]: number;
-    [SETTINGS_INSETS_SECONDARY_RIGHT]: number;
-    [SETTINGS_INSETS_SECONDARY_TOP]: number;
-    [SETTINGS_INSETS_SECONDARY_BOTTOM]: number;
-    [SETTINGS_DEBUG]: any;
-}
-
-const gridSettings: ParsedSettings = {
-    [SETTINGS_GRID_SIZES]: [],
-    [SETTINGS_AUTO_CLOSE]: null,
-    [SETTINGS_ANIMATION]: null,
-    [SETTINGS_SHOW_ICON]: null,
-    [SETTINGS_SHOW_TABS]: null,
-    [SETTINGS_GLOBAL_PRESETS]: null,
-    [SETTINGS_MOVERESIZE_ENABLED]: null,
-    [SETTINGS_WINDOW_MARGIN]: 0,
-    [SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED]: false,
-    [SETTINGS_MAX_TIMEOUT]: null,
-    [SETTINGS_MAIN_WINDOW_SIZES]: [],
-    [SETTINGS_SHOW_TABS]: true,
-    [SETTINGS_INSETS_PRIMARY]: 0,
-    [SETTINGS_INSETS_PRIMARY_LEFT]: 0,
-    [SETTINGS_INSETS_PRIMARY_RIGHT]: 0,
-    [SETTINGS_INSETS_PRIMARY_TOP]: 0,
-    [SETTINGS_INSETS_PRIMARY_BOTTOM]: 0,
-    [SETTINGS_INSETS_SECONDARY]: 0,
-    [SETTINGS_INSETS_SECONDARY_LEFT]: 0,
-    [SETTINGS_INSETS_SECONDARY_RIGHT]: 0,
-    [SETTINGS_INSETS_SECONDARY_TOP]: 0,
-    [SETTINGS_INSETS_SECONDARY_BOTTOM]: 0,
-    [SETTINGS_DEBUG]: null,
-};
-
-interface SettingsObject {
-    get_boolean(name: BoolSettingName): boolean | undefined;
-
-    get_string(name: StringSettingName): string | undefined;
-
-    get_int(name: NumberSettingName): number | undefined;
-
-    connect(eventName: string, callback: () => void): any;
-
-    disconnect(c: any): void;
-};
-
 let launcher: GSnapStatusButtonInterface | null;
 let tracker: ShellWindowTracker;
-let nbCols = 0;
-let nbRows = 0;
 let focusMetaWindow: Window | null = null;
 let focusConnect: any = false;
 
-let settings: SettingsObject;
 let keyControlBound: any = false;
 let enabled = false;
-let mainWindowSizes = new Array();
-;
 let monitorsChangedConnect: any = false;
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
@@ -572,7 +487,6 @@ class App {
         }
 
 
-        initSettings();
         this.setToCurrentWorkspace();
         monitorsChangedConnect = Main.layoutManager.connect(
             'monitors-changed', () => {
@@ -946,137 +860,14 @@ const GSnapStatusButton = GObject.registerClass({
     }
 );
 
-
-/*****************************************************************
- SETTINGS
- *****************************************************************/
-function initGridSizes(configValue: string): void {
-    let gridSizes = tilespec.parseGridSizesIgnoringErrors(configValue);
-    if (gridSizes.length === 0) {
-        gridSizes = [
-            new tilespec.GridSize(8, 6),
-            new tilespec.GridSize(6, 4),
-            new tilespec.GridSize(4, 4),
-        ];
-    }
-    gridSettings[SETTINGS_GRID_SIZES] = gridSizes;
-}
-
-function getBoolSetting(settingName: BoolSettingName): boolean {
-    const value = settings.get_boolean(settingName);
-    if (value === undefined) {
-        log("Undefined settings " + settingName);
-        gridSettings[settingName] = false;
-        return false;
-    } else {
-        gridSettings[settingName] = value;
-    }
-    return value;
-}
-
-function getIntSetting(settingsValue: NumberSettingName) {
-    let iss = settings.get_int(settingsValue);
-    if (iss === undefined) {
-        log("Undefined settings " + settingsValue);
-        return 0;
-    } else {
-        return iss;
-    }
-}
-
-function initSettings() {
-
-    log("Init settings");
-    const gridSizes = settings.get_string(SETTINGS_GRID_SIZES) || '';
-    log(SETTINGS_GRID_SIZES + " set to " + gridSizes);
-    initGridSizes(gridSizes);
-
-    getBoolSetting(SETTINGS_AUTO_CLOSE);
-    getBoolSetting(SETTINGS_ANIMATION);
-    getBoolSetting(SETTINGS_SHOW_ICON);
-    getBoolSetting(SETTINGS_SHOW_TABS);
-    getBoolSetting(SETTINGS_GLOBAL_PRESETS);
-    getBoolSetting(SETTINGS_MOVERESIZE_ENABLED);
-
-    gridSettings[SETTINGS_WINDOW_MARGIN] = getIntSetting(SETTINGS_WINDOW_MARGIN);
-    gridSettings[SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED] = getBoolSetting(SETTINGS_WINDOW_MARGIN_FULLSCREEN_ENABLED);
-
-    gridSettings[SETTINGS_MAX_TIMEOUT] = getIntSetting(SETTINGS_MAX_TIMEOUT);
-
-    // initialize these from settings, the first set of sizes
-    if (nbCols == 0 || nbRows == 0) {
-        nbCols = gridSettings[SETTINGS_GRID_SIZES][0].width;
-        nbRows = gridSettings[SETTINGS_GRID_SIZES][0].height;
-    }
-    const mainWindowSizesString = settings.get_string(SETTINGS_MAIN_WINDOW_SIZES);
-    log(SETTINGS_MAIN_WINDOW_SIZES + " settings found " + mainWindowSizesString);
-    mainWindowSizes = []
-    let mainWindowSizesArray = mainWindowSizesString.split(",");
-
-    for (var i in mainWindowSizesArray) {
-        let size = mainWindowSizesArray[i];
-        if (size.includes("/")) {
-            let fraction = size.split("/");
-            let ratio = parseFloat(fraction[0]) / parseFloat(fraction[1]);
-            mainWindowSizes.push(ratio);
-        } else {
-            mainWindowSizes.push(parseFloat(size));
-        }
-    }
-    ;
-    log(SETTINGS_MAIN_WINDOW_SIZES + " set to " + mainWindowSizes);
-    log("Init complete, nbCols " + nbCols + " nbRows " + nbRows);
-
-}
-
-type MonitorTier = 'primary' | 'secondary';
-
-function getMonitorTier(monitor: Monitor): MonitorTier {
-    return isPrimaryMonitor(monitor) ? 'primary' : 'secondary';
-}
-
-interface Insets {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
-}
-
-function getMonitorInsets(tier: MonitorTier): Insets {
-    switch (tier) {
-        case 'primary':
-            return {
-                top: getIntSetting(SETTINGS_INSETS_PRIMARY_TOP),
-                bottom: getIntSetting(SETTINGS_INSETS_PRIMARY_BOTTOM),
-                left: getIntSetting(SETTINGS_INSETS_PRIMARY_LEFT),
-                right: getIntSetting(SETTINGS_INSETS_PRIMARY_RIGHT)
-            }; // Insets on primary monitor
-        case 'secondary':
-            return {
-                top: getIntSetting(SETTINGS_INSETS_SECONDARY_TOP),
-                bottom: getIntSetting(SETTINGS_INSETS_SECONDARY_BOTTOM),
-                left: getIntSetting(SETTINGS_INSETS_SECONDARY_LEFT),
-                right: getIntSetting(SETTINGS_INSETS_SECONDARY_RIGHT)
-            };
-        default:
-            throw new Error(`unknown monitor name ${JSON.stringify(tier)}`);
-    }
-}
-
-
 /*****************************************************************
  FUNCTIONS
  *****************************************************************/
 function init() {
 }
 
-let settingsConnection: any = null;
-
 export function enable() {
-
-    settings = imports.misc.extensionUtils.getSettings();
-    settingsConnection = settings.connect('changed', changed_settings);
-    setLoggingEnabled(getBoolSetting(SETTINGS_DEBUG));
+    initSettings(changed_settings);
     log("Extension enable begin");
     SHELL_VERSION.print_version();
 
@@ -1084,9 +875,8 @@ export function enable() {
 }
 
 export function disable() {
-    settings.disconnect(settingsConnection);
+    deinitSettings();
     globalApp.disable();
-
 }
 
 function resetFocusMetaWindow() {
@@ -1185,22 +975,6 @@ function getNotFocusedWindowsOfMonitor(monitor: Monitor) {
     return windows;
 }
 
-function getWindowsOfMonitor(monitor: Monitor) {
-    const monitors = activeMonitors();
-    let windows = global.get_window_actors().filter(function (w) {
-        return w.meta_window.get_window_type() != Meta.WindowType.DESKTOP
-            && w.meta_window.get_workspace() == WorkspaceManager.get_active_workspace()
-            && w.meta_window.showing_on_its_workspace()
-            && monitors[w.meta_window.get_monitor()] == monitor;
-    });
-
-    return windows;
-}
-
-function getMonitorKey(monitor: Monitor): string {
-    return monitor.x + ":" + monitor.width + ":" + monitor.y + ":" + monitor.height;
-}
-
 function contains<T>(a: Array<T>, obj: T) {
     var i = a.length;
     while (i--) {
@@ -1239,76 +1013,6 @@ function getFocusWindow(): any {
 
     return WorkspaceManager.get_active_workspace().list_windows()
         .find(w => w.has_focus());
-}
-
-
-// TODO: This type is incomplete. Its definition is based purely on usage in
-// this file and may be missing methods from the Gnome object.
-interface Monitor {
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-};
-
-function activeMonitors(): Monitor[] {
-    return Main.layoutManager.monitors;
-}
-
-/**
- * Determine if the given monitor is the primary monitor.
- * @param {Object} monitor The given monitor to evaluate.
- * @returns {boolean} True if the given monitor is the primary monitor.
- * */
-function isPrimaryMonitor(monitor: Monitor): boolean {
-    return Main.layoutManager.primaryMonitor.x == monitor.x && Main.layoutManager.primaryMonitor.y == monitor.y;
-}
-
-function getWorkAreaByMonitor(monitor: Monitor): WorkArea | null {
-    const monitors = activeMonitors();
-    for (let monitor_idx = 0; monitor_idx < monitors.length; monitor_idx++) {
-        let mon = monitors[monitor_idx];
-        if (mon.x == monitor.x && mon.y == monitor.y) {
-            return getWorkArea(monitor, monitor_idx);
-        }
-    }
-    return null;
-}
-
-/**
- * @deprecated Use {@link workAreaRectByMonitorIndex} instead.
- */
-function getWorkAreaByMonitorIdx(monitor_idx: number): WorkArea {
-    const monitors = activeMonitors();
-    let monitor = monitors[monitor_idx];
-    return getWorkArea(monitor, monitor_idx);
-}
-
-function workAreaRectByMonitorIndex(monitorIndex: number): tilespec.Rect | null {
-    const monitor = activeMonitors()[monitorIndex];
-    if (!monitor) {
-        return null;
-    }
-    const waLegacy = getWorkArea(monitor, monitorIndex);
-
-    return (new tilespec.Rect(
-        new tilespec.XY(waLegacy.x, waLegacy.y),
-        new tilespec.Size(waLegacy.width, waLegacy.height)));
-}
-
-/**
- * @deprecated Use {@link workAreaRectByMonitorIndex} instead.
- */
-function getWorkArea(monitor: Monitor, monitor_idx: number): WorkArea {
-    const wkspace = WorkspaceManager.get_active_workspace();
-    const work_area = wkspace.get_work_area_for_monitor(monitor_idx);
-    const insets = getMonitorInsets(getMonitorTier(monitor));
-    return {
-        x: work_area.x + insets.left,
-        y: work_area.y + insets.top,
-        width: work_area.width - insets.left - insets.right,
-        height: work_area.height - insets.top - insets.bottom
-    };
 }
 
 function bindKeyControls() {
