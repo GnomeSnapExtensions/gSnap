@@ -29,6 +29,7 @@ import {
 
 import { 
     activeMonitors,
+    getCurrentMonitorIndex,
     Monitor,
     workAreaRectByMonitorIndex
 } from './monitors';
@@ -390,17 +391,41 @@ const keyBindingGlobalResizes: Bindings = new Map([
     }],
 ]);
 
+interface WorkspaceMonitorSettings {
+    current: number
+};
+
+interface ZoneDefinition {
+    length: number
+};
+
+interface LayoutDefinition {
+    type: number,
+    name: string,
+    length: number,
+    items: ZoneDefinition[]
+};
+
+interface Layouts {
+    workspaces: WorkspaceMonitorSettings[][],
+    definitions: LayoutDefinition[]
+};
+
 class App {
     private gridShowing: boolean = false;
     private widgets: StWidget[] = [];
     private layoutsFile: any[] = [];
-    private editor: ZoneEditor | null = null;
-    private preview: ZonePreview | null = null;
-    private tabManager: ZoneManager | null = null;
+    private editor: (ZoneEditor | null)[];
+    private preview: (ZonePreview | null)[];
+    private tabManager: (ZoneManager | null)[];
 
-    private currentLayout  : any = null;
-    public layouts = {
-        workspaces: [{current: 0}, {current: 0}],
+    private currentLayout: any = null;
+    public layouts : Layouts = {
+        // [workspaceindex][monitorindex]
+        workspaces: [
+            [{ current: 0 }, { current: 0 }],
+            [{ current: 0 }, { current: 0 }]
+        ],
         definitions: [
             {
                 type: 0,
@@ -411,56 +436,70 @@ class App {
                     {length: 42}
                 ]
             },
-
         ]
     };
+
+    constructor() {
+        const monitors = activeMonitors().length;
+        this.editor = new Array<ZoneEditor>(monitors);
+        this.preview = new Array<ZonePreview>(monitors);
+        this.tabManager = new Array<ZoneManager>(monitors);
+    }
+    
     private _monitorsChangedId: any;
     private restackConnection: any;
     private workspaceSwitchedConnect: any;
+    private workareasChangedConnect: any;
 
-    setLayout(index: number) {
-        if (this.layouts.definitions.length <= index) {
+    setLayout(layoutIndex: number, monitorIndex = -1) {
+        if (this.layouts.definitions.length <= layoutIndex) {
             return;
         }
         
-        this.currentLayout = this.layouts.definitions[index];
+        this.currentLayout = this.layouts.definitions[layoutIndex];
         if (this.layouts.workspaces == null) {
             this.layouts.workspaces = [];
         }
+
+        if(monitorIndex === -1 ) {
+            monitorIndex = getCurrentMonitorIndex();
+        }
+
         let workspaceIndex = WorkspaceManager.get_active_workspace().index();
         while(this.layouts.workspaces.length < workspaceIndex) {
-            this.layouts.workspaces.push({current: index});
+            let wk = new Array<WorkspaceMonitorSettings>(activeMonitors().length);
+            wk.fill({ current: layoutIndex });
+            this.layouts.workspaces.push(wk);
         }
-        this.layouts.workspaces[workspaceIndex].current = index;
+
+        this.layouts.workspaces[workspaceIndex][monitorIndex].current = layoutIndex;
         this.saveLayouts();
         
-        if (this.tabManager) {
-            this.tabManager.destroy();
-            this.tabManager = null;
-        }
+        this.tabManager[monitorIndex]?.destroy();
+        this.tabManager[monitorIndex] = null;
+
         if (gridSettings[SETTINGS_SHOW_TABS]) {
-            this.tabManager = new TabbedZoneManager(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
         } else {
-            this.tabManager = new ZoneManager(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
         }
        
-        this.tabManager.layoutWindows();
+        this.tabManager[monitorIndex]?.layoutWindows();
         this.reloadMenu();
     }
 
-    showLayoutPreview(layout: any) {
-        if (this.preview) {
-            this.preview.destroy();
-            this.preview = null;
-        }
-        this.preview = new ZonePreview(layout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+    showLayoutPreview(monitorIndex: number, layout: LayoutDefinition) {
+        this.preview[monitorIndex]?.destroy();
+        this.preview[monitorIndex] = null;
+
+        this.preview[monitorIndex] = new ZonePreview(activeMonitors()[monitorIndex], layout, gridSettings[SETTINGS_WINDOW_MARGIN]);
     }
 
     hideLayoutPreview() {
-        if (this.preview) {
-            this.preview.destroy();
-            this.preview = null;
-        }
+        activeMonitors().forEach(monitor => {
+            this.preview[monitor.index]?.destroy();
+            this.preview[monitor.index] = null;
+        });
     }
 
     enable() {
@@ -490,7 +529,10 @@ class App {
         this.setToCurrentWorkspace();
         monitorsChangedConnect = Main.layoutManager.connect(
             'monitors-changed', () => {
-                this.tabManager.layoutWindows();
+                activeMonitors().forEach(m => {
+                    this.tabManager[m.index]?.layoutWindows();
+                });
+                this.reloadMenu();
             });
 
         function validWindow(window: Window): boolean {
@@ -501,18 +543,18 @@ class App {
         //var display = getFocusWindow().get_display();
         global.display.connect('window-created', (_display, win, op) => {
             if(validWindow(win)) {
-                if (this.tabManager) {
-                    this.tabManager.layoutWindows();
-                }
+                activeMonitors().forEach(m => {
+                    this.tabManager[m.index]?.layoutWindows();
+                });
             }
         });
         
         global.display.connect('in-fullscreen-changed', (_display, win, op) => {
             if (global.display.get_monitor_in_fullscreen(0)) {
-                if (this.tabManager) {
-                    this.tabManager.destroy();
-                    this.tabManager = null;
-                }
+                activeMonitors().forEach(m => {
+                    this.tabManager[m.index]?.destroy();
+                    this.tabManager[m.index] = null;
+                });
             } else {
                 this.setToCurrentWorkspace();
             }
@@ -526,9 +568,9 @@ class App {
                 //     this.preview = null;
                 // }
                 // this.preview = new ZonePreview(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
-                if (this.tabManager) {
-                    this.tabManager.show();
-                }
+                activeMonitors().forEach(m => {
+                    this.tabManager[m.index]?.show();
+                });
             }
 
         });
@@ -536,23 +578,31 @@ class App {
 
         global.display.connect('grab-op-end', (_display, win, op) => {
             if(validWindow(win)) {
-                if (this.tabManager != null) {
-                    this.tabManager.hide();
-
-                    this.tabManager.moveWindowToWidgetAtCursor(win);
-                    this.tabManager.layoutWindows();
-                }
+                activeMonitors().forEach(m => {
+                    this.tabManager[m.index]?.hide();
+                    this.tabManager[m.index]?.moveWindowToWidgetAtCursor(win);
+                    this.tabManager[m.index]?.layoutWindows();
+                });
             }
         });
         this.restackConnection = global.display.connect('restacked', () => {
-            this.tabManager.layoutWindows();
+            activeMonitors().forEach(m => {
+                this.tabManager[m.index]?.layoutWindows();
+            });
         });
         this.workspaceSwitchedConnect = WorkspaceManager.connect('workspace-switched', () => {
-            if (this.tabManager != null) {
-                this.tabManager?.destroy();    
-            } 
+            activeMonitors().forEach(m => {
+                this.tabManager[m.index]?.destroy();
+                this.tabManager[m.index] = null;
+            });
             this.setToCurrentWorkspace();
+        });
             
+        this.workareasChangedConnect = global.display.connect('workareas-changed', () => {
+            activeMonitors().forEach(m => {
+                this.tabManager[m.index]?.reinit();
+                this.tabManager[m.index]?.layoutWindows();
+            });
         });
         launcher = new GSnapStatusButton('tiling-icon');
         (<any>launcher).label = "Layouts";
@@ -568,10 +618,6 @@ class App {
         }
         if (gridSettings[SETTINGS_MOVERESIZE_ENABLED]) {
             bindHotkeys(keyBindingGlobalResizes);
-        }
-
-        if (monitorsChangedConnect) {
-            Main.layoutManager.disconnect(monitorsChangedConnect);
         }
 
         enabled = true;
@@ -592,36 +638,26 @@ class App {
 
         let renameLayoutButton = new PopupMenu.PopupMenuItem(_("Rename: " + this.currentLayout.name));
 
-        if (this.editor != null) {
-
-
+        let currentMonitorIndex = getCurrentMonitorIndex();
+        if (this.editor[currentMonitorIndex] != null) {
             (<any>launcher).menu.addMenuItem(resetLayoutButton);
             (<any>launcher).menu.addMenuItem(saveLayoutButton);
             (<any>launcher).menu.addMenuItem(cancelEditingButton);
         } else {
+            const monitorsCount = activeMonitors().length;
+            for(let mI = 0; mI < monitorsCount; mI++)
+            {
+                if(monitorsCount > 1) {
+                    let monitorName = new PopupMenu.PopupSubMenuMenuItem(_(`Monitor ${mI}`));
+                    (<any>launcher).menu.addMenuItem(monitorName);
 
-
-            for (let i = 0; i < this.layouts.definitions.length; i++) {
-
-                let item = new PopupMenu.PopupMenuItem(_(this.layouts.definitions[i].name == null ? "Layout " + i : this.layouts.definitions[i].name));
-                item.connect('activate', () => {
-                    this.setLayout(i);
-                    this.hideLayoutPreview();
-
-                });
-                item.actor.connect('enter-event', () => {
-                    this.showLayoutPreview(this.layouts.definitions[i]);
-                });
-                item.actor.connect('leave-event', () => {
-                    this.hideLayoutPreview();
-                });
-                (<any>launcher).menu.addMenuItem(item);
+                    this.createLayoutMenuItems(mI).forEach(i => 
+                        (<any>monitorName).menu.addMenuItem(i));
+                } else {
+                    this.createLayoutMenuItems(mI).forEach(i =>
+                        (<any>launcher).menu.addMenuItem(i));
+                }
             }
-            let sep = new PopupMenu.PopupSeparatorMenuItem();
-            (<any>launcher).menu.addMenuItem(sep);
-            (<any>launcher).menu.addMenuItem(editLayoutButton);
-            (<any>launcher).menu.addMenuItem(renameLayoutButton);
-            (<any>launcher).menu.addMenuItem(newLayoutButton);
         }
 
 
@@ -661,11 +697,10 @@ class App {
 
         });
         editLayoutButton.connect('activate', () => {
-
-            if (this.editor) {
-                this.editor.destroy();
-            }
-            this.editor = new ZoneEditor(this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+            activeMonitors().forEach(m => {
+                this.editor[m.index]?.destroy();
+                this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+            });
 
             var windows = WorkspaceManager.get_active_workspace().list_windows();
             for (let i = 0; i < windows.length; i++) {
@@ -680,27 +715,32 @@ class App {
             //(<any>launcher).menu.removeMenuItem(item2);
         });
         resetLayoutButton.connect('activate', () => {
-            if (this.editor) {
-                this.editor.destroy();
-                this.editor.layoutItem = {
-                    type: 0,
-                    length: 100,
-                    items: [
-                        {
-                            length: 100
-                        }
-                    ]
+            activeMonitors().forEach(m => {
+                let editor = this.editor[m.index];
+                if (editor) {
+                    editor.destroy();
+                    editor.layoutItem = {
+                        type: 0,
+                        length: 100,
+                        items: [
+                            {
+                                length: 100
+                            }
+                        ]
+                    }
+                    editor.applyLayout(editor);
+                    this.reloadMenu();
                 }
-                this.editor.applyLayout(this.editor);
-                this.reloadMenu();
-            }
             //(<any>launcher).menu.removeMenuItem(item2);
+            });
         });
+
         cancelEditingButton.connect('activate', () => {
-            if (this.editor) {
-                this.editor.destroy();
-                this.editor = null;
-            }
+            activeMonitors().forEach(m => {
+                this.editor[m.index]?.destroy();
+                this.editor[m.index] = null;
+            });
+
             var windows = WorkspaceManager.get_active_workspace().list_windows();
             for (let i = 0; i < windows.length; i++) {
                 windows[i].unminimize();
@@ -710,15 +750,34 @@ class App {
         });
     }
 
-    saveLayouts() {
-        if (this.editor) {
-            this.editor.apply();
-            this.editor.destroy();
-
+    createLayoutMenuItems(monitorIndex: number) : Array<any> {
+        let items = [];
+        for (let i = 0; i < this.layouts.definitions.length; i++) {
+            let item = new PopupMenu.PopupMenuItem(_(this.layouts.definitions[i].name == null ? "Layout " + i : this.layouts.definitions[i].name));
+            item.connect('activate', () => {
+                this.setLayout(i, monitorIndex);
+                this.hideLayoutPreview();
+            });
+            item.actor.connect('enter-event', () => {
+                this.showLayoutPreview(monitorIndex, this.layouts.definitions[i]);
+            });
+            item.actor.connect('leave-event', () => {
+                this.hideLayoutPreview();
+            });
+            items.push(item);
         }
+        return items;
+    }
+
+    saveLayouts() {
+        activeMonitors().forEach(m => {
+            this.editor[m.index]?.apply();
+            this.editor[m.index]?.destroy();
+            this.editor[m.index] = null;
+        });
         GLib.file_set_contents(getCurrentPath().replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
         log(JSON.stringify(this.layouts));
-        this.editor = null;
+
         var windows = WorkspaceManager.get_active_workspace().list_windows();
         for (let i = 0; i < windows.length; i++) {
             windows[i].unminimize();
@@ -729,18 +788,10 @@ class App {
     disable() {
         log("Extension disable begin");
         enabled = false;
-        if (this.preview) {
-            this.preview.destroy();
-            this.preview = null;
-        }
-        if (this.editor) {
-            this.editor.destroy();
-            this.editor = null;
-        }
-        if (this.tabManager) {
-            this.tabManager.destroy();
-            this.tabManager = null;
-        }
+        this.preview?.forEach(p => { p?.destroy(); p = null });
+        this.editor?.forEach(e => { e?.destroy(); e = null; });
+        this.tabManager?.forEach(t => { t?.destroy(); t = null });
+
         if (this.workspaceSwitchedConnect) {
             WorkspaceManager.disconnect(this.workspaceSwitchedConnect);
             this.workspaceSwitchedConnect = false;
@@ -753,6 +804,11 @@ class App {
             log("Disconnecting monitors-changed");
             Main.layoutManager.disconnect(monitorsChangedConnect);
             monitorsChangedConnect = false;
+        }
+
+        if(this.workareasChangedConnect) {
+            global.display.disconnect(this.workareasChangedConnect);
+            this.workareasChangedConnect = false;
         }
 
         unbindHotkeys(keyBindings);
@@ -784,7 +840,11 @@ class App {
     }
 
     private setToCurrentWorkspace() {
-        this.setLayout(this.layouts.workspaces[WorkspaceManager.get_active_workspace().index()].current);
+        let currentWorkspaceIdx = WorkspaceManager.get_active_workspace().index();
+        activeMonitors().forEach(m => {
+            let currentLayoutIdx = this.layouts.workspaces[currentWorkspaceIdx][m.index].current;
+            this.setLayout(currentLayoutIdx, m.index);
+        });
     }
 }
 

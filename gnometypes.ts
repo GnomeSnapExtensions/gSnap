@@ -501,7 +501,7 @@ export interface Window {
     is_attached_dialog(): void;
     is_client_decorated(): void;
     is_fullscreen(): void;
-    is_hidden(): void;
+    is_hidden(): boolean;
     is_monitor_sized(): void;
     is_on_all_workspaces(): void;
     is_on_primary_monitor(): void;

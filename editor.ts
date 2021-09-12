@@ -25,7 +25,9 @@ import {
     WindowType,
     WorkspaceManager as WorkspaceManagerInterface
 } from "./gnometypes";
-import {BoolSettingName, NumberSettingName, StringSettingName} from './settings_data';
+
+import { activeMonitors, areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
+
 // Library imports
 const St = imports.gi.St;
 const Main = imports.ui.main;
@@ -694,6 +696,8 @@ export class ZoneAnchor {
 
 export class ZoneDisplay extends ZoneGroup {
     protected motionConnection: any;
+    protected workArea: WorkArea | null;
+    protected monitor: Monitor;
 
     public apply() {
         var c = this.recursiveChildren();
@@ -702,12 +706,13 @@ export class ZoneDisplay extends ZoneGroup {
         }
     }
 
-    constructor(layout: any, margin: number) {
+    constructor(monitor: Monitor, layout: any, margin: number) {
         super();
+        this.monitor = monitor;
         this.margin = margin;
         this.layoutItem = layout;
-
-
+        
+        this.workArea = getWorkAreaByMonitor(this.monitor);
         this.init();
     }
 
@@ -737,17 +742,19 @@ export class ZoneDisplay extends ZoneGroup {
 
     }
 
-
     public init() {
-        let [displayWidth, displayHeight] = global.display.get_size();
-        this.x(this.margin);
-        this.y(30 + this.margin);
+        if(!this.workArea) {
+            log(`Could not get workArea for monitor ${this.monitor.index}`);
+            return;
+        }
 
-        this.width(displayWidth - (this.margin * 2));
-        this.height(displayHeight - 30 - (this.margin * 2));
+        this.x(this.margin + this.workArea.x);
+        this.y(this.margin + this.workArea.y);
+
+        this.width(this.workArea.width - (this.margin * 2));
+        this.height(this.workArea.height - (this.margin * 2));
         this.applyLayout(this);
         this.adjustLayout(this);
-
     }
 
 
@@ -756,10 +763,19 @@ export class ZoneDisplay extends ZoneGroup {
     }
 
     public reinit() {
+        let wa = getWorkAreaByMonitor(this.monitor);
+        if(!this.workArea || !wa) {
+            log(`Could not get workArea for monitor ${this.monitor.index}`);
+            return;
+        }
 
-        //this.apply();
-        this.applyLayout(this);
-        this.adjustLayout(this);
+        if(!areEqual(this.workArea, wa)) {
+            this.workArea = wa;
+            this.init();
+        } else {
+            this.applyLayout(this);
+            this.adjustLayout(this);
+        }
     }
 }
 
@@ -776,8 +792,8 @@ export class ZoneEditor extends ZoneDisplay {
         return zone;
     }
 
-    constructor(layout: any, margin: number) {
-        super(layout, margin);
+    constructor(monitor: Monitor, layout: any, margin: number) {
+        super(monitor, layout, margin);
         // let windows = WorkspaceManager.get_active_workspace().list_windows();
         // for (let i = 0; i < windows.length; i++) {
         //     windows[i].minimize();
@@ -870,36 +886,34 @@ export class ZoneEditor extends ZoneDisplay {
 }
 
 export class ZonePreview extends ZoneDisplay {
-    constructor(layout: any, margin: number) {
-        super(layout, margin);
+    constructor(monitor: Monitor, layout: any, margin: number) {
+        super(monitor, layout, margin);
+    }
+}
+
+export class ZoneManager extends ZoneDisplay {
+    constructor(monitor: Monitor, layout: any, margin: number) {
+        super(monitor, layout, margin);
     }
 
-}
-export class ZoneManager extends ZoneDisplay {
-    
     adjustLayout(root: ZoneDisplay) {
         super.adjustLayout(root);
         this.layoutWindows();
     }
 
     public layoutWindows() {
-
-        let wsm: WorkspaceManagerInterface = (global.workspace_manager);
-        let windows = wsm
-            .get_active_workspace()
-            .list_windows()
-            .filter(w => w.get_window_type() == WindowType.NORMAL);
+        let windows = getWindowsOfMonitor(this.monitor);
 
         for (let c = 0; c < this.children.length; c++) {
             let child = this.children[c];
             child.adjustWindows(windows);
-
         }
     }
 }
+
 export class TabbedZoneManager extends ZoneManager {
-    constructor(layout: any, margin: number) {
-        super(layout, margin);
+    constructor(monitor: Monitor, layout: any, margin: number) {
+        super(monitor, layout, margin);
     }
 
     public createZone() {

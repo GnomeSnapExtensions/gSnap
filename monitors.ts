@@ -3,10 +3,12 @@ declare var imports: any;
 declare var global: any;
 
 const Main = imports.ui.main;
-const Meta = imports.gi.Meta;
 import {
+    Window,
+    WindowType,
     WorkspaceManager as WorkspaceManagerInterface
 } from "./gnometypes";
+import { log } from "./logging";
 import { getIntSetting, SETTINGS_INSETS_PRIMARY_BOTTOM, SETTINGS_INSETS_PRIMARY_LEFT, SETTINGS_INSETS_PRIMARY_RIGHT, SETTINGS_INSETS_PRIMARY_TOP, SETTINGS_INSETS_SECONDARY_BOTTOM, SETTINGS_INSETS_SECONDARY_LEFT, SETTINGS_INSETS_SECONDARY_RIGHT, SETTINGS_INSETS_SECONDARY_TOP, } from "./settings";
 import * as tilespec from "./tilespec";
 
@@ -21,6 +23,13 @@ export interface WorkArea {
     height: number;
 }
 
+export function areEqual(a: WorkArea, b: WorkArea): boolean
+{
+    return a.x == b.x 
+      && a.y == b.y
+      && a.width == b.width
+      && a.height == b.height;
+}
 
 type MonitorTier = 'primary' | 'secondary';
 
@@ -56,15 +65,15 @@ function getMonitorInsets(tier: MonitorTier): Insets {
     }
 }
 
-function getWindowsOfMonitor(monitor: Monitor) {
-    const monitors = activeMonitors();
-    let windows = global.get_window_actors().filter(function (w: any) {
-        return w.meta_window.get_window_type() != Meta.WindowType.DESKTOP
-            && w.meta_window.get_workspace() == WorkspaceManager.get_active_workspace()
-            && w.meta_window.showing_on_its_workspace()
-            && monitors[w.meta_window.get_monitor()] == monitor;
-    });
-
+export function getWindowsOfMonitor(monitor: Monitor) : Window[] {
+    let monitors = activeMonitors();
+    
+    let windows = WorkspaceManager
+        .get_active_workspace()
+        .list_windows()
+        .filter(w => w.get_window_type() == WindowType.NORMAL
+                  && !w.is_hidden()
+                  && monitors[w.get_monitor()] == monitor);
     return windows;
 }
 
@@ -76,6 +85,7 @@ function getMonitorKey(monitor: Monitor): string {
 // TODO: This type is incomplete. Its definition is based purely on usage in
 // this file and may be missing methods from the Gnome object.
 export interface Monitor {
+    index: number;
     x: number;
     y: number;
     height: number;
@@ -94,25 +104,17 @@ export function activeMonitors(): Monitor[] {
 function isPrimaryMonitor(monitor: Monitor): boolean {
     return Main.layoutManager.primaryMonitor.x == monitor.x && Main.layoutManager.primaryMonitor.y == monitor.y;
 }
-
-function getWorkAreaByMonitor(monitor: Monitor): WorkArea | null {
+export function getWorkAreaByMonitor(monitor: Monitor): WorkArea | null {
     const monitors = activeMonitors();
-    for (let monitor_idx = 0; monitor_idx < monitors.length; monitor_idx++) {
-        let mon = monitors[monitor_idx];
+
+    for (let i = 0; i < monitors.length; i++) {
+        let mon = monitors[i];
         if (mon.x == monitor.x && mon.y == monitor.y) {
-            return getWorkArea(monitor, monitor_idx);
+            return getWorkArea(monitor);
         }
     }
-    return null;
-}
 
-/**
- * @deprecated Use {@link workAreaRectByMonitorIndex} instead.
- */
-function getWorkAreaByMonitorIdx(monitor_idx: number): WorkArea {
-    const monitors = activeMonitors();
-    let monitor = monitors[monitor_idx];
-    return getWorkArea(monitor, monitor_idx);
+    return null;
 }
 
 export function workAreaRectByMonitorIndex(monitorIndex: number): tilespec.Rect | null {
@@ -120,24 +122,33 @@ export function workAreaRectByMonitorIndex(monitorIndex: number): tilespec.Rect 
     if (!monitor) {
         return null;
     }
-    const waLegacy = getWorkArea(monitor, monitorIndex);
+    const waLegacy = getWorkAreaByMonitor(monitor);
+    if(!waLegacy) {
+        return null;
+    }
 
     return (new tilespec.Rect(
         new tilespec.XY(waLegacy.x, waLegacy.y),
         new tilespec.Size(waLegacy.width, waLegacy.height)));
 }
 
-/**
- * @deprecated Use {@link workAreaRectByMonitorIndex} instead.
- */
-function getWorkArea(monitor: Monitor, monitor_idx: number): WorkArea {
+function getWorkArea(monitor: Monitor): WorkArea {
     const wkspace = WorkspaceManager.get_active_workspace();
-    const work_area = wkspace.get_work_area_for_monitor(monitor_idx);
+    const work_area = wkspace.get_work_area_for_monitor(monitor.index);
     const insets = getMonitorInsets(getMonitorTier(monitor));
-    return {
+
+    const result = {
         x: work_area.x + insets.left,
         y: work_area.y + insets.top,
         width: work_area.width - insets.left - insets.right,
         height: work_area.height - insets.top - insets.bottom
     };
+
+    log(`getWorkArea m:${monitor.index}, x: ${result.x} y:${result.y} w:${result.width} h:${result.height}`);
+
+    return result;
+}
+
+export function getCurrentMonitorIndex() : number {
+    return global.display.get_current_monitor();
 }
