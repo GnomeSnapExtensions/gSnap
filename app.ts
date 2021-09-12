@@ -658,6 +658,12 @@ class App {
                         (<any>launcher).menu.addMenuItem(i));
                 }
             }
+
+            let sep = new PopupMenu.PopupSeparatorMenuItem();
+            (<any>launcher).menu.addMenuItem(sep);
+            (<any>launcher).menu.addMenuItem(editLayoutButton);
+            (<any>launcher).menu.addMenuItem(renameLayoutButton);
+            (<any>launcher).menu.addMenuItem(newLayoutButton);
         }
 
 
