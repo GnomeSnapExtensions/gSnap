@@ -466,11 +466,6 @@ class App {
         }
 
         let workspaceIndex = WorkspaceManager.get_active_workspace().index();
-        while(this.layouts.workspaces.length < workspaceIndex) {
-            let wk = new Array<WorkspaceMonitorSettings>(activeMonitors().length);
-            wk.fill({ current: layoutIndex });
-            this.layouts.workspaces.push(wk);
-        }
 
         this.layouts.workspaces[workspaceIndex][monitorIndex].current = layoutIndex;
         this.saveLayouts();
@@ -515,12 +510,16 @@ class App {
                 log("Loaded contents " + contents);
                 this.layouts = JSON.parse(contents);
                 log(JSON.stringify(this.layouts));
+                if(this.refreshLayouts()) {
+                    this.saveLayouts();
+                }
             }
         } catch (exception) {
             log(JSON.stringify(exception));
             let [ok, contents] = GLib.file_get_contents(getCurrentPath().replace("/extension.js", "/layouts-default.json"));
             if (ok) {
                 this.layouts = JSON.parse(contents);
+                this.refreshLayouts();
                 this.saveLayouts();
             }
         }
@@ -591,10 +590,15 @@ class App {
             });
         });
         this.workspaceSwitchedConnect = WorkspaceManager.connect('workspace-switched', () => {
+            if(this.refreshLayouts()) {
+                this.saveLayouts();
+            }
+
             activeMonitors().forEach(m => {
                 this.tabManager[m.index]?.destroy();
                 this.tabManager[m.index] = null;
             });
+
             this.setToCurrentWorkspace();
         });
             
@@ -625,6 +629,22 @@ class App {
         log("Extention enable completed");
 
 
+    }
+
+    refreshLayouts() : boolean {
+        let changed = false;
+        
+        // A workspace could have been added. Populate the layouts.workspace array
+        let nWorkspaces = WorkspaceManager.get_n_workspaces();
+        log(`refreshLayouts ${this.layouts.workspaces.length} ${nWorkspaces}`)
+        while(this.layouts.workspaces.length < nWorkspaces) {
+            let wk = new Array<WorkspaceMonitorSettings>(activeMonitors().length);
+            wk.fill({ current: 0 });
+            this.layouts.workspaces.push(wk);
+            changed = true;
+        }
+
+        return changed;
     }
 
     reloadMenu() {
