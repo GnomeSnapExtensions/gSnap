@@ -1,11 +1,21 @@
 {
   "workspaces": [
-    {
-      "current": 3
-    },
-    {
-      "current": 2
-    }
+    [
+      {
+        "current": 3
+      },
+      {
+        "current": 2
+      }
+    ],
+    [
+      {
+        "current": 3
+      },
+      {
+        "current": 2
+      }
+    ]
   ],
   "definitions": [
     {
