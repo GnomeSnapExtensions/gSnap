@@ -201,11 +201,33 @@ ts_library(
     name = "settings_lib",
     srcs = ["settings.ts"],
     tsconfig = "//:tsconfig.json",
-        deps = [
+    deps = [
         ":logging_lib",
         ":settings_data_lib",
         ":tilespec_lib",
     ]
+)
+
+ts_library(
+    name = "prefs_lib",
+    srcs = ["prefs_builder.ts"],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":settings_lib",
+        ":settings_data_lib",
+    ]
+)
+
+rollup_bundle(
+    name = "prefs_bundle",
+    entry_point = "prefs_builder.ts",
+    deps = [":prefs_lib"],
+)
+
+concat(
+    name = "prefs",
+    srcs = ["prefs_bundle.js"],
+    out = "prefs.js"
 )
 
 jasmine_node_test(
