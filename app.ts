@@ -24,13 +24,10 @@ import {
 import { 
     deinitSettings, 
     gridSettings, 
-    initSettings, 
-    SETTINGS_GLOBAL_PRESETS, 
-    SETTINGS_MOVERESIZE_ENABLED, 
-    SETTINGS_SHOW_ICON,
-    SETTINGS_SHOW_TABS,
-    SETTINGS_WINDOW_MARGIN
+    initSettings,
 } from './settings';
+
+import * as SETTINGS from './settings_data';
 
 import { Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
 
@@ -70,150 +67,104 @@ const SHELL_VERSION = ShellVersion.defaultVersion();
 // Hangouts workaround
 
 const keyBindings: Bindings = new Map([
-    ['show-toggle-tiling', () => {
 
-    }],
-    ['show-toggle-tiling-alt', () => {
-
-    }],
 ]);
 
 const key_bindings_presets: Bindings = new Map([
-    ['preset-resize-1', () => {
+    [SETTINGS.PRESET_RESIZE_1, () => {
         globalApp.setLayout(0);
     }],
-    ['preset-resize-2', () => {
+    [SETTINGS.PRESET_RESIZE_2, () => {
         globalApp.setLayout(1);
     }],
-    ['preset-resize-3', () => {
+    [SETTINGS.PRESET_RESIZE_3, () => {
         globalApp.setLayout(2);
     }],
-    ['preset-resize-4', () => {
+    [SETTINGS.PRESET_RESIZE_4, () => {
         globalApp.setLayout(3);
     }],
-    ['preset-resize-5', () => {
+    [SETTINGS.PRESET_RESIZE_5, () => {
         globalApp.setLayout(4);
     }],
-    ['preset-resize-6', () => {
+    [SETTINGS.PRESET_RESIZE_6, () => {
         globalApp.setLayout(5);
     }],
-    ['preset-resize-7', () => {
+    [SETTINGS.PRESET_RESIZE_7, () => {
         globalApp.setLayout(6);
     }],
-    ['preset-resize-8', () => {
+    [SETTINGS.PRESET_RESIZE_8, () => {
         globalApp.setLayout(7);
     }],
-    ['preset-resize-9', () => {
+    [SETTINGS.PRESET_RESIZE_9, () => {
         globalApp.setLayout(8);
     }],
-    ['preset-resize-10', () => {
+    [SETTINGS.PRESET_RESIZE_10, () => {
         globalApp.setLayout(9);
     }],
-    ['preset-resize-11', () => {
+    [SETTINGS.PRESET_RESIZE_11, () => {
         globalApp.setLayout(10);
     }],
-    ['preset-resize-12', () => {
+    [SETTINGS.PRESET_RESIZE_12, () => {
         globalApp.setLayout(11);
     }],
-    ['preset-resize-13', () => {
+    [SETTINGS.PRESET_RESIZE_13, () => {
         globalApp.setLayout(12);
     }],
-    ['preset-resize-14', () => {
+    [SETTINGS.PRESET_RESIZE_14, () => {
 
     }],
-    ['preset-resize-15', () => {
+    [SETTINGS.PRESET_RESIZE_15, () => {
 
     }],
-    ['preset-resize-16', () => {
+    [SETTINGS.PRESET_RESIZE_16, () => {
 
     }],
-    ['preset-resize-17', () => {
+    [SETTINGS.PRESET_RESIZE_17, () => {
 
     }],
-    ['preset-resize-18', () => {
+    [SETTINGS.PRESET_RESIZE_18, () => {
 
     }],
-    ['preset-resize-19', () => {
+    [SETTINGS.PRESET_RESIZE_19, () => {
 
     }],
-    ['preset-resize-20', () => {
+    [SETTINGS.PRESET_RESIZE_20, () => {
 
     }],
-    ['preset-resize-21', () => {
+    [SETTINGS.PRESET_RESIZE_21, () => {
 
     }],
-    ['preset-resize-22', () => {
+    [SETTINGS.PRESET_RESIZE_22, () => {
 
     }],
-    ['preset-resize-23', () => {
+    [SETTINGS.PRESET_RESIZE_23, () => {
 
     }],
-    ['preset-resize-24', () => {
+    [SETTINGS.PRESET_RESIZE_24, () => {
 
     }],
-    ['preset-resize-25', () => {
+    [SETTINGS.PRESET_RESIZE_25, () => {
 
     }],
-    ['preset-resize-26', () => {
+    [SETTINGS.PRESET_RESIZE_26, () => {
 
     }],
-    ['preset-resize-27', () => {
+    [SETTINGS.PRESET_RESIZE_27, () => {
 
     }],
-    ['preset-resize-28', () => {
+    [SETTINGS.PRESET_RESIZE_28, () => {
 
     }],
-    ['preset-resize-29', () => {
+    [SETTINGS.PRESET_RESIZE_29, () => {
 
     }],
-    ['preset-resize-30', () => {
+    [SETTINGS.PRESET_RESIZE_30, () => {
 
     }],
 ]);
 
 const keyBindingGlobalResizes: Bindings = new Map([
-    ['action-change-tiling', () => {
 
-    }],
-    ['action-contract-bottom', () => {
-
-    }],
-    ['action-contract-left', () => {
-
-    }],
-    ['action-contract-right', () => {
-
-    }],
-    ['action-contract-top', () => {
-
-    }],
-    ['action-expand-bottom', () => {
-
-    }],
-    ['action-expand-left', () => {
-
-    }],
-    ['action-expand-right', () => {
-
-    }],
-    ['action-expand-top', () => {
-
-    }],
-    ['action-move-down', () => {
-
-    }],
-    ['action-move-left', () => {
-
-    }],
-    ['action-move-right', () => {
-
-    }],
-    ['action-move-up', () => {
-
-    }],
-    ['action-move-next-monitor', () => {
-
-    }],
 ]);
 
 class App {
@@ -275,10 +226,10 @@ class App {
         this.tabManager[monitorIndex]?.destroy();
         this.tabManager[monitorIndex] = null;
 
-        if (gridSettings[SETTINGS_SHOW_TABS]) {
-            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+        if (gridSettings[SETTINGS.SHOW_TABS]) {
+            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
         } else {
-            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
         }
        
         this.tabManager[monitorIndex]?.layoutWindows();
@@ -289,7 +240,7 @@ class App {
         this.preview[monitorIndex]?.destroy();
         this.preview[monitorIndex] = null;
 
-        this.preview[monitorIndex] = new ZonePreview(activeMonitors()[monitorIndex], layout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+        this.preview[monitorIndex] = new ZonePreview(activeMonitors()[monitorIndex], layout, gridSettings[SETTINGS.WINDOW_MARGIN]);
     }
 
     hideLayoutPreview() {
@@ -402,16 +353,16 @@ class App {
 
         launcher = new GSnapStatusButton('tiling-icon') as GSnapStatusButtonClass;
         launcher.label = "Layouts";
-        if (gridSettings[SETTINGS_SHOW_ICON]) {
+        if (gridSettings[SETTINGS.SHOW_ICON]) {
             Main.panel.addToStatusArea("GSnapStatusButton", launcher);
             this.reloadMenu();
         }
 
         bindHotkeys(keyBindings);
-        if (gridSettings[SETTINGS_GLOBAL_PRESETS]) {
+        if (gridSettings[SETTINGS.GLOBAL_PRESETS]) {
             bindHotkeys(key_bindings_presets);
         }
-        if (gridSettings[SETTINGS_MOVERESIZE_ENABLED]) {
+        if (gridSettings[SETTINGS.MOVERESIZE_ENABLED]) {
             bindHotkeys(keyBindingGlobalResizes);
         }
 
@@ -516,7 +467,7 @@ class App {
         editLayoutButton.connect('activate', () => {
             activeMonitors().forEach(m => {
                 this.editor[m.index]?.destroy();
-                this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], this.currentLayout, gridSettings[SETTINGS_WINDOW_MARGIN]);
+                this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], this.currentLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
             });
 
             var windows = WorkspaceManager.get_active_workspace().list_windows();

@@ -4,28 +4,22 @@ const GObject = imports.gi.GObject;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 
-import {
-    SETTINGS_DEBUG,
-    SETTINGS_MOVERESIZE_ENABLED,
-    SETTINGS_SHOW_ICON,
-    SETTINGS_SHOW_TABS,
-    SETTINGS_WINDOW_MARGIN
-} from "./settings";
+import * as SETTINGS from "./settings_data";
 
 // Globals
 const pretty_names = {
-    ['preset-resize-1']: 'Layout 1',
-    ['preset-resize-2']: 'Layout 2',
-    ['preset-resize-3']: 'Layout 3',
-    ['preset-resize-4']: 'Layout 4',
-    ['preset-resize-5']: 'Layout 5',
-    ['preset-resize-6']: 'Layout 6',
-    ['preset-resize-7']: 'Layout 7',
-    ['preset-resize-8']: 'Layout 8',
-    ['preset-resize-9']: 'Layout 9',
-    ['preset-resize-10']: 'Layout 10',
-    ['preset-resize-11']: 'Layout 11',
-    ['preset-resize-12']: 'Layout 12',
+    [SETTINGS.PRESET_RESIZE_1]: 'Layout 1',
+    [SETTINGS.PRESET_RESIZE_2]: 'Layout 2',
+    [SETTINGS.PRESET_RESIZE_3]: 'Layout 3',
+    [SETTINGS.PRESET_RESIZE_4]: 'Layout 4',
+    [SETTINGS.PRESET_RESIZE_5]: 'Layout 5',
+    [SETTINGS.PRESET_RESIZE_6]: 'Layout 6',
+    [SETTINGS.PRESET_RESIZE_7]: 'Layout 7',
+    [SETTINGS.PRESET_RESIZE_8]: 'Layout 8',
+    [SETTINGS.PRESET_RESIZE_9]: 'Layout 9',
+    [SETTINGS.PRESET_RESIZE_10]: 'Layout 10',
+    [SETTINGS.PRESET_RESIZE_11]: 'Layout 11',
+    [SETTINGS.PRESET_RESIZE_12]: 'Layout 12',
 }
 
 function set_child(widget: any, child: any) {
@@ -167,10 +161,10 @@ class PrefsBuilder {
         bs_grid.set_margin_top(24);
 
 
-        this.add_check("Show icon", SETTINGS_SHOW_ICON, bs_grid, settings);
-        this.add_check("Show tabs", SETTINGS_SHOW_TABS, bs_grid, settings);
-        this.add_check("Enable accelerators for moving and resizing windows", SETTINGS_MOVERESIZE_ENABLED, bs_grid, settings);
-        this.add_check("Debug", SETTINGS_DEBUG, bs_grid, settings);
+        this.add_check("Show icon", SETTINGS.SHOW_ICON, bs_grid, settings);
+        this.add_check("Show tabs", SETTINGS.SHOW_TABS, bs_grid, settings);
+        this.add_check("Enable accelerators for moving and resizing windows", SETTINGS.MOVERESIZE_ENABLED, bs_grid, settings);
+        this.add_check("Debug", SETTINGS.DEBUG, bs_grid, settings);
         let text = "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f";
         bs_grid.attach_next_to(new Gtk.Label({
             label: text,
@@ -210,7 +204,7 @@ class PrefsBuilder {
             wrap: true,
         }), null, Gtk.PositionType.BOTTOM, 1, 1)
 
-        this.add_int("Window margin", SETTINGS_WINDOW_MARGIN, mg_grid, settings, 0, 240, 1, 10);
+        this.add_int("Window margin", SETTINGS.WINDOW_MARGIN, mg_grid, settings, 0, 240, 1, 10);
 
         let mg_window = new Gtk.ScrolledWindow({ 'vexpand': true });
         set_child(mg_window, mg_grid);

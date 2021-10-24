@@ -9,7 +9,8 @@ import {
     WorkspaceManager as WorkspaceManagerInterface
 } from "./gnometypes";
 import { log } from "./logging";
-import { getIntSetting, SETTINGS_INSETS_PRIMARY_BOTTOM, SETTINGS_INSETS_PRIMARY_LEFT, SETTINGS_INSETS_PRIMARY_RIGHT, SETTINGS_INSETS_PRIMARY_TOP, SETTINGS_INSETS_SECONDARY_BOTTOM, SETTINGS_INSETS_SECONDARY_LEFT, SETTINGS_INSETS_SECONDARY_RIGHT, SETTINGS_INSETS_SECONDARY_TOP, } from "./settings";
+import { getIntSetting } from "./settings";
+import * as SETTINGS from './settings_data';
 import * as tilespec from "./tilespec";
 
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
@@ -48,17 +49,17 @@ function getMonitorInsets(tier: MonitorTier): Insets {
     switch (tier) {
         case 'primary':
             return {
-                top: getIntSetting(SETTINGS_INSETS_PRIMARY_TOP),
-                bottom: getIntSetting(SETTINGS_INSETS_PRIMARY_BOTTOM),
-                left: getIntSetting(SETTINGS_INSETS_PRIMARY_LEFT),
-                right: getIntSetting(SETTINGS_INSETS_PRIMARY_RIGHT)
+                top: getIntSetting(SETTINGS.INSETS_PRIMARY_TOP),
+                bottom: getIntSetting(SETTINGS.INSETS_PRIMARY_BOTTOM),
+                left: getIntSetting(SETTINGS.INSETS_PRIMARY_LEFT),
+                right: getIntSetting(SETTINGS.INSETS_PRIMARY_RIGHT)
             }; // Insets on primary monitor
         case 'secondary':
             return {
-                top: getIntSetting(SETTINGS_INSETS_SECONDARY_TOP),
-                bottom: getIntSetting(SETTINGS_INSETS_SECONDARY_BOTTOM),
-                left: getIntSetting(SETTINGS_INSETS_SECONDARY_LEFT),
-                right: getIntSetting(SETTINGS_INSETS_SECONDARY_RIGHT)
+                top: getIntSetting(SETTINGS.INSETS_SECONDARY_TOP),
+                bottom: getIntSetting(SETTINGS.INSETS_SECONDARY_BOTTOM),
+                left: getIntSetting(SETTINGS.INSETS_SECONDARY_LEFT),
+                right: getIntSetting(SETTINGS.INSETS_SECONDARY_RIGHT)
             };
         default:
             throw new Error(`unknown monitor name ${JSON.stringify(tier)}`);
