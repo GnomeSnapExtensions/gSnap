@@ -23,94 +23,101 @@ const ModalDialog = imports.ui.modalDialog;
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
 
 export class ZoneBase {
+    private _x: number = 0;
+    private _y: number = 0;
+    private _width: number = 0;
+    private _height: number = 0;
     public parent: ZoneGroup | null = null;
-    public _x: number = 0;
-    public _y: number = 0;
-    public _width: number = 0;
-    public _height: number = 0;
+    public margin: number = 0;
+    public layoutItem: LayoutItem;
 
 
     public contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
         return (
-            this.x() <= x &&
-            this.y() <= y &&
-            this.x() + this.width() >= x + width &&
-            this.y() + this.height() >= y + height
+            this.x <= x &&
+            this.y <= y &&
+            this.x + this.width >= x + width &&
+            this.y + this.height >= y + height
         );
     }
 
-    public margin: number = 0;
-    public layoutItem: LayoutItem;
-
-    public totalWidth() {
-        return (this.margin * 2) + this.width();
+    public get totalWidth() {
+        return (this.margin * 2) + this.width;
     }
 
-    public totalHeight() {
-        return (this.margin * 2) + this.height();
+    public get totalHeight() {
+        return (this.margin * 2) + this.height;
     }
 
-    public positionChanged() {
-
+    public get innerX(): number {
+        return this.x + this.margin;
     }
 
-    public sizeChanged() {
-
+    public get innerY(): number {
+        return this.y + this.margin;
     }
 
-    public innerX(): number {
-        return this.x() + this.margin;
+    public get innerWidth(): number {
+        return this.width - (this.margin * 2);
     }
 
-    public innerY(): number {
-        return this.y() + this.margin;
+    public get innerHeight(): number {
+        return this.height - (this.margin * 2);
     }
 
-    public innerWidth(): number {
-        return this.width() - (this.margin * 2);
-    }
-
-    public innerHeight(): number {
-        return this.height() - (this.margin * 2);
-    }
-
-    public x(v: number | null = null): number {
-        if (v == null) return this._x;
-        this._x = v;
-        this.positionChanged();
+    public get x() : number {
         return this._x;
     }
 
-    public y(v: number | null = null): number {
-        if (v == null) return this._y;
-        this._y = v;
+    public set x(v : number) {
+        if(this._x !== v) {
+        this._x = v;
         this.positionChanged();
-        return this._y;
+        }
     }
 
-    public width(v: number | null = null): number {
-        if (v == null) return this._width;
+    public get y() : number {
+        return this._y;
+    }
+    
+    public set y(v : number) {
+        if(this._y !== v) {
+        this._y = v;
+        this.positionChanged();
+        }
+    }
 
-        this._width = v;
-        this.sizeChanged();
+    public get width() : number {
         return this._width;
     }
 
-    public height(v: number | null = null): number {
-        if (v == null) return this._height;
-        this._height = v;
+    public set width(v : number) {
+        if(this._width !== v) {
+        this._width = v;
         this.sizeChanged();
+        }
+    }
+
+    public get height() : number {
         return this._height;
     }
 
-    public applyPercentages() {
-        if (this.parent.layoutItem.type == 0) {
+    public set height(v : number) {
+        if(this._height !== v) {
+        this._height = v;
+        this.sizeChanged();
+        }
+    }
 
-            let factor = this.parent.width() / this.width();
-            this.layoutItem.length = 100 / factor;
-        } else {
-            let factor = this.parent.height() / this.height();
-            this.layoutItem.length = 100 / factor;
+    public applyPercentages() {
+        if (this.parent) {
+            if (this.parent.layoutItem.type == 0) {
+                let factor = this.parent.width / this.width;
+                this.layoutItem.length = 100 / factor;
+            } else {
+                let factor = this.parent.height / this.height;
+                this.layoutItem.length = 100 / factor;
+            }
         }
     }
 
@@ -126,22 +133,30 @@ export class ZoneBase {
 
     }
 
+    public positionChanged() {
+
+    }
+
+    public sizeChanged() {
+
+    }
+
     sizeLeft(delta: number) {
-        this.x(this.x() + delta);
-        this.width(this.width() - delta)
+        this.x += delta;
+        this.width -= delta;
     }
 
     sizeRight(delta: number) {
-        this.width(this.width() + delta)
+        this.width += delta;
     }
 
     sizeTop(delta: number) {
-        this.y(this.y() + delta);
-        this.height(this.height() - delta)
+        this.y += delta;
+        this.height -= delta;
     }
 
     sizeBottom(delta: number) {
-        this.height(this.height() + delta)
+        this.height += delta;
     }
 
     public adjustWindows(windows: Window[]) {
@@ -166,14 +181,14 @@ export class Zone extends ZoneBase {
 
     positionChanged() {
         super.positionChanged();
-        this.widget.x = this.innerX();
-        this.widget.y = this.innerY();
+        this.widget.x = this.innerX;
+        this.widget.y = this.innerY;
     }
 
     sizeChanged() {
         super.sizeChanged();
-        this.widget.height = this.innerHeight();
-        this.widget.width = this.innerWidth();
+        this.widget.height = this.innerHeight;
+        this.widget.width = this.innerWidth;
     }
 
     public hide() {
@@ -199,22 +214,18 @@ export class TabbedZone extends Zone {
     public tabWidth: number = 200;
     public tabs: ZoneTab[] = [];
 
-    innerX(): number {
-        return super.innerX();
+    get innerY(): number {
+        if (this.tabs.length > 1) {
+            return super.innerY + this.tabHeight;
+        }
+        return super.innerY;
     }
 
-    innerY(): number {
+    get innerHeight(): number {
         if (this.tabs.length > 1) {
-            return super.innerY() + this.tabHeight;
+            return super.innerHeight - this.tabHeight;
         }
-        return super.innerY();
-    }
-
-    innerHeight(): number {
-        if (this.tabs.length > 1) {
-            return super.innerHeight() - this.tabHeight;
-        }
-        return super.innerHeight();
+        return super.innerHeight;
     }
 
     createWidget(styleClass: string = 'grid-preview') {
@@ -239,7 +250,7 @@ export class TabbedZone extends Zone {
             this.tabs[0].destroy();
         }
         this.tabs = [];
-        let x = this.x() + this.margin;
+        let x = this.x + this.margin;
         for (let i = 0; i < windows.length; i++) {
             let metaWindow = windows[i];
             let outerRect = metaWindow.get_frame_rect();
@@ -247,12 +258,12 @@ export class TabbedZone extends Zone {
             let midX = outerRect.x + (outerRect.width / 2);
             let midY = outerRect.y + (outerRect.height / 2);
             
-            if (this.contains(midX,midY)) {
+            if (this.contains(midX, midY)) {
                 let zoneTab = new ZoneTab(this, metaWindow);
                 zoneTab.buttonWidget.height = this.tabHeight - (this.margin * 2);
                 zoneTab.buttonWidget.width = this.tabWidth;
                 zoneTab.buttonWidget.x = x;
-                zoneTab.buttonWidget.y = this.y() + this.margin;
+                zoneTab.buttonWidget.y = this.y + this.margin;
                 zoneTab.buttonWidget.visible = true;
                 x += zoneTab.buttonWidget.width + this.margin;
             }
@@ -263,8 +274,8 @@ export class TabbedZone extends Zone {
             let midX = outerRect.x + (outerRect.width / 2);
             let midY = outerRect.y + (outerRect.height / 2);
             if (this.contains(midX, midY)) {
-                metaWindow.move_frame(true, this.innerX(), this.innerY());
-                metaWindow.move_resize_frame(true, this.innerX(), this.innerY(), this.innerWidth(), this.innerHeight());
+                metaWindow.move_frame(true, this.innerX, this.innerY);
+                metaWindow.move_resize_frame(true, this.innerX, this.innerY, this.innerWidth, this.innerHeight);
             }
         }
         if (this.tabs.length < 2) {
@@ -414,37 +425,36 @@ export class ZoneGroup extends ZoneBase {
 
     public adjustLayout(root: ZoneDisplay) {
         this.root = root;
-        let x = this.x();
-        let y = this.y();
+        let x = this.x;
+        let y = this.y;
 
         for (let i = 0; i < this.children.length; i++) {
             let child = this.children[i];
             let item = child.layoutItem;
-            let factor = this.layoutItem.type == 0 ? this.width() : this.height();
+            let factor = this.layoutItem.type == 0 ? this.width : this.height;
             let length = (factor / 100) * item.length;
 
             let w = 0;
             let h = 0;
             if (this.layoutItem.type == 0) {
                 w = length;
-                h = this.height();
+                h = this.height;
             } else {
                 h = length;
-                w = this.width();
+                w = this.width;
             }
             if (child instanceof ZoneGroup) {
                 child.layoutItem = item;
-                child.x(x);
-                child.y(y);
-                child.width(w);
-                child.height(h);
+                child.x = x;
+                child.y = y;
+                child.width = w;
+                child.height = h;
                 (<ZoneGroup>child).adjustLayout(root);
             } else {
-
-                child.x(x);
-                child.y(y);
-                child.width(w);
-                child.height(h);
+                child.x = x;
+                child.y = y;
+                child.width = w;
+                child.height = h;
             }
 
             if (this.layoutItem.type == 0) {
@@ -584,17 +594,17 @@ export class ZoneAnchor {
 
     public adjustSizes() {
         if (this.zoneGroup.layoutItem.type == 0) {
-            this.widget.x = this.zoneA.x() + this.zoneA.width() - this.margin;
-            this.widget.y = this.zoneA.y() + this.margin;
+            this.widget.x = this.zoneA.x + this.zoneA.width - this.margin;
+            this.widget.y = this.zoneA.y + this.margin;
             this.widget.width = this.margin * 2;
-            this.widget.height = this.zoneA.height() - (this.margin * 2);
+            this.widget.height = this.zoneA.height - (this.margin * 2);
 
 
         } else {
-            this.widget.y = this.zoneA.y() + this.zoneA.height() - this.margin;
-            this.widget.x = this.zoneA.x() + this.margin;
+            this.widget.y = this.zoneA.y + this.zoneA.height - this.margin;
+            this.widget.x = this.zoneA.x + this.margin;
             this.widget.height = this.margin * 2;
-            this.widget.width = this.zoneA.width() - (this.margin * 2);
+            this.widget.width = this.zoneA.width - (this.margin * 2);
 
         }
     }
@@ -696,8 +706,8 @@ export class ZoneDisplay extends ZoneGroup {
         for (let i = 0; i < c.length; i++) {
             c[i].hide();
             if (c[i].contains(x, y)) {
-                win.move_frame(true, c[i].innerX(), c[i].innerY());
-                win.move_resize_frame(true, c[i].innerX(), c[i].innerY(), c[i].innerWidth(), c[i].innerHeight());
+                win.move_frame(true, c[i].innerX, c[i].innerY);
+                win.move_resize_frame(true, c[i].innerX, c[i].innerY, c[i].innerWidth, c[i].innerHeight);
             }
         }
     }
@@ -716,11 +726,11 @@ export class ZoneDisplay extends ZoneGroup {
             return;
         }
 
-        this.x(this.margin + this.workArea.x);
-        this.y(this.margin + this.workArea.y);
+        this.x = this.margin + this.workArea.x;
+        this.y = this.margin + this.workArea.y;
 
-        this.width(this.workArea.width - (this.margin * 2));
-        this.height(this.workArea.height - (this.margin * 2));
+        this.width = this.workArea.width - (this.margin * 2);
+        this.height = this.workArea.height - (this.margin * 2);
         this.applyLayout(this);
         this.adjustLayout(this);
     }
