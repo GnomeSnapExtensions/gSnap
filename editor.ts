@@ -1,52 +1,26 @@
 // GJS import system
 declare var imports: any;
 declare var global: any;
-import {log, setLoggingEnabled} from './logging';
-import {ShellVersion} from './shellversion';
-import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
-import {snapToNeighbors} from './snaptoneighbors';
-import * as tilespec from "./tilespec";
+import {log} from './logging';
 
-const Gettext = imports.gettext;
-const _ = Gettext.gettext;
 import {
     StBoxLayout,
-    ClutterActor,
-    GridLayout,
-    LayoutManager,
-    MetaWindow,
-    ShellApp,
-    ShellWindowTracker,
-    StBin,
     StButton,
-    StLabel,
     StWidget,
-    Window,
-    WindowType,
-    WorkspaceManager as WorkspaceManagerInterface
+    Window
 } from "./gnometypes";
 
-import { activeMonitors, areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
+import { areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
+
+import { LayoutItem } from './layouts';
 
 // Library imports
 const St = imports.gi.St;
 const Main = imports.ui.main;
-const Shell = imports.gi.Shell;
 const GObject = imports.gi.GObject;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Meta = imports.gi.Meta;
 const Clutter = imports.gi.Clutter;
-const Signals = imports.signals;
-const Workspace = imports.ui.workspace;
-const GLib = imports.gi.GLib;
-const Gtk = imports.gi.Gtk;
 const ModalDialog = imports.ui.modalDialog;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Gio = imports.gi.Gio;
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
-const WorkspaceManager: WorkspaceManagerInterface = (
-    global.screen || global.workspace_manager);
 
 export class ZoneBase {
     public parent: ZoneGroup | null = null;
@@ -66,7 +40,7 @@ export class ZoneBase {
     }
 
     public margin: number = 0;
-    public layoutItem: any;
+    public layoutItem: LayoutItem;
 
     public totalWidth() {
         return (this.margin * 2) + this.width();
@@ -319,7 +293,7 @@ export class ZoneTab {
         this.window = metaWindow;
         this.buttonWidget = new St.Button({style_class: 'tab-button'});
         this.buttonWidget.label = metaWindow.title;
-        this.buttonWidget.connect('button-press-event', (actor, event) => {
+        this.buttonWidget.connect('button-press-event', () => {
             Main.activateWindow(this.window);
         });
         Main.uiGroup.insert_child_above(this.buttonWidget, global.window_group);
@@ -419,16 +393,8 @@ export class ZoneGroup extends ZoneBase {
 
         zone.layoutItem.type = this.layoutItem.type == 1 ? 0 : 1;
 
-        zone.layoutItem.items.push(
-            {
-                length: 50
-            }
-        );
-        zone.layoutItem.items.push(
-            {
-                length: 50
-            }
-        );
+        zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
+        zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
         log(JSON.stringify(this.root.layoutItem));
         this.root.reinit();
     }
@@ -437,7 +403,9 @@ export class ZoneGroup extends ZoneBase {
         let index = this.children.indexOf(zone);
 
         this.layoutItem.items.splice(index, 0, {
-            length: zone.layoutItem.length / 2
+            type: 0,
+            length: zone.layoutItem.length / 2,
+            items: []
         });
         zone.layoutItem.length = zone.layoutItem.length / 2;
         log(JSON.stringify(this.root.layoutItem));
@@ -495,7 +463,7 @@ export class ZoneGroup extends ZoneBase {
         this.children = [];
         for (let i = 0; i < this.layoutItem.items.length; i++) {
             let item = this.layoutItem.items[i];
-            if (item.items) {
+            if (item.items && item.items.length > 0) {
                 let z = new ZoneGroup(this);
                 z.layoutItem = item;
                 z.parent = this;
@@ -593,7 +561,7 @@ export class ZoneAnchor {
         this.widget.label = " = ";
         this.widget.visible = true;
         this.adjustSizes();
-        this.widget.connect('button-press-event', (actor: any, event: any) => {
+        this.widget.connect('button-press-event', () => {
             let [x, y] = global.get_pointer();
             this.startX = x;
             this.startY = y;
@@ -605,7 +573,7 @@ export class ZoneAnchor {
             }
             log("sizing " + a + ", " + b);
         });
-        this.widget.connect('button-release-event', (actor: any, event: any) => {
+        this.widget.connect('button-release-event', () => {
             //this.isMoving = false;
 
         });
@@ -734,11 +702,11 @@ export class ZoneDisplay extends ZoneGroup {
         }
     }
 
-    protected createMarginItem(layout: any, h: number, startY: number, x: number, margin: number, w: number, y: number, startX: number) {
+    protected createMarginItem() {
 
     }
 
-    public createZoneWidget(layout: any, layoutItem: any, x: number, y: number, width: number, height: number) {
+    public createZoneWidget() {
 
     }
 
@@ -808,7 +776,7 @@ export class ZoneEditor extends ZoneDisplay {
             this.anchors = [];
         }
         super.init();
-        this.motionConnection = global.stage.connect("motion-event", (actor: any, event: any) => {
+        this.motionConnection = global.stage.connect("motion-event", () => {
                 let [x, y] = global.get_pointer();
                 for (let i = 0; i < this.anchors.length; i++) {
                     this.anchors[i].mouseMoved(x, y);
@@ -932,7 +900,7 @@ class EntryDialogClass extends ModalDialog.ModalDialog {
     public label : any | null;
     public onOkay : any | null;
 
-    public _onClose(button, event) {
+    public _onClose() {
       
         try {
             this.onOkay(this.entry.text);

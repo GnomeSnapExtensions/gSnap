@@ -73,11 +73,11 @@ ts_library(
         ":logging_lib",
         ":settings_data_lib",
         ":shellversion_lib",
-        ":snaptoneighbors_lib",
+        ":utils_lib",
         ":editor_lib",
-        ":tilespec_lib",
         ":settings_lib",
         ":monitors_lib",
+        ":layouts_lib",
     ],
 )
 ts_library(
@@ -90,9 +90,9 @@ ts_library(
             ":logging_lib",
             ":settings_data_lib",
             ":shellversion_lib",
-            ":snaptoneighbors_lib",
             ":tilespec_lib",
             ":monitors_lib",
+            ":layouts_lib",
         ],
 )
 ts_library(
@@ -139,12 +139,18 @@ ts_library(
 )
 
 ts_library(
-    name = "snaptoneighbors_lib",
-    srcs = ["snaptoneighbors.ts"],
+    name = "layouts_lib",
+    srcs = ["layouts.ts"],
     tsconfig = "//:tsconfig-app.json",
     deps = [
-        ":logging_lib",
-        ":gnometypes_lib",
+    ],
+)
+
+ts_library(
+    name = "utils_lib",
+    srcs = ["utils.ts"],
+    tsconfig = "//:tsconfig-app.json",
+    deps = [
     ],
 )
 
