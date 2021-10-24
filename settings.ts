@@ -49,7 +49,6 @@ export function initSettings(changed_settings: () => void) {
     setLoggingEnabled(getBoolSetting(SETTINGS.DEBUG));
 
     log("Init settings");
-    log(ExtensionUtils.getSettings());
     gridSettings[SETTINGS.SHOW_ICON] = getBoolSetting(SETTINGS.SHOW_ICON);
     gridSettings[SETTINGS.SHOW_TABS] = getBoolSetting(SETTINGS.SHOW_TABS);
     gridSettings[SETTINGS.WINDOW_MARGIN] = getIntSetting(SETTINGS.WINDOW_MARGIN);
