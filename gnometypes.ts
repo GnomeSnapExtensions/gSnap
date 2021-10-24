@@ -714,6 +714,7 @@ export interface StWidget extends ClutterActor {
     style_class: string;
     track_hover: boolean;
     layout_manager: LayoutManager;
+    label: string;
 }
 
 export interface LayoutManager {}

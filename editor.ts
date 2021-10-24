@@ -1,9 +1,11 @@
 // GJS import system
 declare var imports: any;
 declare var global: any;
-import {log} from './logging';
+import { log } from './logging';
 
 import {
+    ClutterActor,
+    MetaWindow,
     StBoxLayout,
     StButton,
     StWidget,
@@ -20,7 +22,6 @@ const Main = imports.ui.main;
 const GObject = imports.gi.GObject;
 const Clutter = imports.gi.Clutter;
 const ModalDialog = imports.ui.modalDialog;
-// Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
 
 export class ZoneBase {
     private _x: number = 0;
@@ -31,6 +32,10 @@ export class ZoneBase {
     public margin: number = 0;
     public layoutItem: LayoutItem;
 
+    constructor(layoutItem: LayoutItem, parent: ZoneGroup | null) {
+        this.layoutItem = layoutItem;
+        this.parent = parent;
+    }
 
     public contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
         return (
@@ -165,18 +170,16 @@ export class ZoneBase {
 }
 
 export class Zone extends ZoneBase {
-    public widget: StWidget | null = null;
+    public widget!: StWidget;
 
-
-    constructor(styleClass: string = 'grid-preview') {
-        super();
-
-        this.createWidget(styleClass);
+    constructor(layoutItem: LayoutItem, parent: ZoneGroup | null) {
+        super(layoutItem, parent);
+        this.createWidget();
         Main.uiGroup.insert_child_above(this.widget, global.window_group);
     }
 
     public createWidget(styleClass: string = 'grid-preview') {
-        this.widget = new St.BoxLayout({style_class: styleClass});
+        this.widget = new St.BoxLayout({ style_class: styleClass });
     }
 
     positionChanged() {
@@ -205,8 +208,6 @@ export class Zone extends ZoneBase {
         this.hide();
         Main.uiGroup.remove_actor(this.widget);
     }
-
-
 }
 
 export class TabbedZone extends Zone {
@@ -229,7 +230,7 @@ export class TabbedZone extends Zone {
     }
 
     createWidget(styleClass: string = 'grid-preview') {
-        this.widget = new St.BoxLayout({style_class: styleClass});
+        this.widget = new St.BoxLayout({ style_class: styleClass });
         this.widget.visible = false;
     }
 
@@ -278,31 +279,27 @@ export class TabbedZone extends Zone {
                 metaWindow.move_resize_frame(true, this.innerX, this.innerY, this.innerWidth, this.innerHeight);
             }
         }
+
         if (this.tabs.length < 2) {
             while (this.tabs.length > 0) {
                 this.tabs[0].destroy();
             }
             this.tabs = [];
         }
-        // for (var i = 0; i < this.tabs.length; i++) {
-        //     var zoneTab = this.tabs[i];
-        //    
-        //  
-        // }
-        log("Adjusted zone with " + this.tabs.length + " with window count " + windows.length);
 
+        log("Adjusted zone with " + this.tabs.length + " with window count " + windows.length);
     }
 
 }
 
 export class ZoneTab {
-    public window: Window | null = null;
-    public buttonWidget: StButton | null = null;
+    public window: Window;
+    public buttonWidget: StButton;
 
     constructor(private tabZone: TabbedZone, metaWindow: Window) {
         tabZone.tabs.push(this);
         this.window = metaWindow;
-        this.buttonWidget = new St.Button({style_class: 'tab-button'});
+        this.buttonWidget = new St.Button({ style_class: 'tab-button' });
         this.buttonWidget.label = metaWindow.title;
         this.buttonWidget.connect('button-press-event', () => {
             Main.activateWindow(this.window);
@@ -318,49 +315,43 @@ export class ZoneTab {
 }
 
 export class EditableZone extends Zone {
-
-
     positionChanged() {
         super.positionChanged();
-        (<any>this.widget).label = this.layoutItem.length + "%";
+        this.widget.label = this.layoutItem.length + "%";
     }
 
     sizeChanged() {
         super.sizeChanged();
-        (<any>this.widget).label = this.layoutItem.length + "%";
+        this.widget.label = this.layoutItem.length + "%";
     }
 
     createWidget(styleClass: string = 'grid-preview') {
-        this.widget = new St.Button({style_class: styleClass});
-        this.widget.connect('button-press-event', (actor, event) => {
+        this.widget = new St.Button({ style_class: styleClass });
+        this.widget.connect('button-press-event', (_actor: ClutterActor, event: any) => {
             var btn = event.get_button();
             if (btn == 1) {
                 log("Splitting");
-                this.parent.split(this);
-
-                //this.parent.root.init();    
+                this.parent?.split(this);
             }
+
             if (btn == 2) {
-                this.parent.splitOtherDirection(this);
-
-
+                this.parent?.splitOtherDirection(this);
             }
-            if (btn == 3) {
-                this.parent.remove(this);
 
+            if (btn == 3) {
+                this.parent?.remove(this);
             }
         });
+        this.widget;
     }
 }
 
 export class ZoneGroup extends ZoneBase {
     public children: ZoneBase[] = [];
+    public root!: ZoneDisplay;
 
-    public root: ZoneDisplay;
-
-    constructor(parent: ZoneGroup | null = null) {
-        super();
-        this.parent = parent;
+    constructor(layoutItem: LayoutItem, parent: ZoneGroup | null) {
+        super(layoutItem, parent);
     }
 
     contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
@@ -375,11 +366,8 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public remove(zone: Zone) {
-
         const index = this.layoutItem.items.indexOf(zone.layoutItem);
         if (index > -1) {
-
-
             if (index + 1 < this.layoutItem.items.length) {
                 this.layoutItem.items[index + 1].length += zone.layoutItem.length;
                 this.layoutItem.items.splice(index, 1);
@@ -387,23 +375,20 @@ export class ZoneGroup extends ZoneBase {
                 this.layoutItem.items[index - 1].length += zone.layoutItem.length;
                 this.layoutItem.items.splice(index, 1);
             }
+
             if (this.layoutItem.items.length < 2) {
-
                 if (this.layoutItem != this.root.layoutItem) {
-                    this.layoutItem.items = null;
+                    this.layoutItem.items = [];
                 }
-
             }
         }
         this.root.reinit();
-
     }
 
     public splitOtherDirection(zone: Zone) {
         zone.layoutItem.items = [];
 
         zone.layoutItem.type = this.layoutItem.type == 1 ? 0 : 1;
-
         zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
         zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
         log(JSON.stringify(this.root.layoutItem));
@@ -474,16 +459,12 @@ export class ZoneGroup extends ZoneBase {
         for (let i = 0; i < this.layoutItem.items.length; i++) {
             let item = this.layoutItem.items[i];
             if (item.items && item.items.length > 0) {
-                let z = new ZoneGroup(this);
-                z.layoutItem = item;
-                z.parent = this;
+                let z = new ZoneGroup(item, this);
                 this.children.push(z);
                 z.applyLayout(root);
             } else {
-                let zone = root.createZone();
-                zone.layoutItem = item;
+                let zone = root.createZone(item, this);
                 zone.margin = root.margin;
-                zone.parent = this;
                 this.children.push(zone);
                 root.zoneCreated(zone);
             }
@@ -543,11 +524,11 @@ export class ZoneGroup extends ZoneBase {
         }
     }
 
-    public recursiveChildren(list: any[] = []): any[] {
+    public recursiveChildren(list: any[] = []): ZoneBase[] {
         for (let i = 0; i < this.children.length; i++) {
-            let item = <any>this.children[i];
+            let item = this.children[i];
 
-            if (item.children) {
+            if (item instanceof ZoneGroup) {
                 item.recursiveChildren(list);
             }
             list.push(item);
@@ -565,9 +546,7 @@ export class ZoneAnchor {
     public motionConnection = null;
 
     constructor(protected zoneGroup: ZoneGroup, protected zoneA: ZoneBase, protected zoneB: ZoneBase, protected margin: number) {
-        //super();
-
-        this.widget = new St.Button({style_class: 'size-button'});
+        this.widget = new St.Button({ style_class: 'size-button' });
         this.widget.label = " = ";
         this.widget.visible = true;
         this.adjustSizes();
@@ -652,15 +631,13 @@ export class ZoneAnchor {
         Main.uiGroup.remove_child(this.widget);
     }
 
-    mouseMoved(x: any, y: any) {
+    mouseMoved(x: number, y: number) {
         if (this.isMoving) {
-
             if (this.zoneGroup.layoutItem.type == 0) {
                 let delta = x - this.startX;
                 this.zoneA.sizeRight(delta);
                 this.zoneB.sizeLeft(delta);
                 this.startX = x;
-
             } else {
                 let delta = y - this.startY;
                 this.zoneA.sizeBottom(delta);
@@ -668,7 +645,6 @@ export class ZoneAnchor {
                 this.startY = y;
             }
         }
-
     }
 }
 
@@ -684,12 +660,11 @@ export class ZoneDisplay extends ZoneGroup {
         }
     }
 
-    constructor(monitor: Monitor, layout: any, margin: number) {
-        super();
+    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
+        super(layout, null);
         this.monitor = monitor;
         this.margin = margin;
-        this.layoutItem = layout;
-        
+
         this.workArea = getWorkAreaByMonitor(this.monitor);
         this.init();
     }
@@ -700,7 +675,7 @@ export class ZoneDisplay extends ZoneGroup {
 
     }
 
-    public moveWindowToWidgetAtCursor(win: any) {
+    public moveWindowToWidgetAtCursor(win: Window) {
         let [x, y] = global.get_pointer();
         let c = this.recursiveChildren();
         for (let i = 0; i < c.length; i++) {
@@ -721,7 +696,7 @@ export class ZoneDisplay extends ZoneGroup {
     }
 
     public init() {
-        if(!this.workArea) {
+        if (!this.workArea) {
             log(`Could not get workArea for monitor ${this.monitor.index}`);
             return;
         }
@@ -736,18 +711,18 @@ export class ZoneDisplay extends ZoneGroup {
     }
 
 
-    public createZone() {
-        return new Zone();
+    public createZone(layout: LayoutItem, parent: ZoneGroup) {
+        return new Zone(layout, parent);
     }
 
     public reinit() {
         let wa = getWorkAreaByMonitor(this.monitor);
-        if(!this.workArea || !wa) {
+        if (!this.workArea || !wa) {
             log(`Could not get workArea for monitor ${this.monitor.index}`);
             return;
         }
 
-        if(!areEqual(this.workArea, wa)) {
+        if (!areEqual(this.workArea, wa)) {
             this.workArea = wa;
             this.init();
         } else {
@@ -764,20 +739,13 @@ export class ZoneEditor extends ZoneDisplay {
     public isMoving: boolean = false;
 
 
-    public createZone() {
-        var zone = new EditableZone();
-
-        return zone;
+    public createZone(layout: LayoutItem, parent: ZoneGroup) {
+        return new EditableZone(layout, parent);
     }
 
-    constructor(monitor: Monitor, layout: any, margin: number) {
+    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
         super(monitor, layout, margin);
-        // let windows = WorkspaceManager.get_active_workspace().list_windows();
-        // for (let i = 0; i < windows.length; i++) {
-        //     windows[i].minimize();
-        // }
-
-
+        this.anchors = [];
     }
 
 
@@ -787,17 +755,16 @@ export class ZoneEditor extends ZoneDisplay {
         }
         super.init();
         this.motionConnection = global.stage.connect("motion-event", () => {
-                let [x, y] = global.get_pointer();
-                for (let i = 0; i < this.anchors.length; i++) {
-                    this.anchors[i].mouseMoved(x, y);
+            let [x, y] = global.get_pointer();
+            for (let i = 0; i < this.anchors.length; i++) {
+                this.anchors[i].mouseMoved(x, y);
 
-                }
-                for (let i = 0; i < this.anchors.length; i++) {
-                    this.anchors[i].adjustSizes();
-                }
-                this.apply();
             }
-        );
+            for (let i = 0; i < this.anchors.length; i++) {
+                this.anchors[i].adjustSizes();
+            }
+            this.apply();
+        });
     }
 
     public destroy() {
@@ -806,16 +773,12 @@ export class ZoneEditor extends ZoneDisplay {
             this.anchors[i].destroy();
         }
         this.anchors = [];
-
         super.destroy();
-
-
     }
 
 
     protected zoneCreated(zone: Zone) {
         super.zoneCreated(zone);
-
     }
 
     protected zoneGroupCreated(z: ZoneGroup) {
@@ -857,20 +820,17 @@ export class ZoneEditor extends ZoneDisplay {
         for (let i = 0; i < this.anchors.length; i++) {
             this.anchors[i].show();
         }
-
-
     }
-
 }
 
 export class ZonePreview extends ZoneDisplay {
-    constructor(monitor: Monitor, layout: any, margin: number) {
+    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
         super(monitor, layout, margin);
     }
 }
 
 export class ZoneManager extends ZoneDisplay {
-    constructor(monitor: Monitor, layout: any, margin: number) {
+    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
         super(monitor, layout, margin);
     }
 
@@ -890,52 +850,49 @@ export class ZoneManager extends ZoneDisplay {
 }
 
 export class TabbedZoneManager extends ZoneManager {
-    constructor(monitor: Monitor, layout: any, margin: number) {
+    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
         super(monitor, layout, margin);
     }
 
-    public createZone() {
-        let zone = new TabbedZone();
-
-        return zone;
+    public createZone(layout: LayoutItem, parent: ZoneGroup) {
+        return new TabbedZone(layout, parent);
     }
-
-   
-
 }
 
 class EntryDialogClass extends ModalDialog.ModalDialog {
 
-    public entry : any | null;
-    public label : any | null;
-    public onOkay : any | null;
+    public entry: any | null;
+    public label: any | null;
+    public onOkay: any | null;
 
     public _onClose() {
-      
+
         try {
             this.onOkay(this.entry.text);
         } catch (e) {
-          
+
             throw e;
         }
     }
-    constructor(params) {
+    
+    constructor(params: any) {
         super(params);
         log(JSON.stringify(params));
     }
+
     public _init() {
-    
+
         super._init({});
         this.setButtons([{
             label: "OK",
-            action: ()=>{
+            action: () => {
                 this.onOkay(this.entry.text);
                 this.close(global.get_current_time());
             },
             key: Clutter.Escape
         }]);
 
-        let box = new St.BoxLayout({vertical: true});
+        let box = new St.BoxLayout({ vertical: true });
         this.contentLayout.add(box);
 
         // const MySelf = ExtensionUtils.getCurrentExtension();
@@ -943,14 +900,14 @@ class EntryDialogClass extends ModalDialog.ModalDialog {
         // let icon = new St.Icon({gicon: gicon});
         // box.add(icon);
 
-        this.label = new St.Label({text: ""});
+        this.label = new St.Label({ text: "" });
         box.add(this.label);
-        box.add(this.entry = new St.Entry({text: ""}));
+        box.add(this.entry = new St.Entry({ text: "" }));
 
     }
 }
 
 export const EntryDialog = GObject.registerClass({
-        GTypeName: 'EntryDialogClass',
-    }, EntryDialogClass
+    GTypeName: 'EntryDialogClass',
+}, EntryDialogClass
 );
