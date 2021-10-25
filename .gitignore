@@ -1,4 +1,6 @@
 /node_modules/
 /.idea/.idea.gSnap.dir/.idea/
-/bazel-gSnap/*
-/bazel-gSnap/
+bazel-bin
+bazel-gSnap
+bazel-out
+bazel-testlogs

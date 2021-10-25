@@ -82,15 +82,36 @@ function generateTypeDefinition(keys: ConfigKey[]): string {
     ${members.map(k => JSON.stringify(k.name)).join(" |\n    ")});`;
     }
 
-    const boolSettings = keys.filter(k => k.type === KeyType.Boolean);
-    const numberSettings = keys.filter(k => k.type === KeyType.Int32);
-    const stringSettings = keys.filter(k => k.type === KeyType.String);
-    const keyBindingSettings = keys.filter(k => k.type === KeyType.StringArray);
+    const settings = {
+        [KeyType.Boolean]: keys.filter(k => k.type === KeyType.Boolean),
+        [KeyType.Int32]: keys.filter(k => k.type === KeyType.Int32),
+        [KeyType.String]: keys.filter(k => k.type === KeyType.String),
+        [KeyType.StringArray]: keys.filter(k => k.type === KeyType.StringArray)
+    }
+    
+    for(let s in settings) {
+        let type = s as KeyType;
+        let collection = settings[type];
 
+        if(collection.length == 0) {
+            collection.push({
+                name: "",
+                type: type,
+                defaultLexicalForm: "",
+                summary: "",
+                typeRaw: type.toString(),
+            })
+        }
+    }
 
     const interfaceEntries = keys.map((key: ConfigKey): string => {
         return `/** ${key.summary} */
-    [${JSON.stringify(key.name)}]: ${keyTypeToTypescriptType(key.type)};`;
+    [${JSON.stringify(key.name)}]: ${keyTypeToTypescriptType(key.type)} = ${key.defaultLexicalForm};`;
+    });
+
+    const constantEntries = keys.map((key: ConfigKey): string => {
+        let constName = key.name.toUpperCase().replace(/-/g , '_');
+        return `export const ${constName} = "${key.name}";`;
     });
 
     return `// GENERATED CODE: DO NOT EDIT
@@ -99,24 +120,26 @@ function generateTypeDefinition(keys: ConfigKey[]): string {
 
 
 // Valid boolean settings
-${settingType('BoolSettingName', boolSettings)}
+${settingType('BoolSettingName', settings[KeyType.Boolean])}
 
 // A setting name for a number-valued setting.
-${settingType('NumberSettingName', numberSettings)}
+${settingType('NumberSettingName', settings[KeyType.Int32])}
 
 // A setting for a key binding i.e. a 'preset' in the app.ts code.
-${settingType('KeyBindingSettingName', keyBindingSettings)}
+${settingType('KeyBindingSettingName', settings[KeyType.StringArray])}
 
 // A setting name for a string-valued setting.
-${settingType('StringSettingName', stringSettings)}
+${settingType('StringSettingName', settings[KeyType.String])}
 
 // Any valid setting name.
 ${settingType('AnySettingName', keys)}
 
-interface RawConfigObject {
+export class ParsedSettings {
     ${interfaceEntries.join("\n\n    ")}
 }
-    `;
+
+${constantEntries.join("\n")}
+`;
 }
 
 

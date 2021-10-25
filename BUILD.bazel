@@ -71,13 +71,12 @@ ts_library(
         ":gnometypes_lib",
         ":hotkeys_lib",
         ":logging_lib",
-        ":settings_data_lib",
         ":shellversion_lib",
-        ":snaptoneighbors_lib",
+        ":utils_lib",
         ":editor_lib",
-        ":tilespec_lib",
         ":settings_lib",
         ":monitors_lib",
+        ":layouts_lib",
     ],
 )
 ts_library(
@@ -88,11 +87,11 @@ ts_library(
             ":gnometypes_lib",
             ":hotkeys_lib",
             ":logging_lib",
-            ":settings_data_lib",
+            ":settings_lib",
             ":shellversion_lib",
-            ":snaptoneighbors_lib",
             ":tilespec_lib",
             ":monitors_lib",
+            ":layouts_lib",
         ],
 )
 ts_library(
@@ -109,7 +108,7 @@ ts_library(
     tsconfig = "//:tsconfig-app.json",
     deps = [
         ":logging_lib",
-        ":settings_data_lib",
+        ":settings_lib",
     ],
 )
 
@@ -121,12 +120,12 @@ ts_library(
     ],
 )
 
-ts_library(
-    name = "settings_data_lib",
-    srcs = ["settings_data.ts"],
-    tsconfig = "//:tsconfig-app.json",
-    deps = [],
-)
+# ts_library(
+#     name = "settings_data_lib",
+#     srcs = ["settings_data.ts"],
+#     tsconfig = "//:tsconfig-app.json",
+#     deps = [],
+# )
 
 
 ts_library(
@@ -139,12 +138,18 @@ ts_library(
 )
 
 ts_library(
-    name = "snaptoneighbors_lib",
-    srcs = ["snaptoneighbors.ts"],
+    name = "layouts_lib",
+    srcs = ["layouts.ts"],
     tsconfig = "//:tsconfig-app.json",
     deps = [
-        ":logging_lib",
-        ":gnometypes_lib",
+    ],
+)
+
+ts_library(
+    name = "utils_lib",
+    srcs = ["utils.ts"],
+    tsconfig = "//:tsconfig-app.json",
+    deps = [
     ],
 )
 
@@ -193,13 +198,33 @@ ts_library(
 
 ts_library(
     name = "settings_lib",
-    srcs = ["settings.ts"],
+    srcs = ["settings.ts", "settings_data.ts"],
     tsconfig = "//:tsconfig.json",
-        deps = [
+    deps = [
         ":logging_lib",
-        ":settings_data_lib",
         ":tilespec_lib",
     ]
+)
+
+ts_library(
+    name = "prefs_lib",
+    srcs = ["prefs_builder.ts"],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":settings_lib"
+    ]
+)
+
+rollup_bundle(
+    name = "prefs_bundle",
+    entry_point = "prefs_builder.ts",
+    deps = [":prefs_lib"],
+)
+
+concat(
+    name = "prefs",
+    srcs = ["prefs_bundle.js"],
+    out = "prefs.js"
 )
 
 jasmine_node_test(
