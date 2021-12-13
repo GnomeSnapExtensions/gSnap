@@ -22,22 +22,10 @@
       "name": "None",
       "type": 0,
       "length": 100,
-      "items": [
-      ]
+      "items": []
     },
     {
-      "name": "1 Column",
-      "type": 0,
-      "length": 100,
-      "items": [
-        {
-          "type": 1,
-          "length": 100
-        }
-      ]
-    },
-    {
-      "name": "2 Column Split",
+      "name": "Normal split",
       "type": 0,
       "length": 100,
       "items": [
@@ -52,73 +40,40 @@
       ]
     },
     {
-      "name": "3 Column",
+      "name": "Master 2 stack",
       "type": 0,
       "length": 100,
       "items": [
         {
+          "length": 50
+        },
+        {
+          "length": 50,
           "type": 1,
+          "items": [
+            {
+              "length": 50
+            },
+            {
+              "length": 50
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vertical 3 stack",
+      "type": 1,
+      "length": 100,
+      "items": [
+        {
           "length": 33
         },
         {
-          "type": 1,
           "length": 34
         },
         {
-          "type": 1,
           "length": 33
-        }
-      ]
-    },
-    {
-      "name": "3 Column (Focused)",
-      "type": 0,
-      "length": 100,
-      "items": [
-        {
-          "type": 1,
-          "length": 25
-        },
-        {
-          "type": 1,
-          "length": 50
-        },
-        {
-          "type": 1,
-          "length": 25
-        }
-      ]
-    },
-    {
-      "name": "3 Columns (Custom)",
-      "type": 0,
-      "length": 100,
-      "items": [
-        {
-          "type": 1,
-          "length": 42
-        },
-        {
-          "type": 1,
-          "length": 16,
-          "items": [
-            {
-              "type": 0,
-              "length": 33
-            },
-            {
-              "type": 0,
-              "length": 34
-            },
-            {
-              "type": 0,
-              "length": 33
-            }
-          ]
-        },
-        {
-          "type": 1,
-          "length": 42
         }
       ]
     }
