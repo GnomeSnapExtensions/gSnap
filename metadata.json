@@ -1,5 +1,5 @@
 {
-  "uuid": "gSnap@micahosborne",
+  "uuid": "gSnap@Yan-Solo",
   "name": "gSnap",
   "description": "Organize windows in customizable snap zones like FancyZones on windows.",
   "version": 1.1,
@@ -7,7 +7,7 @@
     "40",
     "41"
   ],
-  "url": "https://github.com/micahosborne/gSnap",
+  "url": "https://github.com/Yan-Solo/gSnap",
   "settings-schema": "org.gnome.shell.extensions.gsnap",
-  "gettext-domain": "gsnap@micahosborne"
+  "gettext-domain": "gsnap@Yan-Solo"
 }

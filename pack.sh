@@ -11,5 +11,5 @@ gnome-extensions pack -f \
 --extra-source LICENSE \
 --extra-source README.md
 
-unzip -l gSnap@micahosborne.shell-extension.zip
+unzip -l gSnap@Yan-Solo.shell-extension.zip
 

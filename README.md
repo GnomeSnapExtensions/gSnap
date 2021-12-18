@@ -7,7 +7,7 @@ that worked on gTile as it made my process of developing this much easier.
 
 This extensions is developed in freetime.  Developer got to eat, if you like it, consider buying me a coffee :)
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/micahosborne)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Yan-Solo)
 
 ## Installation
 
@@ -20,7 +20,7 @@ You can alternatively manually install the latest version from GitHub master bra
 1. Clone the repository to a folder of your choice.
 
    ```shell
-   git clone https://github.com/micahosborne/gSnap.git
+   git clone https://github.com/Yan-Solo/gSnap.git
    ```
    Note: It is not recommended to clone the repository directly into. The code gSnap
    installs into the extensions folder is a compiled version of the code in the
@@ -31,7 +31,7 @@ You can alternatively manually install the latest version from GitHub master bra
    You will need to [install
    Bazel](https://docs.bazel.build/versions/master/install-ubuntu.html) on your
    system to run the build tool. Then, you can run the installation script to
-   install to `$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne`.
+   install to `$HOME/.local/share/gnome-shell/extensions/gSnap@Yan-Solo`.
 
    ```shell
    bazel run :install-extension
@@ -70,7 +70,7 @@ When done click "Stop Editing"
 
 Layouts are stored in this file.
 ```shell
-gedit ~/.local/share/gnome-shell/extensions/gSnap@micahosborne/layouts.json 
+gedit ~/.local/share/gnome-shell/extensions/gSnap@Yan-Solo/layouts.json 
 ```
 After editing layouts disable and re-enable the plugin
 
@@ -146,7 +146,7 @@ Shortcut | Description
 
 ## Source code
 
-This extension is developed at [GitHub](https://github.com/micahosborne/gSnap).
+This extension is developed at [GitHub](https://github.com/Yan-Solo/gSnap).
 
 gTile was the basis for which I started at [GitHub](https://github.com/gTile/gtile).
 

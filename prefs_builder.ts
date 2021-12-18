@@ -217,7 +217,7 @@ class PrefsBuilder {
     }
 
     help_tab(notebook: any) {
-        let weblink = 'https://github.com/micahosborne/gSnap/blob/master/README.md';
+        let weblink = 'https://github.com/Yan-Solo/gSnap/blob/master/README.md';
         let hl_link = new Gtk.LinkButton({
             label: weblink,
             uri: weblink,

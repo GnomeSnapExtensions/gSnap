@@ -9,8 +9,8 @@
 set -e # exit on error
 
 BASEDIR=$(dirname "$0")
-EXTDIR="$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne"
-UPDATEDIR="$HOME/.local/share/gnome-shell/extension-updates/gSnap@micahosborne"
+EXTDIR="$HOME/.local/share/gnome-shell/extensions/gSnap@Yan-Solo"
+UPDATEDIR="$HOME/.local/share/gnome-shell/extension-updates/gSnap@Yan-Solo"
 
 if [ -d "$EXTDIR" ]; then
     # If $EXTDIR exists...
@@ -24,7 +24,7 @@ if [ -d "$UPDATEDIR" ]; then
 fi
 echo "Running in $BASEDIR"
 mkdir -p "$EXTDIR"
-tar -xzf "$BASEDIR/dist.tar.gz" --directory "$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne"
+tar -xzf "$BASEDIR/dist.tar.gz" --directory "$HOME/.local/share/gnome-shell/extensions/gSnap@Yan-Solo"
 
 echo "Installation complete."
 echo ""

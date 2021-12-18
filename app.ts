@@ -33,7 +33,7 @@ import { Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
 
 /*****************************************************************
 
- This extension has been developed by micahosborne
+ This extension has been developed by Yan-Solo
 
  With the help of the gnome-shell community
 

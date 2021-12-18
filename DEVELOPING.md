@@ -8,7 +8,7 @@ easy:
 1. Clone the repository to a folder of your choice.
 
 ```shell
-git clone https://github.com/micahosborne/gSnap.git
+git clone https://github.com/Yan-Solo/gSnap.git
 ```
 
 2. Build and install
@@ -16,7 +16,7 @@ git clone https://github.com/micahosborne/gSnap.git
 You will need to [install
 Bazel](https://docs.bazel.build/versions/master/install-ubuntu.html) on your
 system to run the build tool. Then, you can run the installation script to
-install to `$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne`.
+install to `$HOME/.local/share/gnome-shell/extensions/gSnap@Yan-Solo`.
 
 ```shell
 bazel run :install-extension
