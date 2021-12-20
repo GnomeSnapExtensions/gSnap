@@ -70,15 +70,11 @@ const keyBindings: Bindings = new Map([
 
 ]);
 
-let dragModifierPresset: boolean = false;
+let dragModifierPressed: boolean = false;
 
 const key_bindings_presets: Bindings = new Map([
     [SETTINGS.DRAG_MODIFIER, () => {
-        if(dragModifierPresset) {
-            dragModifierPresset = false;
-        } else {
-            dragModifierPresset = true;
-        }
+        globalApp.dragModifierSwitch();
     }],
     [SETTINGS.PRESET_RESIZE_1, () => {
         globalApp.setLayout(0);
@@ -213,6 +209,14 @@ class App {
     private workspaceSwitchedConnect: any;
     private workareasChangedConnect: any;
 
+    dragModifierSwitch() {
+        if(dragModifierPressed) {
+            dragModifierPressed = false;
+        } else {
+            dragModifierPressed = true;
+        }
+    }
+
     setLayout(layoutIndex: number, monitorIndex = -1) {
         if (this.layouts.definitions.length <= layoutIndex) {
             return;
@@ -321,14 +325,13 @@ class App {
                     this.tabManager[m.index]?.show();
                 });
             }
-
         });
 
         global.display.connect('grab-op-end', (_display: Display, win: Window) => {
             if(validWindow(win)) {
                 activeMonitors().forEach(m => {
                     this.tabManager[m.index]?.hide();
-                    this.tabManager[m.index]?.moveWindowToWidgetAtCursor(win);
+                    this.tabManager[m.index]?.moveWindowToWidgetAtCursor(win, dragModifierPressed);
                     this.tabManager[m.index]?.layoutWindows();
                 });
             }
