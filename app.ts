@@ -310,7 +310,7 @@ class App {
                     this.tabManager[m.index] = null;
                 });
             } else {
-                this.setToCurrentWorkspace();
+                //this.setToCurrentWorkspace();
             }
             
         });
