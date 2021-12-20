@@ -70,7 +70,16 @@ const keyBindings: Bindings = new Map([
 
 ]);
 
+let dragModifierPresset: boolean = false;
+
 const key_bindings_presets: Bindings = new Map([
+    [SETTINGS.DRAG_MODIFIER, () => {
+        if(dragModifierPresset) {
+            dragModifierPresset = false;
+        } else {
+            dragModifierPresset = true;
+        }
+    }],
     [SETTINGS.PRESET_RESIZE_1, () => {
         globalApp.setLayout(0);
     }],
