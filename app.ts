@@ -340,25 +340,25 @@ class App {
             });
         });
 
-        this.workspaceSwitchedConnect = WorkspaceManager.connect('workspace-switched', () => {
-            if(this.refreshLayouts()) {
-                this.saveLayouts();
-            }
+//        this.workspaceSwitchedConnect = WorkspaceManager.connect('workspace-switched', () => {
+//            if(this.refreshLayouts()) {
+//                this.saveLayouts();
+//            }
+//
+//            activeMonitors().forEach(m => {
+//                this.tabManager[m.index]?.destroy();
+//                this.tabManager[m.index] = null;
+//            });
+//
+//            this.setToCurrentWorkspace();
+//        });
 
-            activeMonitors().forEach(m => {
-                this.tabManager[m.index]?.destroy();
-                this.tabManager[m.index] = null;
-            });
-
-            this.setToCurrentWorkspace();
-        });
-
-        this.workareasChangedConnect = global.display.connect('workareas-changed', () => {
-            activeMonitors().forEach(m => {
-                this.tabManager[m.index]?.reinit();
-                this.tabManager[m.index]?.layoutWindows();
-            });
-        });
+//        this.workareasChangedConnect = global.display.connect('workareas-changed', () => {
+//            activeMonitors().forEach(m => {
+//                this.tabManager[m.index]?.reinit();
+//                this.tabManager[m.index]?.layoutWindows();
+//            });
+//        });
 
         launcher = new GSnapStatusButton('tiling-icon') as GSnapStatusButtonClass;
         launcher.label = "Layouts";
