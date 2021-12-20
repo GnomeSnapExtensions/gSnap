@@ -25,6 +25,7 @@ export type NumberSettingName = (
 
 // A setting for a key binding i.e. a 'preset' in the app.ts code.
 export type KeyBindingSettingName = (
+    "drag-modifier" |
     "preset-resize-1" |
     "preset-resize-10" |
     "preset-resize-11" |
@@ -63,6 +64,7 @@ export type StringSettingName = (
 // Any valid setting name.
 export type AnySettingName = (
     "debug" |
+    "drag-modifier" |
     "global-presets" |
     "insets-primary-bottom" |
     "insets-primary-left" |
@@ -110,6 +112,9 @@ export type AnySettingName = (
 export class ParsedSettings {
     /** Put debug lines into global.log. To see, run journalctl /usr/bin/gnome-shell -f in terminal */
     ["debug"]: boolean = false;
+
+    /** Drag modifier */
+    ["drag-modifier"]: string[] = ['<Super>Q'];
 
     /** Keyboard presets are always active (as opposed active only when tiling window is visible). */
     ["global-presets"]: boolean = true;
@@ -242,6 +247,7 @@ export class ParsedSettings {
 }
 
 export const DEBUG = "debug";
+export const DRAG_MODIFIER = "drag-modifier";
 export const GLOBAL_PRESETS = "global-presets";
 export const INSETS_PRIMARY_BOTTOM = "insets-primary-bottom";
 export const INSETS_PRIMARY_LEFT = "insets-primary-left";

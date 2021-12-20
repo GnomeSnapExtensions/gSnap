@@ -8,6 +8,7 @@ import * as SETTINGS from "./settings_data";
 
 // Globals
 const pretty_names = {
+    [SETTINGS.DRAG_MODIFIER]: 'Drag modifier',
     [SETTINGS.PRESET_RESIZE_1]: 'Layout 1',
     [SETTINGS.PRESET_RESIZE_2]: 'Layout 2',
     [SETTINGS.PRESET_RESIZE_3]: 'Layout 3',

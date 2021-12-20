@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <schemalist>
 	<schema path="/org/gnome/shell/extensions/gsnap/" id="org.gnome.shell.extensions.gsnap" >
+		<key type="as" name="drag-modifier">
+			<default><![CDATA[['<Super>Q']]]></default>
+			<summary>Drag modifier</summary>
+		</key>
 		<key type="as" name="preset-resize-1">
 			<default><![CDATA[['<Super><Alt>KP_1']]]></default>
 			<summary>Preset resize 1.</summary>
