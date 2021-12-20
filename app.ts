@@ -281,7 +281,7 @@ class App {
         }
 
 
-        this.setToCurrentWorkspace();
+        //this.setToCurrentWorkspace();
         monitorsChangedConnect = Main.layoutManager.connect(
             'monitors-changed', () => {
                 activeMonitors().forEach(m => {
