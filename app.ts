@@ -322,7 +322,9 @@ class App {
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
             if(validWindow(win)) {
                 activeMonitors().forEach(m => {
-                    this.tabManager[m.index]?.show();
+                    if (dragModifierPressed) {
+                        this.tabManager[m.index]?.show();
+                    }
                 });
             }
         });
