@@ -70,7 +70,7 @@ const keyBindings: Bindings = new Map([
 
 ]);
 
-let dragModifierPressed: boolean = false;
+let dragModifierPressed: boolean = true;
 
 const key_bindings_presets: Bindings = new Map([
     [SETTINGS.DRAG_MODIFIER, () => {
