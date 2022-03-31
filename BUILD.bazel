@@ -30,7 +30,13 @@ pkg_tar(
     mode = "0664",
     strip_prefix = ".",
 )
-
+pkg_zip(
+    name = "dist",
+    srcs = [":dist_files"],
+    extension = "zip",
+    mode = "0664",
+    strip_prefix = ".",
+)
 filegroup(
     name = "dist_files",
     srcs = [

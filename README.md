@@ -155,3 +155,11 @@ gSnap is licensed under the [GPL v2+](https://www.gnu.org/licenses/gpl-2.0.html)
 For debugging, enable debug in preferences, and in terminal run journalctl /usr/bin/gnome-shell -f
 
 ## Enjoy!
+
+#PACKAGING & DISTRIBUTION NOTES
+1. npm run i
+2. find and extract dist.tar.gz file in bazel-bin
+3. run ./submit.sh to create zip file
+4. Zip file is located in the dist folder.
+
+Note: this is horrible process, needs to be made easier, but works for uploading to gnome extensions.
