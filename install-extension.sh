@@ -24,7 +24,7 @@ if [ -d "$UPDATEDIR" ]; then
 fi
 echo "Running in $BASEDIR"
 mkdir -p "$EXTDIR"
-tar -xzf "$BASEDIR/dist.tar.gz" --directory "$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne"
+cp -r $BASEDIR/dist/* "$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne"
 
 echo "Installation complete."
 echo ""

@@ -671,7 +671,7 @@ function changed_settings() {
     log("changed_settings complete");
 }
 
-export function enable() {
+function enable() {
     initSettings(changed_settings);
     log("Extension enable begin");
     SHELL_VERSION.print_version();
@@ -679,7 +679,11 @@ export function enable() {
     globalApp.enable();
 }
 
-export function disable() {
+function disable() {
     deinitSettings();
     globalApp.disable();
 }
+
+// Useless calls here to trick rollup_bundle
+// to keep the code.
+enable(); disable();

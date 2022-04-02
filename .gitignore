@@ -4,3 +4,6 @@ bazel-bin
 bazel-gSnap
 bazel-out
 bazel-testlogs
+dist/
+build/
+dist.zip
