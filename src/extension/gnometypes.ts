@@ -548,7 +548,7 @@ export interface Window {
     requested_dont_bypass_compositor(): void;
     //set_compositor_private(priv): void;
     set_demands_attention(): void;
-    set_icon_geometry(rect): void;
+    set_icon_geometry(rect: any): void;
     //shade(timestamp): void;
     shove_titlebar_onscreen(): void;
     showing_on_its_workspace(): void;
