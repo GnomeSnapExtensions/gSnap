@@ -345,15 +345,11 @@ class TextEntry {
     }
 }
 
-function init() {
-    buildPrefsWidget();
+export function init() {
+
 }
 
-function buildPrefsWidget() {
+export function buildPrefsWidget() {
     let builder = new PrefsBuilder();
     return builder.build();
 }
-
-// Useless call here to trick rollup_bundle
-// to keep the code.
-init();
