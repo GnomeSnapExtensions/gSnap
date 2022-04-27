@@ -12,6 +12,6 @@
         "clean": "rm -rf dist build dist.tar.gz",
         "build": "tsc && rollup --config rollup.config.js",
         "install-extension": "npm run build && sh install-extension.sh",
-        "pack": "zip -r dist.zip dist/*"
+        "pack": "cd dist && zip -r ../dist.zip *"
     }
 }

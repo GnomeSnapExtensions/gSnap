@@ -2,7 +2,6 @@
 declare var imports: any;
 declare var global: any;
 import {log} from './logging';
-import {getCurrentPath} from './utils';
 import {ShellVersion} from './shellversion';
 import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
 import {ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager} from "./editor";
@@ -53,6 +52,8 @@ const GObject = imports.gi.GObject;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const GLib = imports.gi.GLib;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
 
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
 const WorkspaceManager: WorkspaceManagerInterface = (
@@ -172,6 +173,9 @@ class App {
     private preview: (ZonePreview | null)[];
     private tabManager: (ZoneManager | null)[];
 
+    private readonly layoutsPath = `${Me.path}/layouts.json`;
+    private readonly layoutsDefaultPath =`${Me.path}/layouts-default.json`;
+
     private currentLayout: Layout;
     public layouts : LayoutsSettings = {
         // [workspaceindex][monitorindex]
@@ -252,7 +256,7 @@ class App {
 
     enable() {
         try {
-            let [ok, contents] = GLib.file_get_contents(getCurrentPath()?.replace("/extension.js", "/layouts.json"));
+            let [ok, contents] = GLib.file_get_contents(this.layoutsPath);
             if (ok) {
                 log("Loaded contents " + contents);
                 this.layouts = JSON.parse(contents);
@@ -263,7 +267,7 @@ class App {
             }
         } catch (exception) {
             log(JSON.stringify(exception));
-            let [ok, contents] = GLib.file_get_contents(getCurrentPath()?.replace("/extension.js", "/layouts-default.json"));
+            let [ok, contents] = GLib.file_get_contents(this.layoutsDefaultPath);
             if (ok) {
                 this.layouts = JSON.parse(contents);
                 this.refreshLayouts();
@@ -544,7 +548,7 @@ class App {
             this.editor[m.index]?.destroy();
             this.editor[m.index] = null;
         });
-        GLib.file_set_contents(getCurrentPath()?.replace("/extension.js", "/layouts.json"), JSON.stringify(this.layouts));
+        GLib.file_set_contents(this.layoutsPath, JSON.stringify(this.layouts));
         log(JSON.stringify(this.layouts));
 
         var windows = WorkspaceManager.get_active_workspace().list_windows();
@@ -671,7 +675,7 @@ function changed_settings() {
     log("changed_settings complete");
 }
 
-function enable() {
+export function enable() {
     initSettings(changed_settings);
     log("Extension enable begin");
     SHELL_VERSION.print_version();
@@ -679,11 +683,7 @@ function enable() {
     globalApp.enable();
 }
 
-function disable() {
+export function disable() {
     deinitSettings();
     globalApp.disable();
 }
-
-// Useless calls here to trick rollup_bundle
-// to keep the code.
-enable(); disable();
