@@ -9,7 +9,8 @@ export type BoolSettingName = (
     "global-presets" |
     "moveresize-enabled" |
     "show-icon" |
-    "show-tabs");
+    "show-tabs" |
+    "use-shift-modifier");
 
 // A setting name for a number-valued setting.
 export type NumberSettingName = (
@@ -237,6 +238,9 @@ export class ParsedSettings {
     /** Show tabs for windows in each zone. */
     ["show-tabs"]: boolean = true;
 
+    /** Use shift modifier to snap windows. */
+    ["use-shift-modifier"]: boolean = true;
+
     /** Gaps between windows in the middle of screen */
     ["window-margin"]: number = 0;
 }
@@ -284,4 +288,5 @@ export const PRESET_RESIZE_8 = "preset-resize-8";
 export const PRESET_RESIZE_9 = "preset-resize-9";
 export const SHOW_ICON = "show-icon";
 export const SHOW_TABS = "show-tabs";
+export const USE_SHIFT_MODIFIER = "use-shift-modifier";
 export const WINDOW_MARGIN = "window-margin";
