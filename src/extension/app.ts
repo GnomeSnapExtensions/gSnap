@@ -29,6 +29,7 @@ import {
 import * as SETTINGS from './settings_data';
 
 import { Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
+import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
 
 /*****************************************************************
 
@@ -172,6 +173,7 @@ class App {
     private editor: (ZoneEditor | null)[];
     private preview: (ZonePreview | null)[];
     private tabManager: (ZoneManager | null)[];
+    private modifiersManager: ModifiersManager;
 
     private readonly layoutsPath = `${Me.path}/layouts.json`;
     private readonly layoutsDefaultPath =`${Me.path}/layouts-default.json`;
@@ -202,6 +204,7 @@ class App {
         this.preview = new Array<ZonePreview>(monitors);
         this.tabManager = new Array<ZoneManager>(monitors);
         this.currentLayout = this.layouts.definitions[0];
+        this.modifiersManager = new ModifiersManager();
     }
     
     private restackConnection: any;
@@ -285,10 +288,8 @@ class App {
                 this.reloadMenu();
             });
 
-        function validWindow(window: Window): boolean {
-            return window != null
-                && window.get_window_type() == WindowType.NORMAL;
-        }
+        const validWindow = (window: Window): boolean => window != null
+            && window.get_window_type() == WindowType.NORMAL;
 
         global.display.connect('window-created', (_display: Display, win: Window) => {
             if(validWindow(win)) {
