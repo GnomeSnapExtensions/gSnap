@@ -12,12 +12,9 @@ import {
     Window
 } from "./gnometypes";
 
-import * as SETTINGS from './settings_data';
-
 import { areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
 
 import { LayoutItem } from './layouts';
-import { getBoolSetting } from './settings';
 
 // Library imports
 const St = imports.gi.St;
