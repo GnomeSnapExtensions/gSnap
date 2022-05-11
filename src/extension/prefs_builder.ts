@@ -164,7 +164,7 @@ class PrefsBuilder {
         this.add_check("Show icon", SETTINGS.SHOW_ICON, bs_grid, settings);
         this.add_check("Show tabs", SETTINGS.SHOW_TABS, bs_grid, settings);
         this.add_check("Enable accelerators for moving and resizing windows", SETTINGS.MOVERESIZE_ENABLED, bs_grid, settings);
-        this.add_check("Use shift modifier", SETTINGS.USE_SHIFT_MODIFIER, bs_grid, settings);
+        this.add_check("Use modifier", SETTINGS.USE_MODIFIER, bs_grid, settings);
         this.add_check("Debug", SETTINGS.DEBUG, bs_grid, settings);
         let text = "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f";
         bs_grid.attach_next_to(new Gtk.Label({

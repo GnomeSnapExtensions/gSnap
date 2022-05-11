@@ -22,6 +22,7 @@ import {
 
 import { 
     deinitSettings, 
+    getBoolSetting, 
     gridSettings, 
     initSettings,
 } from './settings';
@@ -63,6 +64,7 @@ const WorkspaceManager: WorkspaceManagerInterface = (
 let launcher: GSnapStatusButtonClass | null;
 let enabled = false;
 let monitorsChangedConnect: any = false;
+const trackedWindows: Window[] = global.trackedWindows = [];
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
 
@@ -174,6 +176,7 @@ class App {
     private preview: (ZonePreview | null)[];
     private tabManager: (ZoneManager | null)[];
     private modifiersManager: ModifiersManager;
+    private isGrabbing: boolean = false;
 
     private readonly layoutsPath = `${Me.path}/layouts.json`;
     private readonly layoutsDefaultPath =`${Me.path}/layouts-default.json`;
@@ -278,7 +281,6 @@ class App {
             }
         }
 
-
         this.setToCurrentWorkspace();
         monitorsChangedConnect = Main.layoutManager.connect(
             'monitors-changed', () => {
@@ -312,20 +314,57 @@ class App {
         });
 
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
-            if(validWindow(win)) {
+            const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+            this.isGrabbing = true;
+
+            if(validWindow(win) && !useModifier) {
                 activeMonitors().forEach(m => {
                     this.tabManager[m.index]?.show();
                 });
             }
-
         });
 
         global.display.connect('grab-op-end', (_display: Display, win: Window) => {
-            if(validWindow(win)) {
-                activeMonitors().forEach(m => {
-                    this.tabManager[m.index]?.hide();
+            const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+            this.isGrabbing = false;
+
+            if(!validWindow(win)) {
+                return;
+            }
+
+            activeMonitors().forEach(m => {
+                this.tabManager[m.index]?.hide();
+
+                if (!useModifier || this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
+                    if (!trackedWindows.includes(win)) {
+                        trackedWindows.push(win);
+                    }
+
                     this.tabManager[m.index]?.moveWindowToWidgetAtCursor(win);
                     this.tabManager[m.index]?.layoutWindows();
+                    return;
+                }
+
+                if (useModifier && !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL) && trackedWindows.includes(win)) {
+                    trackedWindows.splice(trackedWindows.indexOf(win), 1);
+                }
+            });
+        });
+
+        this.modifiersManager.connect("changed", () => {
+            const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+
+            if (!useModifier || !this.isGrabbing) {
+                return;
+            }
+
+            if (this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
+                activeMonitors().forEach(m => {
+                    this.tabManager[m.index]?.show();
+                });
+            } else {
+                activeMonitors().forEach(m => {
+                    this.tabManager[m.index]?.hide();
                 });
             }
         });

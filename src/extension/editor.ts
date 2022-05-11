@@ -12,9 +12,12 @@ import {
     Window
 } from "./gnometypes";
 
+import * as SETTINGS from './settings_data';
+
 import { areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
 
 import { LayoutItem } from './layouts';
+import { getBoolSetting } from './settings';
 
 // Library imports
 const St = imports.gi.St;
@@ -247,6 +250,7 @@ export class TabbedZone extends Zone {
 
     adjustWindows(windows: Window[]) {
         super.adjustWindows(windows);
+
         while (this.tabs.length > 0) {
             this.tabs[0].destroy();
         }
@@ -360,6 +364,7 @@ export class ZoneGroup extends ZoneBase {
 
     adjustWindows(windows: Window[]) {
         super.adjustWindows(windows);
+
         for (var i = 0; i < this.children.length; i++) {
             this.children[i].adjustWindows(windows);
         }

@@ -21,30 +21,13 @@ export const MODIFIERS: {[key: number]: MODIFIERS_ENUM} = {
 };
 
 export default class ModifiersManager {
+    private connected: {[key: string]: Function[]} = {};
     private modifiers: MODIFIERS_ENUM[] = [];
 
     private state: any;
     private previousState: any;
 
-    private latch: any;
-    private previousLatch: any;
-
-    private lock: any;
-    private previousLock: any;
-
-    private seat: any;
-
     constructor() {
-        try {
-            this.seat = Clutter.get_default_backend().get_default_seat();
-        } catch (e) {
-            this.seat = Clutter.DeviceManager.get_default();
-        };
-        
-        if (this.seat) {
-            this.seat.connect("kbd-a11y-mods-state-changed", this.a11yModsUpdate.bind(this));
-        };
-
         Mainloop.timeout_add(200, this.update.bind(this));
     }
 
@@ -52,14 +35,12 @@ export default class ModifiersManager {
         return this.modifiers.includes(modifier);
     }
 
-    private a11yModsUpdate(o: any, latch: any, lock: any): void {
-        if (typeof latch !== 'undefined') {
-            this.latch = latch;
-        };
+    public connect(name: string, callback: Function): number {
+        if (this.connected[name] === undefined) {
+            this.connected[name] = [];
+        }
 
-        if (typeof lock !== 'undefined') {
-            this.lock = lock;
-        };
+        return this.connected[name].push(callback);
     }
 
     private update(): boolean {
@@ -69,19 +50,27 @@ export default class ModifiersManager {
             this.state = m;
         };
 
-        if (this.state === this.previousState && this.latch === this.previousLatch && this.lock === this.previousLock) {
+        if (this.state === this.previousState) {
             return true;
         }
 
+        this.modifiers = [];
+
         for (let i = 0; i < 6; i++) {
-            if ((this.state & 1 << i || this.lock & 1 << i) && MODIFIERS[i] !== undefined) {
+            if (this.state & 1 << i && MODIFIERS[i] !== undefined) {
                 this.modifiers.push(MODIFIERS[i]);
             }
         }
 
+        for (const callback of this.connected["changed"]) {
+            try {
+                callback();
+            } catch (e) {
+                log(`error: ${e}`);
+            }
+        }
+
         this.previousState = this.state;
-        this.previousLatch = this.latch;
-        this.previousLock = this.lock;
 
         return true;
     }

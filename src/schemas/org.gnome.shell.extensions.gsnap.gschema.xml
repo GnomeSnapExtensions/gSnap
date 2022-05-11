@@ -129,9 +129,9 @@
 			<default>true</default>
 			<summary>Show tabs for windows in each zone.</summary>
 		</key>
-		<key type = "b" name="use-shift-modifier">
+		<key type = "b" name="use-modifier">
 			<default>false</default>
-			<summary>Use the shift modifier to snap windows</summary>
+			<summary>Use modifier to snap windows</summary>
 		</key>
 		<key type = "b" name="global-presets">
 			<default>true</default>
