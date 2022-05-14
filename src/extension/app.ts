@@ -351,23 +351,19 @@ class App {
             });
         });
 
-        this.modifiersManager.connect("changed", () => {
-            const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
-
-            if (!useModifier || !this.isGrabbing) {
-                return;
-            }
-
-            if (this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
-                activeMonitors().forEach(m => {
-                    this.tabManager[m.index]?.show();
-                });
-            } else {
-                activeMonitors().forEach(m => {
-                    this.tabManager[m.index]?.hide();
-                });
-            }
-        });
+        if (getBoolSetting(SETTINGS.USE_MODIFIER)) {
+            this.modifiersManager.connect("changed", () => {
+                if (!this.isGrabbing) {
+                    return;
+                }
+    
+                if (this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
+                    activeMonitors().forEach(m => this.tabManager[m.index]?.show());
+                } else {
+                    activeMonitors().forEach(m => this.tabManager[m.index]?.hide());
+                }
+            });
+        }
 
         this.restackConnection = global.display.connect('restacked', () => {
             activeMonitors().forEach(m => {

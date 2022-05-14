@@ -131,7 +131,7 @@
 		</key>
 		<key type = "b" name="use-modifier">
 			<default>false</default>
-			<summary>Use modifier to snap windows</summary>
+			<summary>Hold CTRL to snap windows</summary>
 		</key>
 		<key type = "b" name="global-presets">
 			<default>true</default>

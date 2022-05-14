@@ -4,7 +4,6 @@ declare var global: any;
 import {log} from './logging';
 
 const Mainloop = imports.mainloop;
-const Clutter = imports.gi.Clutter;
 
 export enum MODIFIERS_ENUM {
     SHIFT,
@@ -46,9 +45,9 @@ export default class ModifiersManager {
     private update(): boolean {
         const [x, y, m] = global.get_pointer();
 
-        if (typeof m !== 'undefined') {
+        if (m) {
             this.state = m;
-        };
+        }
 
         if (this.state === this.previousState) {
             return true;
