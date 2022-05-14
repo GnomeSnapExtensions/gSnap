@@ -129,6 +129,10 @@
 			<default>true</default>
 			<summary>Show tabs for windows in each zone.</summary>
 		</key>
+		<key type = "b" name="use-modifier">
+			<default>false</default>
+			<summary>Hold CTRL to snap windows</summary>
+		</key>
 		<key type = "b" name="global-presets">
 			<default>true</default>
 			<summary>Keyboard presets are always active (as opposed active only when tiling window is visible).</summary>

@@ -258,6 +258,7 @@ export class TabbedZone extends Zone {
 
     adjustWindows(windows: Window[]) {
         super.adjustWindows(windows);
+
         while (this.tabs.length > 0) {
             this.tabs[0].destroy();
         }
@@ -371,6 +372,7 @@ export class ZoneGroup extends ZoneBase {
 
     adjustWindows(windows: Window[]) {
         super.adjustWindows(windows);
+
         for (var i = 0; i < this.children.length; i++) {
             this.children[i].adjustWindows(windows);
         }

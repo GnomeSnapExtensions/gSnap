@@ -22,6 +22,7 @@ import {
 
 import { 
     deinitSettings, 
+    getBoolSetting, 
     gridSettings, 
     initSettings,
 } from './settings';
@@ -29,6 +30,7 @@ import {
 import * as SETTINGS from './settings_data';
 
 import { Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
+import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
 
 /*****************************************************************
 
@@ -62,6 +64,7 @@ const WorkspaceManager: WorkspaceManagerInterface = (
 let launcher: GSnapStatusButtonClass | null;
 let enabled = false;
 let monitorsChangedConnect: any = false;
+const trackedWindows: Window[] = global.trackedWindows = [];
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
 
@@ -172,6 +175,8 @@ class App {
     private editor: (ZoneEditor | null)[];
     private preview: (ZonePreview | null)[];
     private tabManager: (ZoneManager | null)[];
+    private modifiersManager: ModifiersManager;
+    private isGrabbing: boolean = false;
 
     private readonly layoutsPath = `${Me.path}/layouts.json`;
     private readonly layoutsDefaultPath =`${Me.path}/layouts-default.json`;
@@ -202,6 +207,7 @@ class App {
         this.preview = new Array<ZonePreview>(monitors);
         this.tabManager = new Array<ZoneManager>(monitors);
         this.currentLayout = this.layouts.definitions[0];
+        this.modifiersManager = new ModifiersManager();
     }
     
     private restackConnection: any;
@@ -275,7 +281,6 @@ class App {
             }
         }
 
-
         this.setToCurrentWorkspace();
         monitorsChangedConnect = Main.layoutManager.connect(
             'monitors-changed', () => {
@@ -285,10 +290,8 @@ class App {
                 this.reloadMenu();
             });
 
-        function validWindow(window: Window): boolean {
-            return window != null
-                && window.get_window_type() == WindowType.NORMAL;
-        }
+        const validWindow = (window: Window): boolean => window != null
+            && window.get_window_type() == WindowType.NORMAL;
 
         global.display.connect('window-created', (_display: Display, win: Window) => {
             if(validWindow(win)) {
@@ -311,23 +314,56 @@ class App {
         });
 
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
-            if(validWindow(win)) {
+            const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+            this.isGrabbing = true;
+
+            if(validWindow(win) && !useModifier) {
                 activeMonitors().forEach(m => {
                     this.tabManager[m.index]?.show();
                 });
             }
-
         });
 
         global.display.connect('grab-op-end', (_display: Display, win: Window) => {
-            if(validWindow(win)) {
-                activeMonitors().forEach(m => {
-                    this.tabManager[m.index]?.hide();
+            const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+            this.isGrabbing = false;
+
+            if(!validWindow(win)) {
+                return;
+            }
+
+            activeMonitors().forEach(m => {
+                this.tabManager[m.index]?.hide();
+
+                if (!useModifier || this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
+                    if (!trackedWindows.includes(win)) {
+                        trackedWindows.push(win);
+                    }
+
                     this.tabManager[m.index]?.moveWindowToWidgetAtCursor(win);
                     this.tabManager[m.index]?.layoutWindows();
-                });
-            }
+                    return;
+                }
+
+                if (useModifier && !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL) && trackedWindows.includes(win)) {
+                    trackedWindows.splice(trackedWindows.indexOf(win), 1);
+                }
+            });
         });
+
+        if (getBoolSetting(SETTINGS.USE_MODIFIER)) {
+            this.modifiersManager.connect("changed", () => {
+                if (!this.isGrabbing) {
+                    return;
+                }
+    
+                if (this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
+                    activeMonitors().forEach(m => this.tabManager[m.index]?.show());
+                } else {
+                    activeMonitors().forEach(m => this.tabManager[m.index]?.hide());
+                }
+            });
+        }
 
         this.restackConnection = global.display.connect('restacked', () => {
             activeMonitors().forEach(m => {
