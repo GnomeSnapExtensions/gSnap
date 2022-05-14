@@ -22,6 +22,7 @@ const Main = imports.ui.main;
 const GObject = imports.gi.GObject;
 const Clutter = imports.gi.Clutter;
 const ModalDialog = imports.ui.modalDialog;
+const Mainloop = imports.mainloop;
 
 export class ZoneBase {
     private _x: number = 0;
@@ -202,6 +203,16 @@ export class Zone extends ZoneBase {
     public show() {
         this.widget.visible = true;
         this.widget.add_style_pseudo_class('activate');
+    }
+
+    public set hover(hovering: boolean) {
+        if(!this.widget) return;
+        
+        // this is needed to highlight windows on hover
+        // while dragging a window in the zone
+        hovering
+            ? this.widget.add_style_pseudo_class('hover')
+            : this.widget.remove_style_pseudo_class('hover');
     }
 
     public destroy() {
@@ -830,6 +841,8 @@ export class ZonePreview extends ZoneDisplay {
 }
 
 export class ZoneManager extends ZoneDisplay {
+    private isShowing: boolean = false;
+
     constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
         super(monitor, layout, margin);
     }
@@ -846,6 +859,36 @@ export class ZoneManager extends ZoneDisplay {
             let child = this.children[c];
             child.adjustWindows(windows);
         }
+    }
+
+    public highlightZonesUnderCursor() {
+        let [x, y] = global.get_pointer();
+        var children = this.recursiveChildren();
+        for (const zone of children) {
+            let contained = zone.contains(x, y);
+            (zone as Zone).hover = contained;
+        }
+    }
+
+    public show() {
+        this.isShowing = true;
+        super.show();
+        this.trackCursorUpdates();
+    }
+
+    public hide() {
+        this.isShowing = false;
+        super.hide();
+    }
+
+    private trackCursorUpdates() {
+        Mainloop.timeout_add(25, () => {
+            if (!this.isShowing) {
+                return false;
+            }
+            this.highlightZonesUnderCursor();
+            return true;
+        });
     }
 }
 
