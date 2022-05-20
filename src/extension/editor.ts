@@ -181,6 +181,7 @@ export class Zone extends ZoneBase {
 
     public createWidget(styleClass: string = 'grid-preview') {
         this.widget = new St.BoxLayout({ style_class: styleClass });
+        this.widget.visible = false;
     }
 
     positionChanged() {
