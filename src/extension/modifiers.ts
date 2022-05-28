@@ -45,10 +45,12 @@ export default class ModifiersManager {
     private update(): boolean {
         const [x, y, m] = global.get_pointer();
 
-        if (m) {
-            this.state = m;
+        if (m === undefined) {
+            log('m === undefined');
+            return false;
         }
 
+        this.state = m;
         if (this.state === this.previousState) {
             return true;
         }
