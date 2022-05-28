@@ -27,7 +27,7 @@ export default class ModifiersManager {
     private previousState: any;
 
     constructor() {
-        Mainloop.timeout_add(200, this.update.bind(this));
+        Mainloop.timeout_add(20, this.update.bind(this));
     }
 
     public isHolding(modifier: MODIFIERS_ENUM): boolean {
