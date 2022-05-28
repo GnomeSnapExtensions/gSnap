@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512.0px"
+   height="512.0px"
+   viewBox="0 0 512.0 512.0"
+   version="1.1"
+   id="SVGRoot"
+   sodipodi:docname="icon.svg"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   inkscape:export-filename="icon.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview14"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="1.8761364"
+     inkscape:cx="101.53846"
+     inkscape:cy="189.21865"
+     inkscape:window-width="3440"
+     inkscape:window-height="1371"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2"
+     showguides="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid20"
+       originx="256"
+       originy="256" />
+    <sodipodi:guide
+       position="256,256"
+       orientation="-1,0"
+       id="guide1097"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+    <sodipodi:guide
+       position="256,256"
+       orientation="0,1"
+       id="guide1099"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+    <sodipodi:guide
+       position="491,491"
+       orientation="0,1"
+       id="guide1101"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+    <sodipodi:guide
+       position="21,491"
+       orientation="-1,0"
+       id="guide1103"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+    <sodipodi:guide
+       position="491,491"
+       orientation="-1,0"
+       id="guide1105"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,134,229)" />
+    <sodipodi:guide
+       position="21,21"
+       orientation="0,-1"
+       id="guide3285"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs9">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient22036">
+      <stop
+         style="stop-color:#c531b6;stop-opacity:1;"
+         offset="0.20329417"
+         id="stop22161" />
+      <stop
+         style="stop-color:#55e1ff;stop-opacity:1;"
+         offset="1"
+         id="stop22034" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient22036"
+       id="linearGradient22040"
+       x1="-142.24913"
+       y1="36.3237"
+       x2="386.42026"
+       y2="345.19409"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.86363634,0,0,0.86363635,34.909092,34.909092)" />
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter23559"
+       x="-0.078540538"
+       y="-0.049087836"
+       width="1.1570811"
+       height="1.0981757">
+      <feGaussianBlur
+         stdDeviation="8 2"
+         result="fbSourceGraphic"
+         id="feGaussianBlur23557" />
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix23561" />
+      <feGaussianBlur
+         id="feGaussianBlur23563"
+         stdDeviation="8 8"
+         result="blur"
+         in="fbSourceGraphic" />
+    </filter>
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer7"
+     inkscape:label="Shadow">
+    <rect
+       style="display:inline;fill:#b8bec6;fill-opacity:1;stroke:none;stroke-width:2.08051;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers;filter:url(#filter23559)"
+       id="rect3287-1"
+       width="488.91949"
+       height="488.91949"
+       x="12.040255"
+       y="12.040255"
+       rx="15.603813"
+       ry="15.603813"
+       inkscape:label="BigRect"
+       transform="matrix(0.83952498,0,0,0.89235583,59.193998,43.54912)" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Fills"
+     style="display:inline">
+    <rect
+       style="display:inline;fill:#ffffff;fill-opacity:1;stroke:#472d59;stroke-width:3.62526;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="rect3287"
+       width="425.96765"
+       height="425.96765"
+       x="43.049492"
+       y="43.336842"
+       rx="12.663158"
+       ry="12.663158"
+       inkscape:label="BigRect" />
+    <rect
+       style="display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.67442;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="rect3291"
+       width="180"
+       height="180"
+       x="266"
+       y="66"
+       rx="15"
+       ry="15"
+       inkscape:label="TopRight" />
+    <rect
+       style="display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.67442;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="rect3293"
+       width="180"
+       height="180"
+       x="266"
+       y="266"
+       rx="15"
+       ry="15"
+       inkscape:label="BotRight" />
+    <rect
+       style="display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.70064;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="rect21283"
+       width="180"
+       height="380"
+       x="66"
+       y="66"
+       rx="15"
+       ry="15"
+       inkscape:label="Left" />
+    <rect
+       style="display:inline;opacity:1;mix-blend-mode:lighten;fill:url(#linearGradient22040);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.72727;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect22030"
+       width="380"
+       height="380"
+       x="66"
+       y="66"
+       rx="12.954545"
+       ry="12.954545"
+       inkscape:label="GradientOverlay"
+       sodipodi:insensitive="true" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2-3"
+     inkscape:label="Border"
+     style="display:inline"
+     sodipodi:insensitive="true">
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#472d59;stroke-width:3.28767;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="rect3291-5"
+       width="176.71233"
+       height="176.71233"
+       x="267.64383"
+       y="67.643837"
+       rx="13.356163"
+       ry="13.356163"
+       inkscape:label="TopRight" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#472d59;stroke-width:3.28768;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="rect3293-6"
+       width="176.71234"
+       height="176.71233"
+       x="267.64383"
+       y="267.64383"
+       rx="13.356171"
+       ry="13.356171"
+       inkscape:label="BotRight" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#472d59;stroke-width:3.3548;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       id="rect21283-2"
+       width="176.6452"
+       height="376.70529"
+       x="67.677399"
+       y="67.677399"
+       rx="13.322601"
+       ry="13.322601"
+       inkscape:label="Left" />
+  </g>
+</svg>
