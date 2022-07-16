@@ -410,6 +410,8 @@ class App {
             bindHotkeys(keyBindingGlobalResizes);
         }
 
+        this.modifiersManager.enable();
+
         enabled = true;
 
         log("Extension enable completed");
