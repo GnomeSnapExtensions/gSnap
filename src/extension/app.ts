@@ -597,6 +597,7 @@ class App {
     disable() {
         log("Extension disable begin");
         enabled = false;
+        this.modifiersManager.destroy();
         this.preview?.forEach(p => { p?.destroy(); p = null });
         this.editor?.forEach(e => { e?.destroy(); e = null; });
         this.tabManager?.forEach(t => { t?.destroy(); t = null });

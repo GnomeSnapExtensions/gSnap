@@ -3,7 +3,7 @@ declare var global: any;
 
 import {log} from './logging';
 
-const Mainloop = imports.mainloop;
+const GLib = imports.gi.GLib;
 
 export enum MODIFIERS_ENUM {
     SHIFT,
@@ -25,9 +25,17 @@ export default class ModifiersManager {
 
     private state: any;
     private previousState: any;
+    private timeoutId: number | null = null;
 
     constructor() {
-        Mainloop.timeout_add(20, this.update.bind(this));
+        this.timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, this.update.bind(this));
+    }
+
+    public destroy() {
+        if (this.timeoutId) {
+            GLib.Source.remove(this.timeoutId);
+            this.timeoutId = null;
+        }
     }
 
     public isHolding(modifier: MODIFIERS_ENUM): boolean {
@@ -47,12 +55,12 @@ export default class ModifiersManager {
 
         if (m === undefined) {
             log('m === undefined');
-            return false;
+            return GLib.SOURCE_REMOVE;
         }
 
         this.state = m;
         if (this.state === this.previousState) {
-            return true;
+            return GLib.SOURCE_CONTINUE;
         }
 
         this.modifiers = [];
@@ -73,6 +81,6 @@ export default class ModifiersManager {
 
         this.previousState = this.state;
 
-        return true;
+        return GLib.SOURCE_CONTINUE;
     }
 }
