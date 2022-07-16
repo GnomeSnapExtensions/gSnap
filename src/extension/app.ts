@@ -317,11 +317,15 @@ class App {
             const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
             this.isGrabbing = true;
 
-            if(validWindow(win) && !useModifier) {
-                activeMonitors().forEach(m => {
-                    this.tabManager[m.index]?.show();
-                });
-            }
+            if (!validWindow(win)) return;
+
+            if (useModifier &&
+                !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL))
+                return;
+
+            activeMonitors().forEach(m => {
+                this.tabManager[m.index]?.show();
+            });
         });
 
         global.display.connect('grab-op-end', (_display: Display, win: Window) => {
