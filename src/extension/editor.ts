@@ -19,10 +19,10 @@ import { LayoutItem } from './layouts';
 // Library imports
 const St = imports.gi.St;
 const Main = imports.ui.main;
+const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 const Clutter = imports.gi.Clutter;
 const ModalDialog = imports.ui.modalDialog;
-const Mainloop = imports.mainloop;
 
 export class ZoneBase {
     private _x: number = 0;
@@ -845,6 +845,7 @@ export class ZonePreview extends ZoneDisplay {
 
 export class ZoneManager extends ZoneDisplay {
     private isShowing: boolean = false;
+    private trackCursorTimeoutId: number | null = null;
 
     constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
         super(monitor, layout, margin);
@@ -882,16 +883,29 @@ export class ZoneManager extends ZoneDisplay {
     public hide() {
         this.isShowing = false;
         super.hide();
+        this.cleanupTrackCursorUpdates();
+    }
+
+    public destroy() {
+        super.destroy();
+        this.cleanupTrackCursorUpdates();
     }
 
     private trackCursorUpdates() {
-        Mainloop.timeout_add(25, () => {
+        this.trackCursorTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 25, () => {
             if (!this.isShowing) {
-                return false;
+                return GLib.SOURCE_REMOVE;
             }
             this.highlightZonesUnderCursor();
-            return true;
+            return GLib.SOURCE_CONTINUE;
         });
+    }
+
+    private cleanupTrackCursorUpdates() {
+        if (this.trackCursorTimeoutId) {
+            GLib.Source.remove(this.trackCursorTimeoutId);
+            this.trackCursorTimeoutId = null;
+        }
     }
 }
 
