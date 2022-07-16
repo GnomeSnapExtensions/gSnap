@@ -1,7 +1,7 @@
 declare var imports: any;
 declare var global: any;
 
-import {log} from './logging';
+import { log } from './logging';
 
 const GLib = imports.gi.GLib;
 
@@ -12,7 +12,7 @@ export enum MODIFIERS_ENUM {
     SUPER = 6
 }
 
-export const MODIFIERS: {[key: number]: MODIFIERS_ENUM} = {
+export const MODIFIERS: { [key: number]: MODIFIERS_ENUM } = {
     0: MODIFIERS_ENUM.SHIFT,
     2: MODIFIERS_ENUM.CONTROL,
     3: MODIFIERS_ENUM.ALT,
@@ -20,14 +20,14 @@ export const MODIFIERS: {[key: number]: MODIFIERS_ENUM} = {
 };
 
 export default class ModifiersManager {
-    private connected: {[key: string]: Function[]} = {};
+    private connected: { [key: string]: Function[] } = {};
     private modifiers: MODIFIERS_ENUM[] = [];
 
     private state: any;
     private previousState: any;
     private timeoutId: number | null = null;
 
-    constructor() {
+    public enable() {
         this.timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, this.update.bind(this));
     }
 
