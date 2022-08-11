@@ -314,10 +314,13 @@ class App {
         });
 
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
+            // only start isGrabbing if is a valid window to avoid conflict 
+            // with dash-to-panel/appIcons.js:1021 where are emitting a grab-op-begin
+            // without never emitting a grab-op-end
+            if (!validWindow(win)) return;
+            
             const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
             this.isGrabbing = true;
-
-            if (!validWindow(win)) return;
 
             if (useModifier &&
                 !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL))
