@@ -6,6 +6,8 @@ import {ShellVersion} from './shellversion';
 import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
 import {ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager} from "./editor";
 
+const Gio = imports.gi.Gio;
+const St = imports.gi.St;
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 import {
@@ -658,52 +660,20 @@ class App {
 const globalApp = new App();
 
 class GSnapStatusButtonClass extends PanelMenu.Button {
-    _init(classname: string) {
+    _init() {
         super._init(0.0, "gSnap", false);
 
-        //Done by default in PanelMenuButton - Just need to override the method
-        if (SHELL_VERSION.version_at_least_34()) {
-            this.add_style_class_name(classname);
-            this.connect('button-press-event', this._onButtonPress);
-        } else {
-            this.actor.add_style_class_name(classname);
-            this.actor.connect('button-press-event', this._onButtonPress);
-        }
+        this._icon = new St.Icon({style_class: 'tiling-icon'});
+        this._icon.gicon = Gio.icon_new_for_string(`${Me.path}/images/tray.svg`);
+        this.add_actor(this._icon);
+        this.connect('button-press-event', this._onButtonPress);
         log("GSnapStatusButton _init done");
     }
 
-    reset() {
-        this.activated = false;
-        if (SHELL_VERSION.version_at_least_34()) {
-            this.remove_style_pseudo_class('activate');
-        } else {
-            this.actor.remove_style_pseudo_class('activate');
-        }
-    }
-
-    activate() {
-        if (SHELL_VERSION.version_at_least_34()) {
-            this.add_style_pseudo_class('activate');
-        } else {
-            this.actor.add_style_pseudo_class('activate');
-        }
-    }
-
-    deactivate() {
-        if (SHELL_VERSION.version_at_least_34()) {
-            this.remove_style_pseudo_class('activate');
-        } else {
-            this.actor.remove_style_pseudo_class('activate');
-        }
-    }
 
     _onButtonPress(_actor: any, _event: any) {
         log(`_onButtonPress Click Toggle Status on system panel ${this}`);
         globalApp.showMenu();
-    }
-
-    _destroy() {
-        this.activated = null;
     }
 }
 
