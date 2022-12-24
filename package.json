@@ -17,6 +17,6 @@
         "build": "tsc && rollup --config rollup.config.js",
         "install-extension": "npm run build && sh install-extension.sh",
         "pack": "cd dist && zip -r ../dist.zip *",
-        "gen_schemas": "npx ts-node src/schemas/extract_settings_type_definition.ts --gschema_xml src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml --output_ts src/extension/settings_data.ts"
+        "gen-schemas": "glib-compile-schemas src/schemas/ && npx ts-node src/schemas/extract_settings_type_definition.ts --gschema_xml src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml --output_ts src/extension/settings_data.ts"
     }
 }
