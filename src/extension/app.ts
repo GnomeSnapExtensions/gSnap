@@ -230,7 +230,7 @@ class App {
 
         let workspaceIndex = WorkspaceManager.get_active_workspace().index();
 
-        this.layouts.workspaces[workspaceIndex][monitorIndex].current = layoutIndex;
+        this.trySetWorkspaceMonitorLayout(workspaceIndex, monitorIndex, layoutIndex);
         this.saveLayouts();
         
         this.tabManager[monitorIndex]?.destroy();
@@ -425,15 +425,39 @@ class App {
         
         // A workspace could have been added. Populate the layouts.workspace array
         let nWorkspaces = WorkspaceManager.get_n_workspaces();
-        log(`refreshLayouts ${this.layouts.workspaces.length} ${nWorkspaces}`)
-        while(this.layouts.workspaces.length < nWorkspaces) {
-            let wk = new Array<WorkspaceMonitorSettings>(activeMonitors().length);
+        let nMonitors = activeMonitors().length;
+        log(`refreshLayouts ${this.layouts.workspaces.length} ${nWorkspaces} ${nMonitors}`)
+        while (this.layouts.workspaces.length < nWorkspaces) {
+            let wk = new Array<WorkspaceMonitorSettings>(nMonitors);
             wk.fill({ current: 0 });
             this.layouts.workspaces.push(wk);
             changed = true;
         }
 
         return changed;
+    }
+
+    private getWorkspaceMonitorSettings(workspaceIdx: number): Array<WorkspaceMonitorSettings> {
+        if (this.layouts.workspaces[workspaceIdx] === undefined) {
+            let wk = new Array<WorkspaceMonitorSettings>(activeMonitors().length);
+            wk.fill({ current: 0 });
+            this.layouts.workspaces[workspaceIdx] = wk;
+        }
+        return this.layouts.workspaces[workspaceIdx];
+    }
+
+    private getWorkspaceMonitorCurrentLayoutOrDefault(workspaceIdx: number, monitorIdx: number): number {
+        let workspaceMonitorSettings = this.getWorkspaceMonitorSettings(workspaceIdx);
+        return workspaceMonitorSettings[monitorIdx]
+            ? workspaceMonitorSettings[monitorIdx].current
+            : 0;
+    }
+
+    private trySetWorkspaceMonitorLayout(workspaceIdx: number, monitorIdx: number, currentLayout: number) {
+        let workspaceMonitorSettings = this.getWorkspaceMonitorSettings(workspaceIdx);
+        if (workspaceMonitorSettings[monitorIdx]) {
+            workspaceMonitorSettings[monitorIdx].current = currentLayout;
+        }
     }
 
     reloadMenu() {
@@ -649,7 +673,7 @@ class App {
     private setToCurrentWorkspace() {
         let currentWorkspaceIdx = WorkspaceManager.get_active_workspace().index();
         activeMonitors().forEach(m => {
-            let currentLayoutIdx = this.layouts.workspaces[currentWorkspaceIdx][m.index].current;
+            let currentLayoutIdx = this.getWorkspaceMonitorCurrentLayoutOrDefault(currentWorkspaceIdx, m.index);
             this.setLayout(currentLayoutIdx, m.index);
         });
     }
