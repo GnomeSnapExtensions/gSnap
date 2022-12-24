@@ -1,13 +1,10 @@
-To regenerate the compiled file, run
+# How to regenerate schemas
 
+In the root directory of the project, simply run the script:
 ```shell
-glib-compile-schemas [PATH TO THIS DIR]
+npm run gen-schemas
 ```
 
-To regenerate the Typescript typings, run
-
-```shell
-bazel run //schemas:extract_settings_type_definition -- \
-  --gschema_xml $PWD/schemas/org.gnome.shell.extensions.gsnap.gschema.xml \
-  --output_ts $PWD/settings_data.ts
-```
+This will both:
+- Recompile the schemas (aka `glib-compile-schemas`).
+- Regenerate the Typescript typings, by running the `extract_settings_type_definition` script.

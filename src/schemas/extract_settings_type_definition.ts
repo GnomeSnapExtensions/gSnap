@@ -1,22 +1,7 @@
 import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
 
-import yargs from "yargs";
-
-const argv = yargs(process.argv.slice(2)).options({
-    gschema_xml: {
-        type: 'string',
-        demandOption: true,
-        description: 'path to schemas/org.gnome.shell.extensions.gsnap.gschema.xml',
-        default: "schemas/org.gnome.shell.extensions.gsnap.gschema.xml"
-    },
-    output_ts: {
-        type: 'string',
-        demandOption: true,
-        description: 'path to output .ts file',
-        default: "settings_data.ts"
-    },
-}).argv;
+import yargs from 'yargs';
 
 /**
  * ConfigKey corresponds to the <key> elements inside of the <schemalist><shema>
@@ -63,7 +48,22 @@ function lookupKeyType(value: string): KeyType | null {
     return Object.values(KeyType).find(v => v === value) || null;
 }
 
-function main() {
+async function main() {
+    const argv = await yargs(process.argv.slice(2)).options({
+        gschema_xml: {
+            type: 'string',
+            demandOption: true,
+            description: 'path to schemas/org.gnome.shell.extensions.gsnap.gschema.xml',
+            default: "schemas/org.gnome.shell.extensions.gsnap.gschema.xml"
+        },
+        output_ts: {
+            type: 'string',
+            demandOption: true,
+            description: 'path to output .ts file',
+            default: "settings_data.ts"
+        },
+    }).argv;
+
     console.log(`Hello, world! reading from ${argv.gschema_xml}, writing to ${argv.output_ts}.`);
     const xml = fs.readFileSync(argv.gschema_xml);
     const keys = parseKeys(xml).sort((a, b): number => {
