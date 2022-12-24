@@ -4,14 +4,19 @@
     "description": "Organize windows in customizable snap zones like FancyZones on Windows.",
     "license": "GPL 2.0",
     "devDependencies": {
+        "@types/jsdom": "^20.0.1",
+        "@types/yargs": "^17.0.17",
+        "jsdom": "^20.0.3",
         "rollup": "^2.70.1",
         "rollup-plugin-copy": "^3.4.0",
-        "typescript": "^4.6.3"
+        "typescript": "^4.6.3",
+        "yargs": "^17.6.2"
     },
     "scripts": {
         "clean": "rm -rf dist build dist.tar.gz",
         "build": "tsc && rollup --config rollup.config.js",
         "install-extension": "npm run build && sh install-extension.sh",
-        "pack": "cd dist && zip -r ../dist.zip *"
+        "pack": "cd dist && zip -r ../dist.zip *",
+        "gen_schemas": "npx ts-node src/schemas/extract_settings_type_definition.ts --gschema_xml src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml --output_ts src/extension/settings_data.ts"
     }
 }
