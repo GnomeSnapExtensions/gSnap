@@ -4,20 +4,8 @@
 
 .tiling-icon
 {
-    width: 24px;
-    height: 24px;
-    background-image: url("images/launcher_16.png");
-    background-size: 16px 16px;
-}
-
-.tiling-icon:hover
-{
-    background-image: url("images/launcher_16_hover.png");
-}
-
-.tiling-icon:activate
-{
-    background-image: url("images/launcher_16_activated.png");
+    width: 16px;
+    height: 16px;
 }
 
 .size-button
