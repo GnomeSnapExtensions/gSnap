@@ -23,8 +23,8 @@ import {
 } from './monitors';
 
 import { 
-    deinitSettings, 
-    getBoolSetting, 
+    deinitSettings,
+    getBoolSetting,
     gridSettings, 
     initSettings,
 } from './settings';
@@ -32,6 +32,7 @@ import {
 import * as SETTINGS from './settings_data';
 
 import { Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
+import { LayoutsUtils } from './layouts_utils';
 import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
 
 /*****************************************************************
@@ -55,7 +56,6 @@ const Main = imports.ui.main;
 const GObject = imports.gi.GObject;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const GLib = imports.gi.GLib;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
@@ -178,10 +178,8 @@ class App {
     private preview: (ZonePreview | null)[];
     private tabManager: (ZoneManager | null)[];
     private modifiersManager: ModifiersManager;
+    private layoutsUtils: LayoutsUtils;
     private isGrabbing: boolean = false;
-
-    private readonly layoutsPath = `${Me.path}/layouts.json`;
-    private readonly layoutsDefaultPath =`${Me.path}/layouts-default.json`;
 
     private currentLayout: Layout;
     public layouts : LayoutsSettings = {
@@ -210,6 +208,7 @@ class App {
         this.tabManager = new Array<ZoneManager>(monitors);
         this.currentLayout = this.layouts.definitions[0];
         this.modifiersManager = new ModifiersManager();
+        this.layoutsUtils = new LayoutsUtils();
     }
     
     private restackConnection: any;
@@ -263,24 +262,10 @@ class App {
     }
 
     enable() {
-        try {
-            let [ok, contents] = GLib.file_get_contents(this.layoutsPath);
-            if (ok) {
-                log("Loaded contents " + contents);
-                this.layouts = JSON.parse(contents);
-                log(JSON.stringify(this.layouts));
-                if(this.refreshLayouts()) {
-                    this.saveLayouts();
-                }
-            }
-        } catch (exception) {
-            log(JSON.stringify(exception));
-            let [ok, contents] = GLib.file_get_contents(this.layoutsDefaultPath);
-            if (ok) {
-                this.layouts = JSON.parse(contents);
-                this.refreshLayouts();
-                this.saveLayouts();
-            }
+        this.layouts = this.layoutsUtils.loadLayoutSettings();
+        log(JSON.stringify(this.layouts));
+        if(this.refreshLayouts()) {
+            this.saveLayouts();
         }
 
         this.setToCurrentWorkspace();
@@ -595,14 +580,13 @@ class App {
             this.editor[m.index]?.destroy();
             this.editor[m.index] = null;
         });
-        GLib.file_set_contents(this.layoutsPath, JSON.stringify(this.layouts));
-        log(JSON.stringify(this.layouts));
+
+        this.layoutsUtils.saveSettings(this.layouts);
 
         var windows = WorkspaceManager.get_active_workspace().list_windows();
         for (let i = 0; i < windows.length; i++) {
             windows[i].unminimize();
         }
-
     }
 
     disable() {
