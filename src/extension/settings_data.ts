@@ -59,7 +59,7 @@ export type KeyBindingSettingName = (
 
 // A setting name for a string-valued setting.
 export type StringSettingName = (
-    "");
+    "layouts-v1");
 
 // Any valid setting name.
 export type AnySettingName = (
@@ -73,6 +73,7 @@ export type AnySettingName = (
     "insets-secondary-left" |
     "insets-secondary-right" |
     "insets-secondary-top" |
+    "layouts-v1" |
     "moveresize-enabled" |
     "preset-resize-1" |
     "preset-resize-10" |
@@ -139,6 +140,9 @@ export class ParsedSettings {
 
     /** Top gap around border of screen for secondary monitor */
     ["insets-secondary-top"]: number = 0;
+
+    /** Layouts in JSON Format (v1) */
+    ["layouts-v1"]: string = '';
 
     /** Enables shortcuts for moving and resizing the current window. */
     ["moveresize-enabled"]: boolean = true;
@@ -256,6 +260,7 @@ export const INSETS_SECONDARY_BOTTOM = "insets-secondary-bottom";
 export const INSETS_SECONDARY_LEFT = "insets-secondary-left";
 export const INSETS_SECONDARY_RIGHT = "insets-secondary-right";
 export const INSETS_SECONDARY_TOP = "insets-secondary-top";
+export const LAYOUTS_V1 = "layouts-v1";
 export const MOVERESIZE_ENABLED = "moveresize-enabled";
 export const PRESET_RESIZE_1 = "preset-resize-1";
 export const PRESET_RESIZE_10 = "preset-resize-10";

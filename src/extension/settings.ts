@@ -16,6 +16,8 @@ export interface SettingsObject {
 
     get_int(name: SETTINGS.NumberSettingName): number | undefined;
 
+    set_string(settingName: SETTINGS.StringSettingName, value: string): boolean;
+
     connect(eventName: string, callback: () => void): any;
 
     disconnect(c: any): void;
@@ -41,6 +43,20 @@ export function getIntSetting(settingsValue: SETTINGS.NumberSettingName) {
     } else {
         return iss;
     }
+}
+
+export function getStringSetting(settingsValue: SETTINGS.StringSettingName) {
+    const value = settings.get_string(settingsValue);
+    if (value === undefined) {
+        log("Undefined settings " + settingsValue);
+        return '';
+    } else {
+        return value;
+    }
+}
+
+export function setStringSetting(settingName: SETTINGS.StringSettingName, value: string): boolean{ 
+    return settings.set_string(settingName, value);
 }
 
 export function initSettings(changed_settings: () => void) {
