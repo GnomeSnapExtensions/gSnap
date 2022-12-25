@@ -4,9 +4,8 @@
     "description": "Organize windows in customizable snap zones like FancyZones on Windows.",
     "license": "GPL 2.0",
     "devDependencies": {
-        "@types/jsdom": "^20.0.1",
         "@types/yargs": "^17.0.17",
-        "jsdom": "^20.0.3",
+        "fast-xml-parser": "^4.0.12",
         "rollup": "^2.70.1",
         "rollup-plugin-copy": "^3.4.0",
         "typescript": "^4.6.3",
