@@ -1,6 +1,5 @@
 import * as fs from 'fs';
-import { JSDOM } from 'jsdom';
-
+import { XMLParser } from 'fast-xml-parser';
 import yargs from 'yargs';
 
 /**
@@ -88,12 +87,12 @@ function generateTypeDefinition(keys: ConfigKey[]): string {
         [KeyType.String]: keys.filter(k => k.type === KeyType.String),
         [KeyType.StringArray]: keys.filter(k => k.type === KeyType.StringArray)
     }
-    
-    for(let s in settings) {
+
+    for (let s in settings) {
         let type = s as KeyType;
         let collection = settings[type];
 
-        if(collection.length == 0) {
+        if (collection.length == 0) {
             collection.push({
                 name: "",
                 type: type,
@@ -110,7 +109,7 @@ function generateTypeDefinition(keys: ConfigKey[]): string {
     });
 
     const constantEntries = keys.map((key: ConfigKey): string => {
-        let constName = key.name.toUpperCase().replace(/-/g , '_');
+        let constName = key.name.toUpperCase().replace(/-/g, '_');
         return `export const ${constName} = "${key.name}";`;
     });
 
@@ -153,26 +152,30 @@ function keyTypeToTypescriptType(keyType: KeyType): string {
 }
 
 function parseKeys(xml: Buffer): ConfigKey[] {
-    const dom = new JSDOM(xml.toString(),
-        {
-            contentType: "application/xml",
-        });
-    const keyElems = dom.window.document.querySelectorAll('schemalist > schema > key');
+    const parser = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: "@_"
+    });
+    const doc = parser.parse(xml);
+
+
     const keys: ConfigKey[] = [];
-    keyElems.forEach((elem: Element) => {
-        const name = elem.getAttribute('name');
+
+    doc.schemalist.schema.key.forEach((element: { [x: string]: any; }) => {
+        const name = element['@_name'];
         if (!name) {
             throw new Error('key is missing name attribute');
         }
-        const type = parseType(elem.getAttribute('type'));
+        const type = parseType(element['@_type']);
         keys.push({
             name,
             type,
             typeRaw: type.toString(),
-            summary: mustGetChildText(elem, 'summary'),
-            defaultLexicalForm: mustGetChildText(elem, 'default'),
+            summary: mustGetChildText(element, 'summary'),
+            defaultLexicalForm: mustGetChildText(element, 'default'),
         });
     });
+
     return keys;
 }
 
@@ -187,10 +190,10 @@ function parseType(t: string | null): KeyType {
     return got;
 }
 
-function mustGetChildText(elem: Element, childName: string): string {
-    const gotText = elem.querySelector(`${childName}`)?.textContent;
-    if (gotText === undefined || gotText == null) {
-        throw new Error(`missing child element ${childName}`);
+function mustGetChildText(element: any, key: string): any {
+    const gotText = element[key]?.toString();
+    if (!gotText) {
+        throw new Error(`${element['@_name']} element is missing ${key} child`);
     }
     return gotText;
 }

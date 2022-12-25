@@ -106,6 +106,7 @@ export type AnySettingName = (
     "preset-resize-9" |
     "show-icon" |
     "show-tabs" |
+    "use-modifier" |
     "window-margin");
 
 export class ParsedSettings {
@@ -238,7 +239,7 @@ export class ParsedSettings {
     /** Show tabs for windows in each zone. */
     ["show-tabs"]: boolean = true;
 
-    /** Use shift modifier to snap windows. */
+    /** Hold CTRL to snap windows */
     ["use-modifier"]: boolean = false;
 
     /** Gaps between windows in the middle of screen */
