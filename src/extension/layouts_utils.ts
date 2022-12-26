@@ -1,5 +1,6 @@
 import { LayoutsSettings } from "./layouts";
 import { log } from "./logging";
+import { ShellVersion } from "./shellversion";
 
 // GJS import system
 declare var imports: any;
@@ -59,9 +60,20 @@ export class LayoutsUtils {
             if(!GLib.file_test(filePath, GLib.FileTest.EXISTS)) return null;
 
             let [ok, contents] = GLib.file_get_contents(filePath);
+
             if (ok) {
                 log(`Found in ${filePath}`);
-                return JSON.parse(contents);
+
+                let contentsString = '';
+                if(ShellVersion.defaultVersion().version_at_least_41()) {
+                    const decoder = new TextDecoder('utf-8');
+                    contentsString = decoder.decode(contents);
+                } else {
+                    const ByteArray = imports.byteArray;
+                    contentsString = ByteArray.toString(contents);
+                }
+
+                return JSON.parse(contentsString);
             }
         } catch (exception) {
             log(JSON.stringify(exception));
