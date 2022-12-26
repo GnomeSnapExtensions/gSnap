@@ -1,7 +1,5 @@
 import { LayoutsSettings } from "./layouts";
 import { log } from "./logging";
-import { getStringSetting, setStringSetting } from "./settings";
-import * as SETTINGS from './settings_data';
 
 // GJS import system
 declare var imports: any;
@@ -9,8 +7,10 @@ const GLib = imports.gi.GLib;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 export class LayoutsUtils {
-    layoutsPath = `${Me.path}/layouts.json`;
-    layoutsDefaultPath =`${Me.path}/layouts-default.json`;
+    get layoutsPath() {
+        const configDir = GLib.get_user_config_dir()
+        return GLib.build_pathv('/', [configDir, 'gSnap', 'layouts.json']);
+    }
 
     public resetToDefault() {
         log('Resetting default LayoutSettings');
@@ -21,41 +21,37 @@ export class LayoutsUtils {
     public saveSettings(layouts: LayoutsSettings) {
         log('Saving LayoutSettings');
         log(JSON.stringify(layouts));
-        setStringSetting(SETTINGS.LAYOUTS_V1, JSON.stringify(layouts));
+        GLib.file_set_contents(this.layoutsPath, JSON.stringify(layouts));
     }
 
     public loadLayoutSettings(): LayoutsSettings {
         log('Loading LayoutSettings');
         let layoutsv1 = this._loadLayoutsV1();
-        if (layoutsv1) {
-            log('Found LayoutSettings v1');
-            return layoutsv1;
-        }
+        if (layoutsv1) return layoutsv1;
 
-        layoutsv1 = this._loadLayoutsV1FromFile();
-        if (layoutsv1) {
-            log('Found LayoutSettings v1 from file');
-            return layoutsv1;
-        }
+        layoutsv1 = this._loadLayoutsV1FromExtensionDir();
+        if (layoutsv1) return layoutsv1;
 
-        log('Load default settings');
         layoutsv1 = this._getDefaultLayoutsV1();
 
         return layoutsv1;
     }
 
     private _loadLayoutsV1(): LayoutsSettings | null {
-        let json = getStringSetting(SETTINGS.LAYOUTS_V1);
-        if (!json || json.length === 0) {
-            return null;
-        }
-        return JSON.parse(json);
+        return this._loadFromJsonFile(this.layoutsPath);
     }
 
-    private _loadLayoutsV1FromFile(): LayoutsSettings | null {
+    private _loadLayoutsV1FromExtensionDir(): LayoutsSettings | null {
+        const oldLayoutsPath = GLib.build_pathv('/', [Me.path, 'layouts.json']);
+        return this._loadFromJsonFile(oldLayoutsPath);
+    }
+
+    private _loadFromJsonFile(path: string): LayoutsSettings | null
+    {
         try {
-            let [ok, contents] = GLib.file_get_contents(this.layoutsPath);
+            let [ok, contents] = GLib.file_get_contents(path);
             if (ok) {
+                log(`Found in ${this.layoutsPath}`);
                 return JSON.parse(contents);
             }
         } catch (exception) {
@@ -65,6 +61,7 @@ export class LayoutsUtils {
     }
 
     private _getDefaultLayoutsV1(): LayoutsSettings {
+        log('Loading default layouts');
         return {
             workspaces: [[{ current: 2 }, { current: 3 }], [{ current: 2 }, { current: 3 }]],
             definitions: [
