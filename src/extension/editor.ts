@@ -77,8 +77,8 @@ export class ZoneBase {
 
     public set x(v : number) {
         if(this._x !== v) {
-        this._x = v;
-        this.positionChanged();
+            this._x = v;
+            this.positionChanged();
         }
     }
 
@@ -88,8 +88,8 @@ export class ZoneBase {
     
     public set y(v : number) {
         if(this._y !== v) {
-        this._y = v;
-        this.positionChanged();
+            this._y = v;
+            this.positionChanged();
         }
     }
 
@@ -99,8 +99,8 @@ export class ZoneBase {
 
     public set width(v : number) {
         if(this._width !== v) {
-        this._width = v;
-        this.sizeChanged();
+            this._width = v;
+            this.sizeChanged();
         }
     }
 
@@ -110,8 +110,8 @@ export class ZoneBase {
 
     public set height(v : number) {
         if(this._height !== v) {
-        this._height = v;
-        this.sizeChanged();
+            this._height = v;
+            this.sizeChanged();
         }
     }
 
@@ -194,14 +194,14 @@ export class Zone extends ZoneBase {
 
     positionChanged() {
         super.positionChanged();
-        this.widget.x = this.innerX;
-        this.widget.y = this.innerY;
+        this.widget.x = Math.max(0, this.innerX);
+        this.widget.y = Math.max(0, this.innerY);
     }
 
     sizeChanged() {
         super.sizeChanged();
-        this.widget.height = this.innerHeight;
-        this.widget.width = this.innerWidth;
+        this.widget.height = Math.max(0, this.innerHeight);
+        this.widget.width = Math.max(0, this.innerWidth);
     }
 
     public hide() {
