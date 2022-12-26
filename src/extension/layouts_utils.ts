@@ -7,9 +7,12 @@ const GLib = imports.gi.GLib;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 export class LayoutsUtils {
+    get configPath() {
+        return GLib.build_pathv('/', [GLib.get_user_config_dir(), 'gSnap']);
+    }
+
     get layoutsPath() {
-        const configDir = GLib.get_user_config_dir()
-        return GLib.build_pathv('/', [configDir, 'gSnap', 'layouts.json']);
+        return GLib.build_filenamev([this.configPath, 'layouts.json']);
     }
 
     public resetToDefault() {
@@ -21,7 +24,11 @@ export class LayoutsUtils {
     public saveSettings(layouts: LayoutsSettings) {
         log('Saving LayoutSettings');
         log(JSON.stringify(layouts));
-        GLib.file_set_contents(this.layoutsPath, JSON.stringify(layouts));
+
+        // 493 dec is 755 octal
+        if(GLib.mkdir_with_parents(this.configPath, 493) === 0) {
+            GLib.file_set_contents(this.layoutsPath, JSON.stringify(layouts));
+        };
     }
 
     public loadLayoutSettings(): LayoutsSettings {
