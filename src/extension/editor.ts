@@ -115,6 +115,14 @@ export class ZoneBase {
         }
     }
 
+    public get minWidth() {
+        return 100 + this.margin * 2;
+    }
+
+    public get minHeight() {
+        return 100 + this.margin * 2;
+    }
+
     public applyPercentages() {
         if (this.parent) {
             if (this.parent.layoutItem.type == 0) {
@@ -407,7 +415,11 @@ export class ZoneGroup extends ZoneBase {
     public splitOtherDirection(zone: Zone) {
         zone.layoutItem.items = [];
 
-        zone.layoutItem.type = this.layoutItem.type == 1 ? 0 : 1;
+        const layoutType = this.layoutItem.type == 1 ? 0 : 1;
+        if(layoutType === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
+        if(layoutType === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
+
+        zone.layoutItem.type = layoutType;
         zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
         zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
         log(JSON.stringify(this.root.layoutItem));
@@ -415,6 +427,9 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public split(zone: Zone) {
+        if(zone.layoutItem.type === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
+        if(zone.layoutItem.type === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
+
         let index = this.children.indexOf(zone);
 
         this.layoutItem.items.splice(index, 0, {
@@ -654,11 +669,22 @@ export class ZoneAnchor {
         if (this.isMoving) {
             if (this.zoneGroup.layoutItem.type == 0) {
                 let delta = x - this.startX;
+                if(delta < 0) {
+                    if(this.zoneA.width + delta < this.zoneA.minWidth) { return; }
+                } else {
+                    if(this.zoneB.width - delta < this.zoneB.minWidth) { return; }
+                }
                 this.zoneA.sizeRight(delta);
                 this.zoneB.sizeLeft(delta);
                 this.startX = x;
             } else {
                 let delta = y - this.startY;
+                if(delta < 0) {
+                    if(this.zoneA.height + delta < this.zoneA.minHeight) { return; }
+                } else {
+                    if(this.zoneB.height - delta < this.zoneB.minHeight) { return; }
+                }
+                
                 this.zoneA.sizeBottom(delta);
                 this.zoneB.sizeTop(delta);
                 this.startY = y;
