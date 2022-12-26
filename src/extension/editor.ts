@@ -327,15 +327,20 @@ export class ZoneTab {
     }
 }
 
+function toRoundedString(val: number, places = 0) {
+    const factor = Math.pow(10, places);
+    return (Math.round((val + Number.EPSILON) * factor) / factor).toFixed(places);
+}
+
 export class EditableZone extends Zone {
     positionChanged() {
         super.positionChanged();
-        this.widget.label = this.layoutItem.length + "%";
+        this.widget.label = `${toRoundedString(this.widget.width)}x${toRoundedString(this.widget.height)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
     }
 
     sizeChanged() {
         super.sizeChanged();
-        this.widget.label = this.layoutItem.length + "%";
+        this.widget.label = `${toRoundedString(this.widget.width)}x${toRoundedString(this.widget.height)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
     }
 
     createWidget(styleClass: string = 'grid-preview') {
