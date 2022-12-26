@@ -49,16 +49,18 @@ export class LayoutsUtils {
     }
 
     private _loadLayoutsV1FromExtensionDir(): LayoutsSettings | null {
-        const oldLayoutsPath = GLib.build_pathv('/', [Me.path, 'layouts.json']);
+        const oldLayoutsPath = GLib.build_filenamev([Me.path, 'layouts.json']);
         return this._loadFromJsonFile(oldLayoutsPath);
     }
 
-    private _loadFromJsonFile(path: string): LayoutsSettings | null
+    private _loadFromJsonFile(filePath: string): LayoutsSettings | null
     {
         try {
-            let [ok, contents] = GLib.file_get_contents(path);
+            if(!GLib.file_test(filePath, GLib.FileTest.EXISTS)) return null;
+
+            let [ok, contents] = GLib.file_get_contents(filePath);
             if (ok) {
-                log(`Found in ${this.layoutsPath}`);
+                log(`Found in ${filePath}`);
                 return JSON.parse(contents);
             }
         } catch (exception) {
