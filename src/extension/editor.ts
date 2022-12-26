@@ -335,12 +335,12 @@ function toRoundedString(val: number, places = 0) {
 export class EditableZone extends Zone {
     positionChanged() {
         super.positionChanged();
-        this.widget.label = `${toRoundedString(this.widget.width)}x${toRoundedString(this.widget.height)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
+        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
     }
 
     sizeChanged() {
         super.sizeChanged();
-        this.widget.label = `${toRoundedString(this.widget.width)}x${toRoundedString(this.widget.height)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
+        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
     }
 
     createWidget(styleClass: string = 'grid-preview') {
