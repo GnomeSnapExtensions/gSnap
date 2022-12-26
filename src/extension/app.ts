@@ -31,7 +31,7 @@ import {
 
 import * as SETTINGS from './settings_data';
 
-import { Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
+import { cloneLayout, Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
 import { LayoutsUtils } from './layouts_utils';
 import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
 
@@ -206,7 +206,7 @@ class App {
         this.editor = new Array<ZoneEditor>(monitors);
         this.preview = new Array<ZonePreview>(monitors);
         this.tabManager = new Array<ZoneManager>(monitors);
-        this.currentLayout = new Array<Layout>(monitors);
+        this.currentLayoutIdxPerMonitor = new Array<number>(monitors);
         this.modifiersManager = new ModifiersManager();
         this.layoutsUtils = new LayoutsUtils();
     }
@@ -228,7 +228,7 @@ class App {
             monitorIndex = getCurrentMonitorIndex();
         }
 
-        this.currentLayout[monitorIndex] = this.layouts.definitions[layoutIndex];
+        this.currentLayoutIdxPerMonitor[monitorIndex] = layoutIndex;
 
         let workspaceIndex = WorkspaceManager.get_active_workspace().index();
 
@@ -239,9 +239,9 @@ class App {
         this.tabManager[monitorIndex] = null;
 
         if (gridSettings[SETTINGS.SHOW_TABS]) {
-            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.currentLayout[monitorIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
         } else {
-            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.currentLayout[monitorIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
         }
 
         this.tabManager[monitorIndex]?.layoutWindows();
@@ -457,7 +457,9 @@ class App {
         let cancelEditingButton = new PopupMenu.PopupMenuItem(_("Cancel Editing"));
         let newLayoutButton = new PopupMenu.PopupMenuItem(_("Create New Layout"));
 
-        let renameLayoutButton = new PopupMenu.PopupMenuItem(_("Rename: " + this.currentLayout[getCurrentMonitorIndex()].name));
+        const currentMonitorLayoutIdx = this.currentLayoutIdxPerMonitor[getCurrentMonitorIndex()];
+        const currentLayout = this.layouts.definitions[currentMonitorLayoutIdx];
+        let renameLayoutButton = new PopupMenu.PopupMenuItem(_("Rename: " + currentLayout.name));
 
         let currentMonitorIndex = getCurrentMonitorIndex();
         if (this.editor[currentMonitorIndex] != null) {
@@ -488,7 +490,8 @@ class App {
 
 
         renameLayoutButton.connect('activate', () => {
-            let currentMonitorLayout = this.currentLayout[getCurrentMonitorIndex()];
+            const currentMonitorLayoutIdx = this.currentLayoutIdxPerMonitor[getCurrentMonitorIndex()];
+            const currentMonitorLayout = this.layouts.definitions[currentMonitorLayoutIdx];
             let dialog = new EntryDialog({
                 label: "test"
             });
@@ -527,8 +530,12 @@ class App {
 
         editLayoutButton.connect('activate', () => {
             activeMonitors().forEach(m => {
+                const currentMonitorLayoutIdx = this.currentLayoutIdxPerMonitor[m.index];
+                const currentMonitorLayout = this.layouts.definitions[currentMonitorLayoutIdx];
+                const editLayout = cloneLayout(currentMonitorLayout);
+
                 this.editor[m.index]?.destroy();
-                this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], this.currentLayout[m.index], gridSettings[SETTINGS.WINDOW_MARGIN]);
+                this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], editLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
             });
 
             var windows = WorkspaceManager.get_active_workspace().list_windows();
@@ -601,8 +608,15 @@ class App {
 
     saveLayouts() {
         activeMonitors().forEach(m => {
-            this.editor[m.index]?.apply();
-            this.editor[m.index]?.destroy();
+            const idx = this.currentLayoutIdxPerMonitor[m.index];
+            const editor = this.editor[m.index];
+            if (editor) {
+                if (editor.layout) {
+                    this.layouts.definitions[idx] = editor.layout;
+                }
+                editor.apply();
+                editor.destroy();
+            }
             this.editor[m.index] = null;
         });
 

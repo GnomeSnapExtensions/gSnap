@@ -14,7 +14,7 @@ import {
 
 import { areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
 
-import { LayoutItem } from './layouts';
+import { Layout, LayoutItem } from './layouts';
 
 // Library imports
 const St = imports.gi.St;
@@ -762,7 +762,7 @@ export class ZoneEditor extends ZoneDisplay {
         return new EditableZone(layout, parent);
     }
 
-    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
+    constructor(monitor: Monitor, public layout: Layout, margin: number) {
         super(monitor, layout, margin);
         this.anchors = [];
     }
