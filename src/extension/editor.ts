@@ -586,19 +586,9 @@ export class ZoneAnchor {
         this.adjustSizes();
         this.widget.connect('button-press-event', () => {
             let [x, y] = global.get_pointer();
-            this.startX = x;
-            this.startY = y;
+            this.startX = Math.floor(x);
+            this.startY = Math.floor(y);
             this.isMoving = !this.isMoving;
-            let a = this.zoneA instanceof ZoneGroup ? "zg" : "z";
-            let b = this.zoneB instanceof ZoneGroup ? "zg" : "z";
-            if (!this.isMoving) {
-
-            }
-            log("sizing " + a + ", " + b);
-        });
-        this.widget.connect('button-release-event', () => {
-            //this.isMoving = false;
-
         });
 
         //this.widgets.push(sizeButton);
@@ -607,47 +597,12 @@ export class ZoneAnchor {
 
     public adjustSizes() {
         if (this.zoneGroup.layoutItem.type == 0) {
-            this.widget.x = this.zoneA.x + this.zoneA.width - this.margin;
-            this.widget.y = this.zoneA.y + this.margin;
-            this.widget.width = this.margin * 2;
-            this.widget.height = this.zoneA.height - (this.margin * 2);
-
-
+            this.widget.x = Math.floor(this.zoneA.x + this.zoneA.width - (this.widget.width/2));
+            this.widget.y = Math.floor(this.zoneA.y + (this.zoneA.height / 2) - (this.widget.height / 2));
         } else {
-            this.widget.y = this.zoneA.y + this.zoneA.height - this.margin;
-            this.widget.x = this.zoneA.x + this.margin;
-            this.widget.height = this.margin * 2;
-            this.widget.width = this.zoneA.width - (this.margin * 2);
-
+            this.widget.y = Math.floor(this.zoneA.y + this.zoneA.height - (this.widget.height/2));
+            this.widget.x = Math.floor(this.zoneA.x + (this.zoneA.width / 2) - (this.widget.width/2));
         }
-    }
-
-    public x(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.x = v;
-        }
-        return this.widget.x;
-    }
-
-    public y(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.y = v;
-        }
-        return this.widget.y;
-    }
-
-    public width(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.width = v;
-        }
-        return this.widget.width;
-    }
-
-    public height(v: number | null = null): number {
-        if (v != null) {
-            return this.widget.height = v;
-        }
-        return this.widget.height;
     }
 
     public hide() {
