@@ -15,31 +15,7 @@ This extensions is developed in freetime.  Developer got to eat, if you like it,
 
 
 ### Installation from source
-You can alternatively manually install the latest version from GitHub master branch:
-
-1. Clone the repository to a folder of your choice.
-
-   ```shell
-   git clone https://github.com/micahosborne/gSnap.git
-   ```
-   Note: It is not recommended to clone the repository directly into. The code gSnap
-   installs into the extensions folder is a compiled version of the code in the
-   git repository, and the files may conflict.)
-
-2. Build and install
-
-   You will need to [install NodeJS](https://nodejs.org) on your
-   system to run the build tool. Then, you can run the installation script to
-   install to `$HOME/.local/share/gnome-shell/extensions/gSnap@micahosborne`.
-   
-   ```shell
-   npm run install-extension
-   ```
-
-3. Log out and log back in. (If you don't want to log out, you can restart gnome
-   shell, which keeps all your windows open. Type `Alt`+`F2`, then type `r` and
-   hit enter.)
-
+Follow the [Development](./DEVELOPING.md) docs.
 
 ### Debugging
 
