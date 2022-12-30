@@ -8,7 +8,7 @@ export interface LayoutItem {
     items: LayoutItem[]
 };
 
-export interface Layout extends LayoutItem{
+export interface Layout extends LayoutItem {
     name: string,
 };
 

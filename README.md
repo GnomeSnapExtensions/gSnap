@@ -43,11 +43,18 @@ To edit a layout follow the instructions below
 
 When done click "Stop Editing"
 
-Layouts are stored in this file.
+Layouts are stored in the default config dir (usually `~/.config/gSnap`). This directory 
+should be user-writable, to save the layouts changes.
 ```shell
-gedit ~/.local/share/gnome-shell/extensions/gSnap@micahosborne/layouts.json 
+gedit ~/.config/gSnap/layouts.json 
 ```
-After editing layouts disable and re-enable the plugin
+
+Previous versions of the extensions used to store the layouts file in the extension directory 
+(`~/.local/share/gnome-shell/extensions/gSnap@micahosborne/`). This has been deprecated to allow 
+for the extension to be installed as a system package. When upgrading, the extension will copy 
+the old file and save it in the new path.
+
+After editing layouts disable and re-enable the plugin.
 
 Layouts are defined via json here is a 50% 50% split layout
 ```jsonc

@@ -21,6 +21,7 @@ interface Version {
 
 const VERSION_34: Version = {major:3, minor: 34};
 const VERSION_36: Version = {major:3, minor: 36};
+const VERSION_41: Version = {major:41, minor: 0};
 
 /**
  * ShellVersion is used to parse the version string
@@ -61,6 +62,10 @@ export class ShellVersion {
 
     version_at_least_36(): boolean {
         return versionGreaterThanOrEqualTo(this, VERSION_36);
+    }
+
+    version_at_least_41(): boolean {
+        return versionGreaterThanOrEqualTo(this, VERSION_41);
     }
 
     print_version  () {
