@@ -1,10 +1,10 @@
 // GJS import system
 declare var imports: any;
 declare var global: any;
-import {log} from './logging';
-import {ShellVersion} from './shellversion';
-import {bind as bindHotkeys, unbind as unbindHotkeys, Bindings} from './hotkeys';
-import {ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager} from "./editor";
+import { log } from './logging';
+import { ShellVersion } from './shellversion';
+import { bind as bindHotkeys, unbind as unbindHotkeys, Bindings } from './hotkeys';
+import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager } from "./editor";
 
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
@@ -17,21 +17,21 @@ import {
     WorkspaceManager as WorkspaceManagerInterface
 } from "./gnometypes";
 
-import { 
+import {
     activeMonitors,
     getCurrentMonitorIndex
 } from './monitors';
 
-import { 
+import {
     deinitSettings,
     getBoolSetting,
-    gridSettings, 
+    gridSettings,
     initSettings,
 } from './settings';
 
 import * as SETTINGS from './settings_data';
 
-import { Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
+import { cloneLayout, Layout, LayoutsSettings, WorkspaceMonitorSettings } from './layouts';
 import { LayoutsUtils } from './layouts_utils';
 import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
 
@@ -181,8 +181,8 @@ class App {
     private layoutsUtils: LayoutsUtils;
     private isGrabbing: boolean = false;
 
-    private currentLayout: Layout;
-    public layouts : LayoutsSettings = {
+    private currentLayoutIdxPerMonitor: number[];
+    public layouts: LayoutsSettings = {
         // [workspaceindex][monitorindex]
         workspaces: [
             [{ current: 0 }, { current: 0 }],
@@ -194,8 +194,8 @@ class App {
                 name: "2 Column",
                 length: 100,
                 items: [
-                    {type:0, length: 50, items: []},
-                    {type:0, length: 50, items: []}
+                    { type: 0, length: 50, items: [] },
+                    { type: 0, length: 50, items: [] }
                 ]
             },
         ]
@@ -206,11 +206,11 @@ class App {
         this.editor = new Array<ZoneEditor>(monitors);
         this.preview = new Array<ZonePreview>(monitors);
         this.tabManager = new Array<ZoneManager>(monitors);
-        this.currentLayout = this.layouts.definitions[0];
+        this.currentLayoutIdxPerMonitor = new Array<number>(monitors);
         this.modifiersManager = new ModifiersManager();
         this.layoutsUtils = new LayoutsUtils();
     }
-    
+
     private restackConnection: any;
     private workspaceSwitchedConnect: any;
     private workareasChangedConnect: any;
@@ -219,30 +219,31 @@ class App {
         if (this.layouts.definitions.length <= layoutIndex) {
             return;
         }
-        
-        this.currentLayout = this.layouts.definitions[layoutIndex];
+
         if (this.layouts.workspaces == null) {
             this.layouts.workspaces = [];
         }
 
-        if(monitorIndex === -1 ) {
+        if (monitorIndex === -1) {
             monitorIndex = getCurrentMonitorIndex();
         }
+
+        this.currentLayoutIdxPerMonitor[monitorIndex] = layoutIndex;
 
         let workspaceIndex = WorkspaceManager.get_active_workspace().index();
 
         this.trySetWorkspaceMonitorLayout(workspaceIndex, monitorIndex, layoutIndex);
         this.saveLayouts();
-        
+
         this.tabManager[monitorIndex]?.destroy();
         this.tabManager[monitorIndex] = null;
 
         if (gridSettings[SETTINGS.SHOW_TABS]) {
-            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
         } else {
-            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.currentLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
         }
-       
+
         this.tabManager[monitorIndex]?.layoutWindows();
         this.reloadMenu();
     }
@@ -252,6 +253,7 @@ class App {
         this.preview[monitorIndex] = null;
 
         this.preview[monitorIndex] = new ZonePreview(activeMonitors()[monitorIndex], layout, gridSettings[SETTINGS.WINDOW_MARGIN]);
+        this.preview[monitorIndex]!.show();
     }
 
     hideLayoutPreview() {
@@ -264,7 +266,7 @@ class App {
     enable() {
         this.layouts = this.layoutsUtils.loadLayoutSettings();
         log(JSON.stringify(this.layouts));
-        if(this.refreshLayouts()) {
+        if (this.refreshLayouts()) {
             this.saveLayouts();
         }
 
@@ -281,13 +283,13 @@ class App {
             && window.get_window_type() == WindowType.NORMAL;
 
         global.display.connect('window-created', (_display: Display, win: Window) => {
-            if(validWindow(win)) {
+            if (validWindow(win)) {
                 activeMonitors().forEach(m => {
                     this.tabManager[m.index]?.layoutWindows();
                 });
             }
         });
-        
+
         global.display.connect('in-fullscreen-changed', (_display: Display) => {
             if (global.display.get_monitor_in_fullscreen(0)) {
                 activeMonitors().forEach(m => {
@@ -297,7 +299,7 @@ class App {
             } else {
                 this.setToCurrentWorkspace();
             }
-            
+
         });
 
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
@@ -305,7 +307,7 @@ class App {
             // with dash-to-panel/appIcons.js:1021 where are emitting a grab-op-begin
             // without never emitting a grab-op-end
             if (!validWindow(win)) return;
-            
+
             const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
             this.isGrabbing = true;
 
@@ -322,7 +324,7 @@ class App {
             const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
             this.isGrabbing = false;
 
-            if(!validWindow(win)) {
+            if (!validWindow(win)) {
                 return;
             }
 
@@ -350,7 +352,7 @@ class App {
                 if (!this.isGrabbing) {
                     return;
                 }
-    
+
                 if (this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
                     activeMonitors().forEach(m => this.tabManager[m.index]?.show());
                 } else {
@@ -366,7 +368,7 @@ class App {
         });
 
         this.workspaceSwitchedConnect = WorkspaceManager.connect('workspace-switched', () => {
-            if(this.refreshLayouts()) {
+            if (this.refreshLayouts()) {
                 this.saveLayouts();
             }
 
@@ -407,9 +409,9 @@ class App {
         log("Extension enable completed");
     }
 
-    refreshLayouts() : boolean {
+    refreshLayouts(): boolean {
         let changed = false;
-        
+
         // A workspace could have been added. Populate the layouts.workspace array
         let nWorkspaces = WorkspaceManager.get_n_workspaces();
         let nMonitors = activeMonitors().length;
@@ -456,7 +458,9 @@ class App {
         let cancelEditingButton = new PopupMenu.PopupMenuItem(_("Cancel Editing"));
         let newLayoutButton = new PopupMenu.PopupMenuItem(_("Create New Layout"));
 
-        let renameLayoutButton = new PopupMenu.PopupMenuItem(_("Rename: " + this.currentLayout.name));
+        const currentMonitorLayoutIdx = this.currentLayoutIdxPerMonitor[getCurrentMonitorIndex()];
+        const currentLayout = this.layouts.definitions[currentMonitorLayoutIdx];
+        let renameLayoutButton = new PopupMenu.PopupMenuItem(_("Rename: " + currentLayout.name));
 
         let currentMonitorIndex = getCurrentMonitorIndex();
         if (this.editor[currentMonitorIndex] != null) {
@@ -465,13 +469,12 @@ class App {
             launcher.menu.addMenuItem(cancelEditingButton);
         } else {
             const monitorsCount = activeMonitors().length;
-            for(let mI = 0; mI < monitorsCount; mI++)
-            {
-                if(monitorsCount > 1) {
+            for (let mI = 0; mI < monitorsCount; mI++) {
+                if (monitorsCount > 1) {
                     let monitorName = new PopupMenu.PopupSubMenuMenuItem(_(`Monitor ${mI}`));
                     launcher.menu.addMenuItem(monitorName);
 
-                    this.createLayoutMenuItems(mI).forEach(i => 
+                    this.createLayoutMenuItems(mI).forEach(i =>
                         (<any>monitorName).menu.addMenuItem(i));
                 } else {
                     this.createLayoutMenuItems(mI).forEach(i =>
@@ -488,13 +491,15 @@ class App {
 
 
         renameLayoutButton.connect('activate', () => {
+            const currentMonitorLayoutIdx = this.currentLayoutIdxPerMonitor[getCurrentMonitorIndex()];
+            const currentMonitorLayout = this.layouts.definitions[currentMonitorLayoutIdx];
             let dialog = new EntryDialog({
                 label: "test"
             });
-            dialog.label.text = "Rename Layout " + this.currentLayout.name;
-            dialog.entry.text = this.currentLayout.name;
+            dialog.label.text = "Rename Layout " + currentMonitorLayout.name;
+            dialog.entry.text = currentMonitorLayout.name;
             dialog.onOkay = (text: string) => {
-                this.currentLayout.name = text;
+                currentMonitorLayout.name = text;
                 this.saveLayouts();
                 this.reloadMenu();
             }
@@ -526,8 +531,14 @@ class App {
 
         editLayoutButton.connect('activate', () => {
             activeMonitors().forEach(m => {
+                const currentMonitorLayoutIdx = this.currentLayoutIdxPerMonitor[m.index];
+                const currentMonitorLayout = this.layouts.definitions[currentMonitorLayoutIdx];
+                const editLayout = cloneLayout(currentMonitorLayout);
+
                 this.editor[m.index]?.destroy();
-                this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], this.currentLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
+                this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], editLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
+                this.editor[m.index]?.init();
+                this.editor[m.index]?.show();
             });
 
             var windows = WorkspaceManager.get_active_workspace().list_windows();
@@ -579,7 +590,7 @@ class App {
         });
     }
 
-    createLayoutMenuItems(monitorIndex: number) : Array<any> {
+    createLayoutMenuItems(monitorIndex: number): Array<any> {
         let items = [];
         for (let i = 0; i < this.layouts.definitions.length; i++) {
             let item = new PopupMenu.PopupMenuItem(_(this.layouts.definitions[i].name == null ? "Layout " + i : this.layouts.definitions[i].name));
@@ -600,8 +611,15 @@ class App {
 
     saveLayouts() {
         activeMonitors().forEach(m => {
-            this.editor[m.index]?.apply();
-            this.editor[m.index]?.destroy();
+            const idx = this.currentLayoutIdxPerMonitor[m.index];
+            const editor = this.editor[m.index];
+            if (editor) {
+                if (editor.layout) {
+                    this.layouts.definitions[idx] = editor.layout;
+                }
+                editor.apply();
+                editor.destroy();
+            }
             this.editor[m.index] = null;
         });
 
@@ -635,7 +653,7 @@ class App {
             monitorsChangedConnect = false;
         }
 
-        if(this.workareasChangedConnect) {
+        if (this.workareasChangedConnect) {
             global.display.disconnect(this.workareasChangedConnect);
             this.workareasChangedConnect = false;
         }
@@ -671,7 +689,7 @@ class GSnapStatusButtonClass extends PanelMenu.Button {
     _init() {
         super._init(0.0, "gSnap", false);
 
-        this._icon = new St.Icon({style_class: 'tiling-icon'});
+        this._icon = new St.Icon({ style_class: 'tiling-icon' });
         this._icon.gicon = Gio.icon_new_for_string(`${Me.path}/images/tray.svg`);
         this.add_actor(this._icon);
         this.connect('button-press-event', this._onButtonPress);
@@ -686,8 +704,8 @@ class GSnapStatusButtonClass extends PanelMenu.Button {
 }
 
 const GSnapStatusButton = GObject.registerClass({
-        GTypeName: 'GSnapStatusButton',
-    }, GSnapStatusButtonClass
+    GTypeName: 'GSnapStatusButton',
+}, GSnapStatusButtonClass
 );
 
 function changed_settings() {
