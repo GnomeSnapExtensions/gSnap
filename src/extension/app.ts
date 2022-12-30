@@ -181,7 +181,7 @@ class App {
     private layoutsUtils: LayoutsUtils;
     private isGrabbing: boolean = false;
 
-    private currentLayout: Layout[];
+    private currentLayoutIdxPerMonitor: number[];
     public layouts: LayoutsSettings = {
         // [workspaceindex][monitorindex]
         workspaces: [
