@@ -202,7 +202,7 @@ export interface ClutterActor {
     // remove_action_by_name(name): someType;
     // remove_all_children(): someType;
     // remove_all_transitions(): someType;
-    // remove_child(child): someType;
+    remove_child(widget: ClutterActor): void;
     // remove_clip(): someType;
     // remove_constraint(constraint): someType;
     // remove_constraint_by_name(name): someType;
@@ -214,10 +214,10 @@ export interface ClutterActor {
     // save_easing_state(): someType;
     // set_allocation(box): someType;
     // set_background_color(color): someType;
-    // set_child_above_sibling(child, sibling): someType;
-    // set_child_at_index(child, index_): someType;
-    // set_child_below_sibling(child, sibling): someType;
-    // set_child_transform(transform): someType;
+    set_child_above_sibling(child: ClutterActor, sibling: ClutterActor): void;
+    set_child_at_index(child: ClutterActor, index_: number): void;
+    set_child_below_sibling(child: ClutterActor, sibling: ClutterActor): void;
+    // set_child_transform(transform): void;
     // set_clip(xoff, yoff, width, height): someType;
     // set_clip_to_allocation(clip_set): someType;
     // set_content(content): someType;
@@ -357,7 +357,7 @@ interface ClutterContainer {
     // get_children(): someType;
     // lower_child(actor, sibling): someType;
     // raise_child(actor, sibling): someType;
-    // remove_actor(actor): someType;
+    remove_actor(actor: ClutterActor): void;
     // sort_depth_order(): someType;
 }
 
@@ -742,6 +742,10 @@ export interface GridLayout extends LayoutManager {
     // set_orientation(orientation)
     set_row_homogeneous(homogeneous: boolean): void;
     // set_row_spacing(spacing)
+}
+
+export interface FixedLayout extends LayoutManager {
+
 }
 
 export interface SignalMethods {

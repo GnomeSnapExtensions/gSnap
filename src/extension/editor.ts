@@ -5,8 +5,6 @@ import { log } from './logging';
 
 import {
     ClutterActor,
-    MetaWindow,
-    StBoxLayout,
     StButton,
     StWidget,
     Window
@@ -180,11 +178,13 @@ export class ZoneBase {
 
 export class Zone extends ZoneBase {
     public widget!: StWidget;
+    public stage: ClutterActor;
 
-    constructor(layoutItem: LayoutItem, parent: ZoneGroup | null) {
+    constructor(layoutItem: LayoutItem, parent: ZoneGroup | null, stage: ClutterActor) {
         super(layoutItem, parent);
         this.createWidget();
-        Main.uiGroup.insert_child_above(this.widget, global.window_group);
+        this.stage = stage;
+        this.stage.add_child(this.widget);
     }
 
     public createWidget(styleClass: string = 'grid-preview') {
@@ -226,7 +226,7 @@ export class Zone extends ZoneBase {
 
     public destroy() {
         this.hide();
-        Main.uiGroup.remove_actor(this.widget);
+        this.stage.remove_child(this.widget);
     }
 }
 
@@ -341,6 +341,9 @@ function toRoundedString(val: number, places = 0) {
 }
 
 export class EditableZone extends Zone {
+    constructor(layoutItem: LayoutItem, parent: ZoneGroup | null, stage: ClutterActor) {
+        super(layoutItem, parent, stage);
+    }
     positionChanged() {
         super.positionChanged();
         this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
@@ -368,7 +371,6 @@ export class EditableZone extends Zone {
                 this.parent?.remove(this);
             }
         });
-        this.widget;
     }
 }
 
@@ -487,9 +489,13 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public applyLayout(root: ZoneDisplay) {
-        this.destroy();
         this.root = root;
+
+        for (let i = 0; i < this.children.length; i++) {
+            this.children[i].destroy();
+        }
         this.children = [];
+
         for (let i = 0; i < this.layoutItem.items.length; i++) {
             let item = this.layoutItem.items[i];
             if (item.items && item.items.length > 0) {
@@ -515,7 +521,6 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public destroy() {
-
         super.destroy();
         this.hide();
         for (let i = 0; i < this.children.length; i++) {
@@ -579,7 +584,7 @@ export class ZoneAnchor {
     public isMoving: boolean = false;
     public motionConnection = null;
 
-    constructor(protected zoneGroup: ZoneGroup, protected zoneA: ZoneBase, protected zoneB: ZoneBase, protected margin: number) {
+    constructor(protected zoneGroup: ZoneGroup, protected zoneA: ZoneBase, protected zoneB: ZoneBase, protected margin: number, protected stage: ClutterActor) {
         this.widget = new St.Button({ style_class: 'size-button' });
         this.widget.label = " = ";
         this.widget.visible = true;
@@ -591,8 +596,7 @@ export class ZoneAnchor {
             this.isMoving = !this.isMoving;
         });
 
-        //this.widgets.push(sizeButton);
-        Main.uiGroup.insert_child_above(this.widget, global.window_group);
+        this.stage.add_child(this.widget);
     }
 
     public adjustSizes() {
@@ -617,7 +621,7 @@ export class ZoneAnchor {
 
     public destroy() {
         this.hide();
-        Main.uiGroup.remove_child(this.widget);
+        this.stage.remove_child(this.widget);
     }
 
     mouseMoved(x: number, y: number) {
@@ -649,6 +653,7 @@ export class ZoneAnchor {
 }
 
 export class ZoneDisplay extends ZoneGroup {
+    protected stage: ClutterActor;
     protected motionConnection: any;
     protected workArea: WorkArea | null;
     protected monitor: Monitor;
@@ -666,13 +671,25 @@ export class ZoneDisplay extends ZoneGroup {
         this.margin = margin;
 
         this.workArea = getWorkAreaByMonitor(this.monitor);
+        this.stage = new Clutter.Actor({
+            name: 'gsnap-stage',
+            visible: false,
+            width: 1000,
+            height: 1000,
+            x: 0,
+            y: 0,
+        });
+        Main.uiGroup.insert_child_above(this.stage, global.window_group);
+
         this.init();
     }
 
 
     public destroy() {
         super.destroy();
-
+        if(Main.uiGroup.get_children().indexOf(this.stage) >= 0) {
+            Main.uiGroup.remove_child(this.stage);
+        }
     }
 
     public moveWindowToWidgetAtCursor(win: Window) {
@@ -712,7 +729,7 @@ export class ZoneDisplay extends ZoneGroup {
 
 
     public createZone(layout: LayoutItem, parent: ZoneGroup) {
-        return new Zone(layout, parent);
+        return new Zone(layout, parent, this.stage);
     }
 
     public reinit() {
@@ -730,17 +747,26 @@ export class ZoneDisplay extends ZoneGroup {
             this.adjustLayout(this);
         }
     }
+
+    public show(): void {
+        super.show();
+        this.stage.visible = true;
+    }
+    
+    public hide(): void {
+        super.hide();
+        this.stage.visible = false;
+    }
 }
 
 export class ZoneEditor extends ZoneDisplay {
-    public stage: StBoxLayout | null = null;
     public motionConnection = null;
     public anchors: ZoneAnchor[];
     public isMoving: boolean = false;
 
 
     public createZone(layout: LayoutItem, parent: ZoneGroup) {
-        return new EditableZone(layout, parent);
+        return new EditableZone(layout, parent, this.stage);
     }
 
     constructor(monitor: Monitor, public layout: Layout, margin: number) {
@@ -798,7 +824,7 @@ export class ZoneEditor extends ZoneDisplay {
                 log("--- --- AFTER IS NULL --- ---" + i);
                 log(JSON.stringify(z.children));
             }
-            let zoneAnchor = new ZoneAnchor(z, before, after, this.margin);
+            let zoneAnchor = new ZoneAnchor(z, before, after, this.margin, this.stage);
             this.anchors.push(zoneAnchor);
         }
     }
@@ -901,7 +927,7 @@ export class TabbedZoneManager extends ZoneManager {
     }
 
     public createZone(layout: LayoutItem, parent: ZoneGroup) {
-        return new TabbedZone(layout, parent);
+        return new TabbedZone(layout, parent, this.stage);
     }
 }
 

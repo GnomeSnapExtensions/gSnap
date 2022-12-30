@@ -537,6 +537,8 @@ class App {
 
                 this.editor[m.index]?.destroy();
                 this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], editLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
+                this.editor[m.index]?.init();
+                this.editor[m.index]?.show();
             });
 
             var windows = WorkspaceManager.get_active_workspace().list_windows();
