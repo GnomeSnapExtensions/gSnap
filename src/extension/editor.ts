@@ -830,6 +830,7 @@ export class ZoneEditor extends ZoneDisplay {
     }
 
     applyLayout(root: ZoneDisplay) {
+        this.stage.remove_all_children();
         super.applyLayout(root);
     }
 

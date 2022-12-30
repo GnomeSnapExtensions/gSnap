@@ -200,7 +200,7 @@ export interface ClutterActor {
     // realize(): someType;
     // remove_action(action): someType;
     // remove_action_by_name(name): someType;
-    // remove_all_children(): someType;
+    remove_all_children(): void;
     // remove_all_transitions(): someType;
     remove_child(widget: ClutterActor): void;
     // remove_clip(): someType;
