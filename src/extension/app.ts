@@ -253,6 +253,7 @@ class App {
         this.preview[monitorIndex] = null;
 
         this.preview[monitorIndex] = new ZonePreview(activeMonitors()[monitorIndex], layout, gridSettings[SETTINGS.WINDOW_MARGIN]);
+        this.preview[monitorIndex]!.show();
     }
 
     hideLayoutPreview() {
