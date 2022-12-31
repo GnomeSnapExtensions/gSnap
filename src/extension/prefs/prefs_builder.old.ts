@@ -39,7 +39,7 @@ function box_append(box: any, child: any) {
 }
 
 export class PrefsBuilder {
-    accel_tab(notebook: any) {
+    shortcuts_tab(notebook: any) {
         let settings = imports.misc.extensionUtils.getSettings();
         let ks_grid = new Gtk.Grid({
             column_spacing: 10,
@@ -74,7 +74,7 @@ export class PrefsBuilder {
         cellrend = new Gtk.CellRendererText();
 
         col = new Gtk.TreeViewColumn({
-            'title': 'Keybinding',
+            'title': 'Shortcut',
             'expand': true
         });
 
@@ -119,7 +119,7 @@ export class PrefsBuilder {
         });
 
         col = new Gtk.TreeViewColumn({
-            'title': 'Accel'
+            'title': 'Keybinding'
         });
 
         col.pack_end(cellrend, false);
@@ -141,7 +141,7 @@ export class PrefsBuilder {
         let ks_window = new Gtk.ScrolledWindow({ 'vexpand': true });
         set_child(ks_window, ks_grid)
         let ks_label = new Gtk.Label({
-            label: "Accelerators",
+            label: "Keybindings",
             halign: Gtk.Align.START,
             use_markup: false,
         });
@@ -217,8 +217,8 @@ export class PrefsBuilder {
         notebook.append_page(mg_window, mg_label);
     }
 
-    help_tab(notebook: any) {
-        let weblink = 'https://github.com/micahosborne/gSnap/blob/master/README.md';
+    info_tab(notebook: any) {
+        let weblink = 'https://github.com/GnomeSnapExtensions/gSnap/issues';
         let hl_link = new Gtk.LinkButton({
             label: weblink,
             uri: weblink,
@@ -226,7 +226,7 @@ export class PrefsBuilder {
             valign: Gtk.Align.CENTER,
         });
         let hl_label = new Gtk.Label({
-            label: "Help",
+            label: "Report a bug",
             halign: Gtk.Align.START,
             use_markup: false,
         });
@@ -237,10 +237,10 @@ export class PrefsBuilder {
         let notebook = new Gtk.Notebook();
 
         this.basics_tab(notebook);
-        this.accel_tab(notebook);
+        this.shortcuts_tab(notebook);
         //presets_tab(notebook);
         this.margins_tab(notebook);
-        this.help_tab(notebook);
+        this.info_tab(notebook);
 
         let main_vbox = new Gtk.Box({
             orientation: Gtk.Orientation.VERTICAL,

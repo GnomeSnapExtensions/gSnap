@@ -80,7 +80,7 @@ export class AdwPrefsBuilder {
 
         const titleRenderer = new Gtk.CellRendererText();
         const titleColumn = new Gtk.TreeViewColumn({
-            title: 'Keybinding',
+            title: 'Shortcut',
             expand: true
         });
 
@@ -118,7 +118,7 @@ export class AdwPrefsBuilder {
         });
 
         const keybindingsColumn = new Gtk.TreeViewColumn({
-            title: 'Accel'
+            title: 'Keybindings'
         });
         keybindingsColumn.pack_end(keybindingsCellRenderer, false);
         keybindingsColumn.add_attribute(keybindingsCellRenderer, 'accel-mods', 2);
