@@ -14,7 +14,7 @@ export default defineConfig([
         ]
     },
     {
-        input: "build/prefs_builder.js",
+        input: "build/prefs/prefs.js",
         output: {
             file: "dist/prefs.js",
             format: "cjs",

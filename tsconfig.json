@@ -8,5 +8,8 @@
     "downlevelIteration": true,            /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
     "outDir": "build/"
   },
-  "include": [ "src/extension/*.ts" ],
+  "include": [ 
+    "src/extension/*.ts",
+    "src/extension/prefs/*.ts"
+   ],
 }

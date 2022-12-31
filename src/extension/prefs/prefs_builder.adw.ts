@@ -1,7 +1,6 @@
 // Library imports
 declare var imports: any;
 const {
-    Adw,
     Gio,
     Gtk,
     GObject,
@@ -27,13 +26,14 @@ const pretty_names = {
 
 export class AdwPrefsBuilder {
     private settings: any;
+    private _Adw = imports.gi.Adw;
 
     constructor() {
         this.settings = imports.misc.extensionUtils.getSettings();
     }
 
     basics() {
-        const group = new Adw.PreferencesGroup({
+        const group = new this._Adw.PreferencesGroup({
             title: 'Basics'
         });
 
@@ -48,7 +48,7 @@ export class AdwPrefsBuilder {
     }
 
     margins() {
-        const group = new Adw.PreferencesGroup({
+        const group = new this._Adw.PreferencesGroup({
             title: 'Margins'
         });
 
@@ -61,7 +61,7 @@ export class AdwPrefsBuilder {
     }
 
     shortcuts() {
-        const group = new Adw.PreferencesGroup({
+        const group = new this._Adw.PreferencesGroup({
             title: 'Shortcuts'
         });
 
@@ -136,7 +136,7 @@ export class AdwPrefsBuilder {
 
 
     info() {
-        const group = new Adw.PreferencesGroup({
+        const group = new this._Adw.PreferencesGroup({
             title: 'gSnap'
         });
 
@@ -154,7 +154,7 @@ export class AdwPrefsBuilder {
 
     public build(window: any) {
         // Create a preferences page and group
-        const page = new Adw.PreferencesPage();
+        const page = new this._Adw.PreferencesPage();
 
         page.add(this.info());
         page.add(this.basics());
@@ -172,7 +172,7 @@ export class AdwPrefsBuilder {
         });
         this.settings.bind(setting, toggle, 'active', Gio.SettingsBindFlags.DEFAULT);
 
-        const row = new Adw.ActionRow({
+        const row = new this._Adw.ActionRow({
             title,
             subtitle,
             activatable_widget: toggle,
@@ -186,7 +186,7 @@ export class AdwPrefsBuilder {
         spin.set_valign(Gtk.Align.CENTER);
         this.settings.bind(setting, spin.get_adjustment(), 'value', Gio.SettingsBindFlags.DEFAULT);
 
-        const row = new Adw.ActionRow({
+        const row = new this._Adw.ActionRow({
             title,
             subtitle,
             activatableWidget: spin
@@ -201,7 +201,7 @@ export class AdwPrefsBuilder {
             halign: Gtk.Align.CENTER,
             valign: Gtk.Align.CENTER,
         });
-        const row = new Adw.ActionRow({
+        const row = new this._Adw.ActionRow({
             title,
             activatable_widget: button,
         });
