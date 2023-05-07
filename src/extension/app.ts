@@ -12,6 +12,7 @@ const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 import {
     Display,
+    Rectangle,
     Window,
     WindowType,
     WorkspaceManager as WorkspaceManagerInterface
@@ -263,6 +264,15 @@ class App {
         });
     }
 
+    /** Returns true if the settings allow to span multiple zones and 
+     *  the user is holding ALT. The user must enable it in the settings
+     *  and it is not possible to span multiple zones in "tab" mode */
+    canSpanMultipleZones() {
+        return !getBoolSetting(SETTINGS.SHOW_TABS) &&
+                getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES) &&
+                this.modifiersManager.isHolding(MODIFIERS_ENUM.ALT);
+    }
+
     enable() {
         this.layouts = this.layoutsUtils.loadLayoutSettings();
         log(JSON.stringify(this.layouts));
@@ -308,14 +318,17 @@ class App {
             // without never emitting a grab-op-end
             if (!validWindow(win)) return;
 
+            const spanMultipleZones = this.canSpanMultipleZones();
+
             const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
             this.isGrabbing = true;
 
             if (useModifier &&
                 !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL))
                 return;
-
+            
             activeMonitors().forEach(m => {
+                this.tabManager[m.index]?.allow_multiple_zones_selection(spanMultipleZones);
                 this.tabManager[m.index]?.show();
             });
         });
@@ -328,33 +341,55 @@ class App {
                 return;
             }
 
+            let selection: Rectangle | undefined;
             activeMonitors().forEach(m => {
-                this.tabManager[m.index]?.hide();
-
                 if (!useModifier || this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
                     if (!trackedWindows.includes(win)) {
                         trackedWindows.push(win);
                     }
-
-                    this.tabManager[m.index]?.moveWindowToWidgetAtCursor(win);
+                    
+                    if (!selection) { // ensure window is moved one time only
+                        selection = this.tabManager[m.index]?.getSelectionRect();
+                        // may be undefined if there are no zones selected in this monitor
+                        if (selection) {
+                            win.move_frame(true, selection.x, selection.y);
+                            win.move_resize_frame(true, selection.x, selection.y, selection.width, selection.height);
+                        }
+                    }
+                    
+                    this.tabManager[m.index]?.hide(); // hide zones after the window was moved
                     this.tabManager[m.index]?.layoutWindows();
                     return;
                 }
 
+                this.tabManager[m.index]?.hide();
                 if (useModifier && !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL) && trackedWindows.includes(win)) {
                     trackedWindows.splice(trackedWindows.indexOf(win), 1);
                 }
             });
         });
 
-        if (getBoolSetting(SETTINGS.USE_MODIFIER)) {
+        if (getBoolSetting(SETTINGS.USE_MODIFIER) || getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES)) {
+            // callback run when a modifier change state (e.g from not pressed to pressed)
             this.modifiersManager.connect("changed", () => {
                 if (!this.isGrabbing) {
                     return;
                 }
 
+                const spanMultipleZones = getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES);
+                if (spanMultipleZones) {
+                    const allow_multiple_selections = this.canSpanMultipleZones();
+                    activeMonitors().forEach(m => {
+                        this.tabManager[m.index]?.allow_multiple_zones_selection(allow_multiple_selections);
+                    });
+                }
+
+                if (!getBoolSetting(SETTINGS.USE_MODIFIER)) return;
+
                 if (this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
-                    activeMonitors().forEach(m => this.tabManager[m.index]?.show());
+                    activeMonitors().forEach(m => {
+                        this.tabManager[m.index]?.show()
+                    });
                 } else {
                     activeMonitors().forEach(m => this.tabManager[m.index]?.hide());
                 }

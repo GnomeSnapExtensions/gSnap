@@ -133,6 +133,10 @@
 			<default>false</default>
 			<summary>Hold CTRL to snap windows</summary>
 		</key>
+		<key type = "b" name="span-multiple-zones">
+			<default>false</default>
+			<summary>Hold ALT to span multiple zones</summary>
+		</key>
 		<key type = "b" name="global-presets">
 			<default>true</default>
 			<summary>Keyboard presets are always active (as opposed active only when tiling window is visible).</summary>
