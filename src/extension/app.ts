@@ -487,6 +487,12 @@ class App {
             launcher.menu.addMenuItem(editLayoutButton);
             launcher.menu.addMenuItem(renameLayoutButton);
             launcher.menu.addMenuItem(newLayoutButton);
+
+            // Add an entry-point for more settings
+            launcher.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            const settingsButton = launcher.menu.addAction('Settings',
+                () => ExtensionUtils.openPrefs());
+            launcher.menu.addMenuItem(settingsButton);
         }
 
 
