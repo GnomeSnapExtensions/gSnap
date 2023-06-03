@@ -4,7 +4,7 @@ declare var global: any;
 import { log } from './logging';
 import { ShellVersion } from './shellversion';
 import { bind as bindHotkeys, unbind as unbindHotkeys, Bindings } from './hotkeys';
-import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager } from "./editor";
+import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager, MoveDirection } from "./editor";
 
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
@@ -20,7 +20,8 @@ import {
 
 import {
     activeMonitors,
-    getCurrentMonitorIndex
+    getCurrentMonitorIndex,
+    getWindowsOfMonitor,
 } from './monitors';
 
 import {
@@ -71,10 +72,19 @@ const trackedWindows: Window[] = global.trackedWindows = [];
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
 
-// Hangouts workaround
-
 const keyBindings: Bindings = new Map([
-
+    [SETTINGS.MOVE_FOCUSED_UP, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Up)
+    }],
+    [SETTINGS.MOVE_FOCUSED_DOWN, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Down)
+    }],
+    [SETTINGS.MOVE_FOCUSED_LEFT, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Left)
+    }],
+    [SETTINGS.MOVE_FOCUSED_RIGHT, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Right)
+    }],
 ]);
 
 const key_bindings_presets: Bindings = new Map([
@@ -459,6 +469,29 @@ class App {
         }
 
         return changed;
+    }
+
+    moveFocusedWindow(direction: MoveDirection) {
+        let monitorIndex = getCurrentMonitorIndex();
+        const monitor = activeMonitors()[monitorIndex];
+        if (!monitor) return;
+
+        let windows = getWindowsOfMonitor(monitor).filter(w => w.has_focus());
+        if (windows.length <= 0) return;
+        let focusedWindow = windows[0];
+
+        log(`Move ${focusedWindow.title} ${direction}`);
+
+        const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+        if (useModifier) {
+            const trackedWindows = global.trackedWindows;
+            if (!trackedWindows.includes(focusedWindow)) {
+                trackedWindows.push(focusedWindow);
+            }
+        }
+
+        this.tabManager[monitorIndex]?.moveWindowAtDirection(focusedWindow, direction);
+        this.tabManager[monitorIndex]?.layoutWindows();
     }
 
     private getWorkspaceMonitorSettings(workspaceIdx: number): Array<WorkspaceMonitorSettings> {

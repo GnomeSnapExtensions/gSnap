@@ -11,7 +11,7 @@ import {
     Window
 } from "./gnometypes";
 
-import { areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
+import { areEqual, getWorkAreaByMonitor, getTrackedWindowsOfMonitor, Monitor, WorkArea } from './monitors';
 
 import { Layout, LayoutItem } from './layouts';
 
@@ -22,6 +22,13 @@ const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 const Clutter = imports.gi.Clutter;
 const ModalDialog = imports.ui.modalDialog;
+
+export enum MoveDirection {
+    Up,
+    Down,
+    Left,
+    Right
+}
 
 export class ZoneBase {
     private _x: number = 0;
@@ -732,6 +739,37 @@ export class ZoneDisplay extends ZoneGroup {
         return { x : smallestX, y: smallestY, width: biggestX - smallestX, height: biggestY - smallestY };
     }
 
+    public moveWindowAtDirection(win: Window, dir: MoveDirection) {
+        let frameRect = win.get_frame_rect();
+        // get window center position
+        let x = frameRect.x + (frameRect.width / 2);
+        let y = frameRect.y + (frameRect.height / 2);
+
+        switch (dir) {
+            case MoveDirection.Up:
+                y -= (frameRect.height + this.margin);
+                break;
+            case MoveDirection.Down:
+                y += (frameRect.height + this.margin);
+                break;
+            case MoveDirection.Left:
+                x -= (frameRect.width + this.margin);
+                break;
+            case MoveDirection.Right:
+                x += (frameRect.width + this.margin);
+                break;
+        }
+
+        let c = this.recursiveChildren();
+        for (let i = 0; i < c.length; i++) {
+            if (c[i].contains(x, y)) {
+                log(`moveWindowAtDirection moving to x:${c[i].innerX}, y:${c[i].innerY}`);
+                win.move_frame(true, c[i].innerX, c[i].innerY);
+                win.move_resize_frame(true, c[i].innerX, c[i].innerY, c[i].innerWidth, c[i].innerHeight);
+            }
+        }
+    }
+
     protected createMarginItem() {
 
     }
@@ -899,7 +937,7 @@ export class ZoneManager extends ZoneDisplay {
     }
 
     public layoutWindows() {
-        let windows = getWindowsOfMonitor(this.monitor);
+        let windows = getTrackedWindowsOfMonitor(this.monitor);
 
         for (let c = 0; c < this.children.length; c++) {
             let child = this.children[c];
