@@ -747,16 +747,16 @@ export class ZoneDisplay extends ZoneGroup {
 
         switch (dir) {
             case MoveDirection.Up:
-                y -= (frameRect.height + this.margin);
+                y = frameRect.y - (1 + this.margin);
                 break;
             case MoveDirection.Down:
-                y += (frameRect.height + this.margin);
+                y = frameRect.y + frameRect.height + (1 + this.margin);
                 break;
             case MoveDirection.Left:
-                x -= (frameRect.width + this.margin);
+                x = frameRect.x - (1 + this.margin);
                 break;
             case MoveDirection.Right:
-                x += (frameRect.width + this.margin);
+                x = frameRect.x + frameRect.width + (1 + this.margin);
                 break;
         }
 
