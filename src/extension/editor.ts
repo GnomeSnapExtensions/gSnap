@@ -770,6 +770,37 @@ export class ZoneDisplay extends ZoneGroup {
         }
     }
 
+    public moveWindowAtDirection(win: Window, dir: MoveDirection) {
+        let frameRect = win.get_frame_rect();
+        // get window center position
+        let x = frameRect.x + (frameRect.width / 2);
+        let y = frameRect.y + (frameRect.height / 2);
+
+        switch (dir) {
+            case MoveDirection.Up:
+                y = frameRect.y - (1 + this.margin);
+                break;
+            case MoveDirection.Down:
+                y = frameRect.y + frameRect.height + (1 + this.margin);
+                break;
+            case MoveDirection.Left:
+                x = frameRect.x - (1 + this.margin);
+                break;
+            case MoveDirection.Right:
+                x = frameRect.x + frameRect.width + (1 + this.margin);
+                break;
+        }
+
+        let c = this.recursiveChildren();
+        for (let i = 0; i < c.length; i++) {
+            if (c[i].contains(x, y)) {
+                log(`moveWindowAtDirection moving to x:${c[i].innerX}, y:${c[i].innerY}`);
+                win.move_frame(true, c[i].innerX, c[i].innerY);
+                win.move_resize_frame(true, c[i].innerX, c[i].innerY, c[i].innerWidth, c[i].innerHeight);
+            }
+        }
+    }
+
     protected createMarginItem() {
 
     }
