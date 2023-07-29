@@ -7,6 +7,7 @@ import {
     ClutterActor,
     StButton,
     StWidget,
+    Rectangle,
     Window
 } from "./gnometypes";
 
@@ -177,6 +178,7 @@ export class ZoneBase {
 }
 
 export class Zone extends ZoneBase {
+    private _selected: boolean = false;
     public widget!: StWidget;
     public stage: ClutterActor;
 
@@ -205,6 +207,7 @@ export class Zone extends ZoneBase {
     }
 
     public hide() {
+        this._selected = false;
         this.widget.visible = false;
         this.widget.remove_style_pseudo_class('activate');
     }
@@ -215,13 +218,28 @@ export class Zone extends ZoneBase {
     }
 
     public set hover(hovering: boolean) {
-        if(!this.widget) return;
-        
+        if (!this.widget) return;
+
         // this is needed to highlight windows on hover
         // while dragging a window in the zone
         hovering
             ? this.widget.add_style_pseudo_class('hover')
             : this.widget.remove_style_pseudo_class('hover');
+    }
+
+    public set selected(value: boolean) {
+        if (!this.widget) return;
+
+        this._selected = value;
+        // this is needed to highlight the selected zone
+        // while dragging the window in other zones
+        value
+            ? this.widget.add_style_class_name('selected')
+            : this.widget.remove_style_class_name('selected');
+    }
+
+    public get selected() {
+        return this._selected;
     }
 
     public destroy() {
@@ -692,16 +710,26 @@ export class ZoneDisplay extends ZoneGroup {
         }
     }
 
-    public moveWindowToWidgetAtCursor(win: Window) {
+    public getSelectionRect(): Rectangle | undefined {
         let [x, y] = global.get_pointer();
-        let c = this.recursiveChildren();
-        for (let i = 0; i < c.length; i++) {
-            c[i].hide();
-            if (c[i].contains(x, y)) {
-                win.move_frame(true, c[i].innerX, c[i].innerY);
-                win.move_resize_frame(true, c[i].innerX, c[i].innerY, c[i].innerWidth, c[i].innerHeight);
-            }
+        let children = this.recursiveChildren();
+        let smallestX = x, smallestY = y, biggestX = x, biggestY = y;
+        for (let i = 0; i < children.length; i++) {
+            let zone = (children[i] as Zone);
+            if (!zone.selected) continue;
+            
+            if (zone.innerX < smallestX) smallestX = zone.innerX;
+            if (zone.innerY < smallestY) smallestY = zone.innerY;
+
+            if (zone.innerX + zone.innerWidth > biggestX)  
+                biggestX  = zone.innerX + zone.innerWidth;
+            if (zone.innerY + zone.innerHeight > biggestY) 
+                biggestY  = zone.innerY + zone.innerHeight;
         }
+        // no zones selected
+        if (biggestX - smallestX == 0) return undefined;
+        
+        return { x : smallestX, y: smallestY, width: biggestX - smallestX, height: biggestY - smallestY };
     }
 
     protected createMarginItem() {
@@ -857,8 +885,9 @@ export class ZonePreview extends ZoneDisplay {
 }
 
 export class ZoneManager extends ZoneDisplay {
-    private isShowing: boolean = false;
     private trackCursorTimeoutId: number | null = null;
+    private isShowing: boolean = false;
+    private _select_multiple_zones: boolean = false;
 
     constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
         super(monitor, layout, margin);
@@ -883,7 +912,9 @@ export class ZoneManager extends ZoneDisplay {
         var children = this.recursiveChildren();
         for (const zone of children) {
             let contained = zone.contains(x, y);
-            (zone as Zone).hover = contained;
+            
+            (zone as Zone).hover = contained; // hover the one on which the cursor is
+            (zone as Zone).selected = contained || (this._select_multiple_zones && (zone as Zone).selected);
         }
     }
 
@@ -919,6 +950,10 @@ export class ZoneManager extends ZoneDisplay {
             GLib.Source.remove(this.trackCursorTimeoutId);
             this.trackCursorTimeoutId = null;
         }
+    }
+
+    public allow_multiple_zones_selection(value: boolean) {
+        this._select_multiple_zones = value;
     }
 }
 

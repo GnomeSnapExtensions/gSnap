@@ -162,18 +162,26 @@ class PrefsBuilder {
 
 
         this.add_check("Show icon", SETTINGS.SHOW_ICON, bs_grid, settings);
-        this.add_check("Show tabs", SETTINGS.SHOW_TABS, bs_grid, settings);
+        const show_tabs_check = this.add_check("Show tabs", SETTINGS.SHOW_TABS, bs_grid, settings);
+        this.add_label(
+            "This feature is not supported if you have the \"Hold ALT to span multiple zones\" feature enabled", 
+            bs_grid);
         this.add_check("Enable accelerators for moving and resizing windows", SETTINGS.MOVERESIZE_ENABLED, bs_grid, settings);
         this.add_check("Hold CTRL to snap windows", SETTINGS.USE_MODIFIER, bs_grid, settings);
+        const span_multiple_zones_check = this.add_check("Hold ALT to span multiple zones", SETTINGS.SPAN_MULTIPLE_ZONES, bs_grid, settings);
+        this.add_label(
+            "This feature is not supported if you have the \"Show tabs\" feature enabled", 
+            bs_grid);
+        // disable "Span multiple zones" setting if "Show tabs" setting was already enabled
+        if (settings.get_boolean(SETTINGS.SHOW_TABS)) {
+            span_multiple_zones_check.set_sensitive(false);
+        // disable "Show tabs" setting if "Span multiple zones" setting was already enabled
+        } else if (settings.get_boolean(SETTINGS.SPAN_MULTIPLE_ZONES)) {
+            show_tabs_check.set_sensitive(false);
+        }
+
         this.add_check("Debug", SETTINGS.DEBUG, bs_grid, settings);
-        let text = "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f";
-        bs_grid.attach_next_to(new Gtk.Label({
-            label: text,
-            halign: Gtk.Align.START,
-            justify: Gtk.Justification.LEFT,
-            use_markup: false,
-            wrap: true,
-        }), null, Gtk.PositionType.BOTTOM, 1, 1)
+        this.add_label("To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f", bs_grid);
 
         let bs_window = new Gtk.ScrolledWindow({ 'vexpand': true });
         set_child(bs_window, bs_grid);
@@ -183,6 +191,18 @@ class PrefsBuilder {
             use_markup: false,
         });
         notebook.append_page(bs_window, bs_label);
+        
+        // Watch for changes to the setting SETTINGS.SHOW_TABS
+        settings.connect(`changed::${SETTINGS.SHOW_TABS}`, (settings: any, changed_key: string) => {
+            // disable "Span multiple zones" setting if "Show tabs" setting is enabled by the user
+            span_multiple_zones_check.set_sensitive(!settings.get_boolean(changed_key));
+        });
+
+        // Watch for changes to the setting SETTINGS.SPAN_MULTIPLE_ZONES
+        settings.connect(`changed::${SETTINGS.SPAN_MULTIPLE_ZONES}`, (settings: any, changed_key: string) => {
+            // disable "Show tabs" setting if "Span multiple zones" setting is enabled by the user
+            show_tabs_check.set_sensitive(!settings.get_boolean(changed_key));
+        });
     }
 
     margins_tab(notebook: any) {
@@ -261,6 +281,7 @@ class PrefsBuilder {
         let check = new Gtk.CheckButton({ label: check_label, margin_top: 6 });
         settings.bind(SETTINGS, check, 'active', Gio.SettingsBindFlags.DEFAULT);
         grid.attach_next_to(check, null, Gtk.PositionType.BOTTOM, 1, 1);
+        return check;
     }
 
     add_int(int_label: string, SETTINGS: string, grid: any, settings: any, minv: number, maxv: number, incre: number, page: number) {
@@ -275,6 +296,20 @@ class PrefsBuilder {
         item.set_args(width);
         settings.bind(SETTINGS, item.textentry, 'text', Gio.SettingsBindFlags.DEFAULT);
         grid.attach_next_to(item.actor, null, Gtk.PositionType.BOTTOM, 1, 1);
+    }
+
+    add_label(label: string, grid: any) {
+        let text = "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f";
+        let gtk_label = new Gtk.Label({
+            label: label,
+            halign: Gtk.Align.START,
+            justify: Gtk.Justification.LEFT,
+            use_markup: false,
+            wrap: true,
+        });
+        grid.attach_next_to(gtk_label, null, Gtk.PositionType.BOTTOM, 1, 1);
+
+        return gtk_label;
     }
 
     append_hotkey(model: any, settings: any, name: string, pretty_name: string) {

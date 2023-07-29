@@ -10,6 +10,7 @@ export type BoolSettingName = (
     "moveresize-enabled" |
     "show-icon" |
     "show-tabs" |
+    "span-multiple-zones" |
     "use-modifier");
 
 // A setting name for a number-valued setting.
@@ -106,6 +107,7 @@ export type AnySettingName = (
     "preset-resize-9" |
     "show-icon" |
     "show-tabs" |
+    "span-multiple-zones" |
     "use-modifier" |
     "window-margin");
 
@@ -239,6 +241,9 @@ export class ParsedSettings {
     /** Show tabs for windows in each zone. */
     ["show-tabs"]: boolean = true;
 
+    /** Hold ALT to span multiple zones */
+    ["span-multiple-zones"]: boolean = false;
+
     /** Hold CTRL to snap windows */
     ["use-modifier"]: boolean = false;
 
@@ -289,5 +294,6 @@ export const PRESET_RESIZE_8 = "preset-resize-8";
 export const PRESET_RESIZE_9 = "preset-resize-9";
 export const SHOW_ICON = "show-icon";
 export const SHOW_TABS = "show-tabs";
+export const SPAN_MULTIPLE_ZONES = "span-multiple-zones";
 export const USE_MODIFIER = "use-modifier";
 export const WINDOW_MARGIN = "window-margin";

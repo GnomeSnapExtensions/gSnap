@@ -689,7 +689,7 @@ export interface StWidget extends ClutterActor {
     // peek_theme_node(): someTYpe;
     // popup_menu(): someTYpe;
     // remove_accessible_state(state): someTYpe;
-    // remove_style_class_name(style_class): someTYpe;
+    remove_style_class_name(style_class: string): void;
     remove_style_pseudo_class(pseudo_class: string): void;
     // set_accessible(accessible): someTYpe;
     // set_accessible_name(name): someTYpe;
