@@ -181,6 +181,7 @@ class App {
     private modifiersManager: ModifiersManager;
     private layoutsUtils: LayoutsUtils;
     private isGrabbing: boolean = false;
+    private minimizedWindows: Window[];
 
     private currentLayoutIdxPerMonitor: number[];
     public layouts: LayoutsSettings = {
@@ -210,6 +211,7 @@ class App {
         this.currentLayoutIdxPerMonitor = new Array<number>(monitors);
         this.modifiersManager = new ModifiersManager();
         this.layoutsUtils = new LayoutsUtils();
+        this.minimizedWindows = new Array<Window>();
     }
 
     private restackConnection: any;
@@ -484,6 +486,21 @@ class App {
         }
     }
 
+    minimizeAllWindows() {
+        // we need to know what windows have been minimized by the user
+        // so we don't accidentally restore them when calling unminimizeAllWindows()
+        this.minimizedWindows = WorkspaceManager
+            .get_active_workspace()
+            .list_windows()
+            .filter(x => !x.minimized);
+        this.minimizedWindows.forEach(w => w.minimize());
+    }
+
+    unminimizeAllWindows() {
+        this.minimizedWindows.forEach(w => w.unminimize());
+        this.minimizedWindows = [];
+    }
+
     reloadMenu() {
         if (launcher == null) return;
         launcher.menu.removeAll();
@@ -582,10 +599,7 @@ class App {
                 this.editor[m.index]?.show();
             });
 
-            var windows = WorkspaceManager.get_active_workspace().list_windows();
-            for (let i = 0; i < windows.length; i++) {
-                windows[i].minimize();
-            }
+            this.minimizeAllWindows();
             this.reloadMenu();
         });
 
@@ -623,10 +637,7 @@ class App {
                 this.editor[m.index] = null;
             });
 
-            var windows = WorkspaceManager.get_active_workspace().list_windows();
-            for (let i = 0; i < windows.length; i++) {
-                windows[i].unminimize();
-            }
+            this.unminimizeAllWindows();
             this.reloadMenu();
         });
     }
@@ -665,11 +676,7 @@ class App {
         });
 
         this.layoutsUtils.saveSettings(this.layouts);
-
-        var windows = WorkspaceManager.get_active_workspace().list_windows();
-        for (let i = 0; i < windows.length; i++) {
-            windows[i].unminimize();
-        }
+        this.unminimizeAllWindows();
     }
 
     disable() {
