@@ -52,6 +52,7 @@ export function initSettings(changed_settings: () => void) {
     gridSettings[SETTINGS.SHOW_ICON] = getBoolSetting(SETTINGS.SHOW_ICON);
     gridSettings[SETTINGS.SHOW_TABS] = getBoolSetting(SETTINGS.SHOW_TABS);
     gridSettings[SETTINGS.WINDOW_MARGIN] = getIntSetting(SETTINGS.WINDOW_MARGIN);
+    gridSettings[SETTINGS.ANIMATIONS_ENABLED] = getBoolSetting(SETTINGS.ANIMATIONS_ENABLED);
     log("Init complete");
 }
 

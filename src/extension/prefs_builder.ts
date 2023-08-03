@@ -180,6 +180,8 @@ class PrefsBuilder {
             show_tabs_check.set_sensitive(false);
         }
 
+        this.add_check("Enable animations", SETTINGS.ANIMATIONS_ENABLED, bs_grid, settings);
+
         this.add_check("Debug", SETTINGS.DEBUG, bs_grid, settings);
         this.add_label("To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f", bs_grid);
 

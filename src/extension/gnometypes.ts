@@ -670,7 +670,7 @@ export interface StWidget extends ClutterActor {
     // add_accessible_state(state): someTYpe;
     add_style_class_name(style_class: string): void;
     add_style_pseudo_class(pseudo_class: string): void;
-    // ensure_style(): someTYpe;
+    ensure_style(): void;
     // get_accessible_name(): someTYpe;
     // get_accessible_role(): someTYpe;
     // get_can_focus(): someTYpe;
@@ -680,7 +680,7 @@ export interface StWidget extends ClutterActor {
     // get_style(): someTYpe;
     // get_style_class_name(): someTYpe;
     // get_style_pseudo_class(): someTYpe;
-    // get_theme_node(): someTYpe;
+    get_theme_node(): StThemeNode;
     // get_track_hover(): someTYpe;
     // has_style_class_name(style_class): someTYpe;
     // has_style_pseudo_class(pseudo_class): someTYpe;
@@ -697,7 +697,7 @@ export interface StWidget extends ClutterActor {
     // set_can_focus(can_focus): someTYpe;
     // set_hover(hover): someTYpe;
     // set_label_actor(label): someTYpe;
-    // set_style(style): someTYpe;
+    set_style(style: string): void;
     // set_style_class_name(style_class_list): someTYpe;
     // set_style_pseudo_class(pseudo_class_list): someTYpe;
     // set_track_hover(track_hover): someTYpe;
@@ -715,6 +715,95 @@ export interface StWidget extends ClutterActor {
     track_hover: boolean;
     layout_manager: LayoutManager;
     label: string;
+}
+
+export interface ClutterColor {
+    // Fields
+    red: number;
+    green: number;
+    blue: number;
+    alpha: number;
+
+    // Members
+    add(b: ClutterColor): ClutterColor;
+    copy(): ClutterColor;
+    darken(): ClutterColor;
+    equal(v2: ClutterColor): boolean;
+    free(): void;
+    hash(): number;
+    init(red: number, green: number, blue: number, alpha: number): ClutterColor;
+    interpolate(_final: ClutterColor, progress: number): ClutterColor;
+    lighten(): ClutterColor;
+    shade(factor: number): ClutterColor;
+    subtract(b: ClutterColor): ClutterColor;
+    to_hls(): [number, number, number];
+    to_pixel(): number;
+    to_string(): string;
+}
+
+export interface StThemeNode {
+    // adjust_for_height(for_height: number): number;
+    // adjust_for_width(for_width: number): number;
+    // adjust_preferred_height(min_height_p: number, natural_height_p: number): [number, number];
+    // adjust_preferred_width(min_width_p: number, natural_width_p: number): [number, number];
+    // equal(node_b: ThemeNode): boolean;
+    // geometry_equal(other: ThemeNode): boolean;
+    get_background_color(): ClutterColor;
+    // get_background_gradient(): [GradientType, Clutter.Color, Clutter.Color];
+    // get_background_image(): Gio.File;
+    // get_background_image_shadow(): Shadow | null;
+    // get_background_paint_box(allocation: Clutter.ActorBox): Clutter.ActorBox;
+    // get_border_color(side: Side): Clutter.Color;
+    // get_border_image(): BorderImage;
+    // get_border_radius(corner: Corner): number;
+    // get_border_width(side: Side): number;
+    // get_box_shadow(): Shadow | null;
+    // get_color(property_name: string): Clutter.Color;
+    // get_content_box(allocation: Clutter.ActorBox): Clutter.ActorBox;
+    // get_double(property_name: string): number;
+    // get_element_classes(): string[];
+    // get_element_id(): string;
+    // get_element_type(): GObject.GType;
+    // get_font(): Pango.FontDescription;
+    // get_font_features(): string;
+    // get_foreground_color(): Clutter.Color;
+    // get_height(): number;
+    // get_horizontal_padding(): number;
+    // get_icon_colors(): IconColors;
+    // get_icon_style(): IconStyle;
+    // get_length(property_name: string): number;
+    // get_letter_spacing(): number;
+    // get_margin(side: Side): number;
+    // get_max_height(): number;
+    // get_max_width(): number;
+    // get_min_height(): number;
+    // get_min_width(): number;
+    // get_outline_color(): Clutter.Color;
+    // get_outline_width(): number;
+    // get_padding(side: Side): number;
+    // get_paint_box(allocation: Clutter.ActorBox): Clutter.ActorBox;
+    // get_parent(): StThemeNode | null;
+    // get_pseudo_classes(): string[];
+    // get_shadow(property_name: string): Shadow | null;
+    // get_text_align(): TextAlign;
+    // get_text_decoration(): TextDecoration;
+    // get_text_shadow(): Shadow | null;
+    // get_theme(): Theme;
+    // get_transition_duration(): number;
+    // get_url(property_name: string): Gio.File | null;
+    // get_vertical_padding(): number;
+    // get_width(): number;
+    // hash(): number;
+    // invalidate_background_image(): void;
+    // invalidate_border_image(): void;
+    // lookup_color(property_name: string, inherit: boolean): [boolean, Clutter.Color];
+    // lookup_double(property_name: string, inherit: boolean): [boolean, number];
+    // lookup_length(property_name: string, inherit: boolean): [boolean, number];
+    // lookup_shadow(property_name: string, inherit: boolean): [boolean, Shadow];
+    // lookup_time(property_name: string, inherit: boolean): [boolean, number];
+    // lookup_url(property_name: string, inherit: boolean): [boolean, Gio.File];
+    // paint_equal(other?: StThemeNode | null): boolean;
+    // to_string(): string;
 }
 
 export interface LayoutManager {}
