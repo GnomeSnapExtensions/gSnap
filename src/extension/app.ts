@@ -12,6 +12,7 @@ const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 import {
     Display,
+    MetaSizeChange,
     Rectangle,
     Window,
     WindowType,
@@ -357,6 +358,16 @@ class App {
                         selection = this.tabManager[m.index]?.getSelectionRect();
                         // may be undefined if there are no zones selected in this monitor
                         if (selection) {
+                            if (getBoolSetting(SETTINGS.ANIMATIONS_ENABLED)) {
+                                const windowActor = win.get_compositor_private();                            
+                                windowActor.remove_all_transitions();
+                                Main.wm._prepareAnimationInfo(
+                                    global.window_manager,
+                                    windowActor,
+                                    win.get_frame_rect().copy(),
+                                    MetaSizeChange.MAXIMIZE
+                                );
+                            }
                             win.move_frame(true, selection.x, selection.y);
                             win.move_resize_frame(true, selection.x, selection.y, selection.width, selection.height);
                         }

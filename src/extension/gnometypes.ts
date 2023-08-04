@@ -421,6 +421,8 @@ export interface Rectangle {
     width: number;
     /** Height of the rectangle. */
     height: number;
+
+    copy(): Rectangle;
 }
 
 export interface Strut {
@@ -453,7 +455,7 @@ export interface Window {
     get_buffer_rect(): Rectangle;
     get_client_machine(): string;
     // get_client_type(): WindowClientType;
-    //get_compositor_private(): void;
+    get_compositor_private(): WindowActor;
     get_description(): string;
     get_display(): Display;
     //get_frame_bounds(): void;
@@ -591,6 +593,18 @@ export interface Window {
 
     connect(monitorsChanged: string, param2: () => void): void;
 }
+
+export interface WindowActor {
+    remove_all_transitions(): void;
+}
+
+/** From https://gjs-docs.gnome.org/meta8~8/meta.sizechange */
+export enum MetaSizeChange {
+    MAXIMIZE = 0,
+    UNMAXIMIZE = 1,
+    FULLSCREEN = 2,
+    UNFULLSCREEN = 3,
+} 
 
 export interface StackLayer {}
 

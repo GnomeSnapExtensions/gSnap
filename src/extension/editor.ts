@@ -975,7 +975,7 @@ export class ZoneManager extends ZoneDisplay {
             y: this._last_selection_zone.innerY, 
             width: this._last_selection_zone.innerWidth, 
             height: this._last_selection_zone.innerHeight 
-        };
+        } as Rectangle;
     }
 
     public highlightZonesUnderCursor() {
