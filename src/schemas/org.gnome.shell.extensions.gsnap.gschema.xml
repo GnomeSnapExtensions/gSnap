@@ -149,6 +149,10 @@
 			<default>0</default>
 			<summary>Gaps between windows in the middle of screen</summary>
 		</key>
+		<key type = "b" name="animations-enabled">
+			<default>true</default>
+			<summary>Enable or disable animations when hovering and selecting zones</summary>
+		</key>
 		<key type = "i" name="insets-primary-left">
 			<default>0</default>
 			<summary>Left gap around border of screen for primary monitor</summary>

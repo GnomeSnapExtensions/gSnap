@@ -32,28 +32,6 @@
     color: #f1f1f1;
 }
 
-.grid-preview
-{
-    background-color: rgba(197, 198, 255, 0.4);
-    border: solid 1px rgba(220, 220, 255, 0.6);
-    border-radius: 4px;
-}
-
-.grid-preview:activate
-{
-    background-color: rgba(197, 198, 255, 0.4);
-    border: solid 1px rgba(220, 220, 255, 0.6);
-}
-
-/* style when hover on selected or not selected zone */
-.grid-preview:hover, .grid-preview.selected:hover
-{
-    background-color: rgba(12, 16, 194, 0.4);
-    border: solid 1px rgba(220, 220, 255, 0.6);
-}
-
-/* style of a selected zone (not when you hover it) */
-.grid-preview.selected {
-    background-color: rgba(70, 194, 12, 0.2);
-    border: solid 1px rgba(220, 220, 255, 0.6);
+.grid-preview {
+    border-radius: 8px !important;
 }

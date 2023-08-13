@@ -12,6 +12,7 @@ const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 import {
     Display,
+    MetaSizeChange,
     Rectangle,
     Window,
     WindowType,
@@ -240,11 +241,13 @@ class App {
 
         this.tabManager[monitorIndex]?.destroy();
         this.tabManager[monitorIndex] = null;
+        
+        const animationsEnabled = getBoolSetting(SETTINGS.ANIMATIONS_ENABLED);
 
         if (gridSettings[SETTINGS.SHOW_TABS]) {
-            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN], animationsEnabled);
         } else {
-            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN], animationsEnabled);
         }
 
         this.tabManager[monitorIndex]?.layoutWindows();
@@ -313,6 +316,7 @@ class App {
             }
 
         });
+    
 
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
             // only start isGrabbing if is a valid window to avoid conflict 
@@ -354,6 +358,16 @@ class App {
                         selection = this.tabManager[m.index]?.getSelectionRect();
                         // may be undefined if there are no zones selected in this monitor
                         if (selection) {
+                            if (getBoolSetting(SETTINGS.ANIMATIONS_ENABLED)) {
+                                const windowActor = win.get_compositor_private();                            
+                                windowActor.remove_all_transitions();
+                                Main.wm._prepareAnimationInfo(
+                                    global.window_manager,
+                                    windowActor,
+                                    win.get_frame_rect().copy(),
+                                    MetaSizeChange.MAXIMIZE
+                                );
+                            }
                             win.move_frame(true, selection.x, selection.y);
                             win.move_resize_frame(true, selection.x, selection.y, selection.width, selection.height);
                         }
