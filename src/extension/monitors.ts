@@ -1,8 +1,6 @@
-// GJS import system
-declare var imports: any;
 declare var global: any;
+import { Main } from '../gnome/imports';
 
-const Main = imports.ui.main;
 import {
     Window,
     WindowType,

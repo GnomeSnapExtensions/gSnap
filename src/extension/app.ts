@@ -1,15 +1,26 @@
-// GJS import system
-declare var imports: any;
 declare var global: any;
+import {
+    Gio,
+    St,
+    Gettext,
+    Main,
+    GObject,
+    PanelMenu,
+    PopupMenu,
+    ExtensionUtils,
+} from "../gnome/imports";
+
 import { log } from './logging';
 import { ShellVersion } from './shellversion';
 import { bind as bindHotkeys, unbind as unbindHotkeys, Bindings } from './hotkeys';
 import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager } from "./editor";
 
-const Gio = imports.gi.Gio;
-const St = imports.gi.St;
-const Gettext = imports.gettext;
-const _ = Gettext.gettext;
+export const _ = Gettext.gettext;
+export const Me = ExtensionUtils.getCurrentExtension();
+
+// Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
+const WorkspaceManager: WorkspaceManagerInterface = global.workspace_manager;
+
 import {
     Display,
     Rectangle,
@@ -52,26 +63,10 @@ import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
  CONST & VARS
  *****************************************************************/
 
-// Library imports
-const Main = imports.ui.main;
-const GObject = imports.gi.GObject;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
-// Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
-const WorkspaceManager: WorkspaceManagerInterface = (
-    global.screen || global.workspace_manager);
-
 let launcher: GSnapStatusButtonClass | null;
 let enabled = false;
 let monitorsChangedConnect: any = false;
 const trackedWindows: Window[] = global.trackedWindows = [];
-
-const SHELL_VERSION = ShellVersion.defaultVersion();
-
-// Hangouts workaround
 
 const keyBindings: Bindings = new Map([
 
@@ -768,8 +763,8 @@ function changed_settings() {
 export function enable() {
     initSettings(changed_settings);
     log("Extension enable begin");
-    SHELL_VERSION.print_version();
-
+    const shellVersion = ShellVersion.defaultVersion();
+    shellVersion.print_version();
     globalApp.enable();
 }
 

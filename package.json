@@ -12,10 +12,11 @@
         "yargs": "^17.6.2"
     },
     "scripts": {
-        "clean": "rm -rf dist build dist.tar.gz",
-        "build": "tsc && rollup --config rollup.config.js",
+        "clean": "rm -rf build dist*",
+        "build": "tsc && tsc -p tsconfig.44.json && rollup --config rollup.config.js",
         "install-extension": "npm run build && sh install-extension.sh",
-        "pack": "cd dist && zip -r ../dist.zip *",
-        "gen-schemas": "glib-compile-schemas src/schemas/ && npx ts-node src/schemas/extract_settings_type_definition.ts --gschema_xml src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml --output_ts src/extension/settings_data.ts"
+        "pack": "cd dist && zip -r ../dist.zip * && cd dist44 && zip -r ../dist44.zip *",
+        "gen-schemas": "glib-compile-schemas src/schemas/ && npx ts-node src/schemas/extract_settings_type_definition.ts --gschema_xml src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml --output_ts src/extension/settings_data.ts",
+        "release": "npm run clean && npm run build && npm run pack"
     }
 }

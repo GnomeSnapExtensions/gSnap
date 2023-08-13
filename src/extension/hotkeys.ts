@@ -1,17 +1,14 @@
-import {log} from './logging';
+declare const global: any;
+import {
+    Main,
+    Meta,
+    Shell,
+    ExtensionUtils
+} from "../gnome/imports";
+
+import { log } from './logging';
 import { KeyBindingSettingName } from './settings_data';
 
-declare const imports: any;
-declare const global: any;
-
-// Library imports
-const Main = imports.ui.main;
-const Meta = imports.gi.Meta;
-const Shell = imports.gi.Shell;
-
-// Extension imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const ExtensionUtils = imports.misc.extensionUtils;
 /**
  * Bindings is a dictionary that maps a hotkey name to a function that handles
  * the press of the key that is bound to that action.

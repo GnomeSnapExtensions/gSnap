@@ -1,8 +1,9 @@
-// Library imports
-declare var imports: any;
-const GObject = imports.gi.GObject;
-const Gtk = imports.gi.Gtk;
-const Gio = imports.gi.Gio;
+import {
+    GObject,
+    Gtk,
+    Gio,
+    ExtensionUtils
+} from '../gnome/imports'
 
 import * as SETTINGS from "./settings_data";
 
@@ -40,7 +41,7 @@ function box_append(box: any, child: any) {
 
 class PrefsBuilder {
     accel_tab(notebook: any) {
-        let settings = imports.misc.extensionUtils.getSettings();
+        let settings = ExtensionUtils.getSettings();
         let ks_grid = new Gtk.Grid({
             column_spacing: 10,
             orientation: Gtk.Orientation.VERTICAL,
@@ -149,7 +150,7 @@ class PrefsBuilder {
     }
 
     basics_tab(notebook: any) {
-        let settings = imports.misc.extensionUtils.getSettings();
+        let settings = ExtensionUtils.getSettings();
 
         let bs_grid = new Gtk.Grid({
             column_spacing: 10,
@@ -206,7 +207,7 @@ class PrefsBuilder {
     }
 
     margins_tab(notebook: any) {
-        let settings = imports.misc.extensionUtils.getSettings();
+        let settings = ExtensionUtils.getSettings();
         let mg_grid = new Gtk.Grid({
             column_spacing: 10,
             orientation: Gtk.Orientation.VERTICAL,

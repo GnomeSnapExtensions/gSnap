@@ -1,9 +1,7 @@
-declare var imports: any;
 declare var global: any;
+import { GLib } from '../gnome/imports';
 
 import { log } from './logging';
-
-const GLib = imports.gi.GLib;
 
 export enum MODIFIERS_ENUM {
     SHIFT,

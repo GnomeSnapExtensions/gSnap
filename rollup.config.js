@@ -1,41 +1,54 @@
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy'
 
-export default defineConfig([
-    {
-        input: "build/app.js",
-        output: {
-            file: "dist/extension.js",
-            format: "cjs",
-            esModule: false,
+export default defineConfig(getBuildConfig());
+
+function getBuildConfig() {
+    let versions = [null, 44];
+    return versions.map(v => genBuildConfig(v)).flat()
+}
+
+function genBuildConfig(gnomeVersion) {
+    let buildDir = gnomeVersion ? `build${gnomeVersion}` : 'build';
+    let distDir = gnomeVersion ? `dist${gnomeVersion}` : 'dist';
+    let metadataDir = gnomeVersion ? `src/gnome/${gnomeVersion}` : 'src/gnome';
+
+    return [
+        {
+            input: `${buildDir}/extension/app.js`,
+            output: {
+                file: `${distDir}/extension.js`,
+                format: "cjs",
+                esModule: false,
+            },
+            plugins: [
+                stripExports(),
+            ]
         },
-        plugins: [
-            stripExports(),
-        ]
-    },
-    {
-        input: "build/prefs_builder.js",
-        output: {
-            file: "dist/prefs.js",
-            format: "cjs",
-            esModule: false,
-        },
-        plugins: [
-            stripExports(),
-            copy({
-                targets: [
-                    { src: 'LICENSE', dest: 'dist/' },
-                    { src: 'src/metadata.json', dest: 'dist/' },
-                    { src: 'src/layouts-default.json', dest: 'dist/' },
-                    { src: 'src/stylesheet.css', dest: 'dist/' },
-                    { src: 'src/images', dest: 'dist/' },
-                    { src: 'src/schemas/gschemas.compiled', dest: 'dist/schemas' },
-                    { src: 'src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml', dest: 'dist/schemas' },
-                ]
-            })
-        ]
-    }
-]);
+        {
+            input: `${buildDir}/extension/prefs_builder.js`,
+            output: {
+                file: `${distDir}/prefs.js`,
+                format: "cjs",
+                esModule: false,
+            },
+            plugins: [
+                stripExports(),
+                copy({
+                    targets: [
+                        { src: 'LICENSE', dest: distDir },
+                        { src: `${metadataDir}/metadata.json`, dest: distDir },
+                        { src: 'src/layouts-default.json', dest: distDir },
+                        { src: 'src/stylesheet.css', dest: distDir },
+                        { src: 'src/images', dest: distDir },
+                        { src: 'src/schemas/gschemas.compiled', dest: `${distDir}/schemas` },
+                        { src: 'src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml', dest: `${distDir}/schemas` },
+                    ]
+                })
+            ]
+        }
+    ]
+}
 
 // Cleans up the generated bundle from lines like exports.XXXX
 // This trick is a compromise between using the tree-shaker and

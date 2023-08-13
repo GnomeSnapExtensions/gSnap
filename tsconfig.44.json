@@ -6,10 +6,10 @@
 
     "strict": true,                        /* Enable all strict type-checking options. */
     "downlevelIteration": true,            /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
-    "outDir": "build/"
+    "outDir": "build44/"
   },
   "include": [
     "src/extension/*.ts",
-    "src/gnome/imports.ts"
+    "src/gnome/44/imports.ts"
   ]
 }

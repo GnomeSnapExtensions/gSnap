@@ -1,11 +1,8 @@
-// GJS import system
-declare var imports: any;
+import { ExtensionUtils } from '../gnome/imports';
 
 import * as SETTINGS from './settings_data';
 
 import { log, setLoggingEnabled } from "./logging";
-
-const ExtensionUtils = imports.misc.extensionUtils;
 
 export const gridSettings = new SETTINGS.ParsedSettings();
 

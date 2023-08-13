@@ -1,11 +1,14 @@
+import {
+    GLib,
+    ExtensionUtils,
+    ByteArray
+} from "../gnome/imports";
+
 import { LayoutsSettings } from "./layouts";
 import { log } from "./logging";
 import { ShellVersion } from "./shellversion";
 
-// GJS import system
-declare var imports: any;
-const GLib = imports.gi.GLib;
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Me = ExtensionUtils.getCurrentExtension();
 
 export class LayoutsUtils {
     get configPath() {
@@ -69,7 +72,6 @@ export class LayoutsUtils {
                     const decoder = new TextDecoder('utf-8');
                     contentsString = decoder.decode(contents);
                 } else {
-                    const ByteArray = imports.byteArray;
                     contentsString = ByteArray.toString(contents);
                 }
 

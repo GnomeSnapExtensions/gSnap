@@ -1,7 +1,12 @@
-// GJS import system
-declare var imports: any;
 declare var global: any;
-import { log } from './logging';
+import {
+    St,
+    Main,
+    GLib,
+    GObject,
+    Clutter,
+    ModalDialog
+} from "../gnome/imports";
 
 import {
     ClutterActor,
@@ -11,17 +16,9 @@ import {
     Window
 } from "./gnometypes";
 
+import { log } from './logging';
 import { areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
-
 import { Layout, LayoutItem } from './layouts';
-
-// Library imports
-const St = imports.gi.St;
-const Main = imports.ui.main;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-const Clutter = imports.gi.Clutter;
-const ModalDialog = imports.ui.modalDialog;
 
 export class ZoneBase {
     private _x: number = 0;

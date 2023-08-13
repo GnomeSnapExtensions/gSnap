@@ -2,16 +2,15 @@
  * Written by Sergey
 */
 
+import { Config } from '../gnome/imports'
 import {log} from './logging';
-
-declare var imports: any;
 
 interface ConfigObject {
     PACKAGE_VERSION: string;
 }
 
 function getConfig(): ConfigObject {
-    return imports.misc.config;
+    return Config;
 }
 
 interface Version {
@@ -22,6 +21,7 @@ interface Version {
 const VERSION_34: Version = {major:3, minor: 34};
 const VERSION_36: Version = {major:3, minor: 36};
 const VERSION_41: Version = {major:41, minor: 0};
+const VERSION_45: Version = { major: 45, minor: 0 };
 
 /**
  * ShellVersion is used to parse the version string
@@ -67,6 +67,11 @@ export class ShellVersion {
     version_at_least_41(): boolean {
         return versionGreaterThanOrEqualTo(this, VERSION_41);
     }
+
+    version_at_least_45(): boolean {
+        return versionGreaterThanOrEqualTo(this, VERSION_45);
+    }
+
 
     print_version  () {
         log("Init gnome-shell version " + this.rawVersion + " major " + this.major + " minor " + this.minor);
