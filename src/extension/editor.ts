@@ -191,6 +191,8 @@ export class Zone extends ZoneBase {
         this.stage.add_child(this.widget);
     }
 
+    // the CSS class "tile-preview" is declared by GNOME shell. It is used by
+    // GNOME edge-tiling system. More info here: https://github.com/GNOME/gnome-shell/blob/7c4b1d4ae62cfc6c5b0637819d465ce8968bd944/js/ui/windowManager.js#L388
     public createWidget(styleClass: string = 'tile-preview grid-preview') {
         this.widget = new St.BoxLayout({ style_class: styleClass });
         this.widget.visible = false;
@@ -290,7 +292,7 @@ export class SelectionZone extends Zone {
         if (ease) { // animate with easing
             this.animationRunning = true;
             (this.widget as any).ease({
-                time: ANIMATION_SPEED,
+                duration: ANIMATION_SPEED,
                 x: Math.max(0, this.innerX),
                 y: Math.max(0, this.innerY),
                 width: Math.max(0, this.innerWidth),
@@ -339,6 +341,8 @@ export class TabbedZone extends Zone {
         return super.innerHeight;
     }
 
+    // the CSS class "tile-preview" is declared by GNOME shell. It is used by
+    // GNOME edge-tiling system. More info here: https://github.com/GNOME/gnome-shell/blob/7c4b1d4ae62cfc6c5b0637819d465ce8968bd944/js/ui/windowManager.js#L388
     createWidget(styleClass: string = 'tile-preview grid-preview') {
         this.widget = new St.BoxLayout({ style_class: styleClass });
         this.widget.visible = false;
@@ -444,6 +448,8 @@ export class EditableZone extends Zone {
         this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
     }
 
+    // the CSS class "tile-preview" is declared by GNOME shell. It is used by
+    // GNOME edge-tiling system. More info here: https://github.com/GNOME/gnome-shell/blob/7c4b1d4ae62cfc6c5b0637819d465ce8968bd944/js/ui/windowManager.js#L388
     createWidget(styleClass: string = 'tile-preview grid-preview') {
         this.widget = new St.Button({ style_class: styleClass });
         this.widget.connect('button-press-event', (_actor: ClutterActor, event: any) => {
