@@ -72,8 +72,8 @@ export function getWindowsOfMonitor(monitor: Monitor): Window[] {
         .get_active_workspace()
         .list_windows()
         .filter(w => w.get_window_type() == WindowType.NORMAL
-            && !w.is_hidden()
-            && monitors[w.get_monitor()] == monitor);
+                  && !w.is_hidden()
+                  && monitors[w.get_monitor()] == monitor);
     return windows;
 }
 

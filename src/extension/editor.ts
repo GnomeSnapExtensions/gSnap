@@ -704,11 +704,11 @@ export class ZoneAnchor {
 
     public adjustSizes() {
         if (this.zoneGroup.layoutItem.type == 0) {
-            this.widget.x = Math.floor(this.zoneA.x + this.zoneA.width - (this.widget.width / 2));
+            this.widget.x = Math.floor(this.zoneA.x + this.zoneA.width - (this.widget.width/2));
             this.widget.y = Math.floor(this.zoneA.y + (this.zoneA.height / 2) - (this.widget.height / 2));
         } else {
-            this.widget.y = Math.floor(this.zoneA.y + this.zoneA.height - (this.widget.height / 2));
-            this.widget.x = Math.floor(this.zoneA.x + (this.zoneA.width / 2) - (this.widget.width / 2));
+            this.widget.y = Math.floor(this.zoneA.y + this.zoneA.height - (this.widget.height/2));
+            this.widget.x = Math.floor(this.zoneA.x + (this.zoneA.width / 2) - (this.widget.width/2));
         }
     }
 
@@ -731,22 +731,22 @@ export class ZoneAnchor {
         if (this.isMoving) {
             if (this.zoneGroup.layoutItem.type == 0) {
                 let delta = x - this.startX;
-                if (delta < 0) {
-                    if (this.zoneA.width + delta < this.zoneA.minWidth) { return; }
+                if(delta < 0) {
+                    if(this.zoneA.width + delta < this.zoneA.minWidth) { return; }
                 } else {
-                    if (this.zoneB.width - delta < this.zoneB.minWidth) { return; }
+                    if(this.zoneB.width - delta < this.zoneB.minWidth) { return; }
                 }
                 this.zoneA.sizeRight(delta);
                 this.zoneB.sizeLeft(delta);
                 this.startX = x;
             } else {
                 let delta = y - this.startY;
-                if (delta < 0) {
-                    if (this.zoneA.height + delta < this.zoneA.minHeight) { return; }
+                if(delta < 0) {
+                    if(this.zoneA.height + delta < this.zoneA.minHeight) { return; }
                 } else {
-                    if (this.zoneB.height - delta < this.zoneB.minHeight) { return; }
+                    if(this.zoneB.height - delta < this.zoneB.minHeight) { return; }
                 }
-
+                
                 this.zoneA.sizeBottom(delta);
                 this.zoneB.sizeTop(delta);
                 this.startY = y;
@@ -790,7 +790,7 @@ export class ZoneDisplay extends ZoneGroup {
 
     public destroy() {
         super.destroy();
-        if (Main.uiGroup.get_children().indexOf(this.stage) >= 0) {
+        if(Main.uiGroup.get_children().indexOf(this.stage) >= 0) {
             Main.uiGroup.remove_child(this.stage);
         }
     }
@@ -843,7 +843,7 @@ export class ZoneDisplay extends ZoneGroup {
         super.show();
         this.stage.visible = true;
     }
-
+    
     public hide(): void {
         super.hide();
         this.stage.visible = false;
@@ -980,14 +980,14 @@ export class ZoneManager extends ZoneDisplay {
         // if the cursor is not inside the last selected zone,
         // then no zones have been selected since the last
         // selection were performed
-        if (!this._last_selection_zone.contains(x, y))
+        if (!this._last_selection_zone.contains(x, y)) 
             return undefined;
 
-        return {
-            x: this._last_selection_zone.innerX,
-            y: this._last_selection_zone.innerY,
-            width: this._last_selection_zone.innerWidth,
-            height: this._last_selection_zone.innerHeight
+        return { 
+            x : this._last_selection_zone.innerX, 
+            y: this._last_selection_zone.innerY, 
+            width: this._last_selection_zone.innerWidth, 
+            height: this._last_selection_zone.innerHeight 
         } as Rectangle;
     }
 
@@ -1004,10 +1004,10 @@ export class ZoneManager extends ZoneDisplay {
             if (zone.x < smallestX) smallestX = zone.x;
             if (zone.y < smallestY) smallestY = zone.y;
 
-            if (zone.x + zone.width > biggestX)
-                biggestX = zone.x + zone.width;
-            if (zone.y + zone.height > biggestY)
-                biggestY = zone.y + zone.height;
+            if (zone.x + zone.width > biggestX)  
+                biggestX  = zone.x + zone.width;
+            if (zone.y + zone.height > biggestY) 
+                biggestY  = zone.y + zone.height;
         }
 
         if (biggestX - smallestX == 0 || biggestY - smallestY == 0) {
@@ -1015,8 +1015,8 @@ export class ZoneManager extends ZoneDisplay {
         }
 
         this._last_selection_zone.move(
-            smallestX,
-            smallestY,
+            smallestX, 
+            smallestY, 
             biggestX - smallestX,
             biggestY - smallestY,
             this.animationsEnabled
@@ -1096,7 +1096,7 @@ class EntryDialogClass extends ModalDialog.ModalDialog {
             throw e;
         }
     }
-
+    
     constructor(params: any) {
         super(params);
         log(JSON.stringify(params));

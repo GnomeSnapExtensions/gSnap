@@ -297,7 +297,7 @@ class PrefsBuilder {
         grid.attach_next_to(item.actor, null, Gtk.PositionType.BOTTOM, 1, 1);
     }
 
-    add_text(text_label: string, SETTINGS: string, grid: any, settings: any, width: number) {
+    add_text(text_label: string, SETTINGS: string, grid:any, settings:any, width: number) {
         let item = new TextEntry(text_label);
         item.set_args(width);
         settings.bind(SETTINGS, item.textentry, 'text', Gio.SettingsBindFlags.DEFAULT);
@@ -320,16 +320,16 @@ class PrefsBuilder {
 
     append_hotkey(model: any, settings: any, name: string, pretty_name: string) {
         let _ok, key, mods;
-
+    
         if (Gtk.get_major_version() >= 4) {
             // ignore ok as failure treated as disabled
             [_ok, key, mods] = Gtk.accelerator_parse(settings.get_strv(name)[0]);
         } else {
             [key, mods] = Gtk.accelerator_parse(settings.get_strv(name)[0]);
         }
-
+    
         let row = model.insert(-1);
-
+    
         model.set(row, [0, 1, 2, 3], [name, pretty_name, mods, key]);
     }
 }
@@ -339,7 +339,7 @@ class IntSelect {
     label: any; //Gtk.Label
     spin: any;  //Gtk.SpinButton
     actor: any; //Gtk.Box
-
+    
     constructor(name: string) {
         this.label = new Gtk.Label({
             label: name + ":",

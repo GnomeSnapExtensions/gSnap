@@ -4,7 +4,7 @@ declare var global: any;
 import { log } from './logging';
 import { ShellVersion } from './shellversion';
 import { bind as bindHotkeys, unbind as unbindHotkeys, Bindings } from './hotkeys';
-import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager, MoveDirection, ZoneBase } from "./editor";
+import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager } from "./editor";
 
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
@@ -72,6 +72,13 @@ let monitorsChangedConnect: any = false;
 const trackedWindows: Window[] = global.trackedWindows = [];
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
+
+enum MoveDirection {
+    Up,
+    Down,
+    Left,
+    Right
+}
 
 const keyBindings: Bindings = new Map([
     [SETTINGS.MOVE_FOCUSED_UP, () => {
@@ -251,7 +258,7 @@ class App {
 
         this.tabManager[monitorIndex]?.destroy();
         this.tabManager[monitorIndex] = null;
-
+        
         const animationsEnabled = getBoolSetting(SETTINGS.ANIMATIONS_ENABLED);
 
         if (gridSettings[SETTINGS.SHOW_TABS]) {
@@ -284,8 +291,8 @@ class App {
      *  and it is not possible to span multiple zones in "tab" mode */
     canSpanMultipleZones() {
         return !getBoolSetting(SETTINGS.SHOW_TABS) &&
-            getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES) &&
-            this.modifiersManager.isHolding(MODIFIERS_ENUM.ALT);
+                getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES) &&
+                this.modifiersManager.isHolding(MODIFIERS_ENUM.ALT);
     }
 
     enable() {
@@ -326,7 +333,7 @@ class App {
             }
 
         });
-
+    
 
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
             // only start isGrabbing if is a valid window to avoid conflict 
@@ -342,7 +349,7 @@ class App {
             if (useModifier &&
                 !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL))
                 return;
-
+            
             activeMonitors().forEach(m => {
                 this.tabManager[m.index]?.allow_multiple_zones_selection(spanMultipleZones);
                 this.tabManager[m.index]?.show();
@@ -363,7 +370,7 @@ class App {
                     if (!trackedWindows.includes(win)) {
                         trackedWindows.push(win);
                     }
-
+                    
                     if (!selection) { // ensure window is moved one time only
                         selection = this.tabManager[m.index]?.getSelectionRect();
                         // may be undefined if there are no zones selected in this monitor
@@ -371,7 +378,7 @@ class App {
                             this.moveWindow(win, selection.x, selection.y, selection.width, selection.height);
                         }
                     }
-
+                    
                     this.tabManager[m.index]?.hide(); // hide zones after the window was moved
                     this.tabManager[m.index]?.layoutWindows();
                     return;
