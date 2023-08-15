@@ -11,7 +11,7 @@ import {
     Window
 } from "./gnometypes";
 
-import { areEqual, getWorkAreaByMonitor, getWindowsOfMonitor, Monitor, WorkArea } from './monitors';
+import { areEqual, getWorkAreaByMonitor, getTrackedWindowsOfMonitor, Monitor, WorkArea } from './monitors';
 
 import { Layout, LayoutItem } from './layouts';
 
@@ -960,7 +960,7 @@ export class ZoneManager extends ZoneDisplay {
     }
 
     public layoutWindows() {
-        let windows = getWindowsOfMonitor(this.monitor);
+        let windows = getTrackedWindowsOfMonitor(this.monitor);
 
         for (let c = 0; c < this.children.length; c++) {
             let child = this.children[c];

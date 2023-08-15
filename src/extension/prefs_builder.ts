@@ -20,6 +20,10 @@ const pretty_names = {
     [SETTINGS.PRESET_RESIZE_10]: 'Layout 10',
     [SETTINGS.PRESET_RESIZE_11]: 'Layout 11',
     [SETTINGS.PRESET_RESIZE_12]: 'Layout 12',
+    [SETTINGS.MOVE_FOCUSED_UP]: 'Move focused window up',
+    [SETTINGS.MOVE_FOCUSED_DOWN]: 'Move focused window down',
+    [SETTINGS.MOVE_FOCUSED_LEFT]: 'Move focused window left',
+    [SETTINGS.MOVE_FOCUSED_RIGHT]: 'Move focused window right',
 }
 
 function set_child(widget: any, child: any) {

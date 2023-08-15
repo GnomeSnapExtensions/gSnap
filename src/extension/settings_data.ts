@@ -28,6 +28,10 @@ export type NumberSettingName = (
 
 // A setting for a key binding i.e. a 'preset' in the app.ts code.
 export type KeyBindingSettingName = (
+    "move-focused-down" |
+    "move-focused-left" |
+    "move-focused-right" |
+    "move-focused-up" |
     "preset-resize-1" |
     "preset-resize-10" |
     "preset-resize-11" |
@@ -76,6 +80,10 @@ export type AnySettingName = (
     "insets-secondary-left" |
     "insets-secondary-right" |
     "insets-secondary-top" |
+    "move-focused-down" |
+    "move-focused-left" |
+    "move-focused-right" |
+    "move-focused-up" |
     "moveresize-enabled" |
     "preset-resize-1" |
     "preset-resize-10" |
@@ -146,6 +154,18 @@ export class ParsedSettings {
 
     /** Top gap around border of screen for secondary monitor */
     ["insets-secondary-top"]: number = 0;
+
+    /** Move focused window down */
+    ["move-focused-down"]: string[] = ['<Super>Down'];
+
+    /** Move focused window left */
+    ["move-focused-left"]: string[] = ['<Super>Left'];
+
+    /** Move focused window right */
+    ["move-focused-right"]: string[] = ['<Super>Right'];
+
+    /** Move focused window up */
+    ["move-focused-up"]: string[] = ['<Super>Up'];
 
     /** Enables shortcuts for moving and resizing the current window. */
     ["moveresize-enabled"]: boolean = true;
@@ -267,6 +287,10 @@ export const INSETS_SECONDARY_BOTTOM = "insets-secondary-bottom";
 export const INSETS_SECONDARY_LEFT = "insets-secondary-left";
 export const INSETS_SECONDARY_RIGHT = "insets-secondary-right";
 export const INSETS_SECONDARY_TOP = "insets-secondary-top";
+export const MOVE_FOCUSED_DOWN = "move-focused-down";
+export const MOVE_FOCUSED_LEFT = "move-focused-left";
+export const MOVE_FOCUSED_RIGHT = "move-focused-right";
+export const MOVE_FOCUSED_UP = "move-focused-up";
 export const MOVERESIZE_ENABLED = "moveresize-enabled";
 export const PRESET_RESIZE_1 = "preset-resize-1";
 export const PRESET_RESIZE_10 = "preset-resize-10";

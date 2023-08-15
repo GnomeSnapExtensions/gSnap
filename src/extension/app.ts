@@ -21,7 +21,8 @@ import {
 
 import {
     activeMonitors,
-    getCurrentMonitorIndex
+    getCurrentMonitorIndex,
+    getWindowsOfMonitor,
 } from './monitors';
 
 import {
@@ -72,10 +73,26 @@ const trackedWindows: Window[] = global.trackedWindows = [];
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
 
-// Hangouts workaround
+enum MoveDirection {
+    Up,
+    Down,
+    Left,
+    Right
+}
 
 const keyBindings: Bindings = new Map([
-
+    [SETTINGS.MOVE_FOCUSED_UP, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Up)
+    }],
+    [SETTINGS.MOVE_FOCUSED_DOWN, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Down)
+    }],
+    [SETTINGS.MOVE_FOCUSED_LEFT, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Left)
+    }],
+    [SETTINGS.MOVE_FOCUSED_RIGHT, () => {
+        globalApp.moveFocusedWindow(MoveDirection.Right)
+    }],
 ]);
 
 const key_bindings_presets: Bindings = new Map([
@@ -358,18 +375,7 @@ class App {
                         selection = this.tabManager[m.index]?.getSelectionRect();
                         // may be undefined if there are no zones selected in this monitor
                         if (selection) {
-                            if (getBoolSetting(SETTINGS.ANIMATIONS_ENABLED)) {
-                                const windowActor = win.get_compositor_private();                            
-                                windowActor.remove_all_transitions();
-                                Main.wm._prepareAnimationInfo(
-                                    global.window_manager,
-                                    windowActor,
-                                    win.get_frame_rect().copy(),
-                                    MetaSizeChange.MAXIMIZE
-                                );
-                            }
-                            win.move_frame(true, selection.x, selection.y);
-                            win.move_resize_frame(true, selection.x, selection.y, selection.width, selection.height);
+                            this.moveWindow(win, selection.x, selection.y, selection.width, selection.height);
                         }
                     }
                     
@@ -475,6 +481,77 @@ class App {
         }
 
         return changed;
+    }
+
+    moveFocusedWindow(direction: MoveDirection) {
+        let monitorIndex = getCurrentMonitorIndex();
+        const monitor = activeMonitors()[monitorIndex];
+        if (!monitor) return;
+
+        let windows = getWindowsOfMonitor(monitor).filter(w => w.has_focus());
+        if (windows.length <= 0) return;
+        let focusedWindow = windows[0];
+
+        log(`Move ${focusedWindow.title} ${direction}`);
+
+        const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+        if (useModifier) {
+            if (!trackedWindows.includes(focusedWindow)) {
+                trackedWindows.push(focusedWindow);
+            }
+        }
+
+        let zoneManager = this.tabManager[monitorIndex];
+        if (!zoneManager) return;
+
+        let frameRect = focusedWindow.get_frame_rect();
+        // get window center position
+        let x = frameRect.x + (frameRect.width / 2);
+        let y = frameRect.y + (frameRect.height / 2);
+
+        // add/remove 2 to avoid zone not being recognized due to rounding errors
+        switch (direction) {
+            case MoveDirection.Up:
+                y = frameRect.y - (2 + zoneManager.margin);
+                break;
+            case MoveDirection.Down:
+                y = frameRect.y + frameRect.height + (2 + zoneManager.margin);
+                break;
+            case MoveDirection.Left:
+                x = frameRect.x - (2 + zoneManager.margin);
+                break;
+            case MoveDirection.Right:
+                x = frameRect.x + frameRect.width + (2 + zoneManager.margin);
+                break;
+        }
+
+        let layoutZones = zoneManager.recursiveChildren();
+        for (let i = 0; i < layoutZones.length; i++) {
+            let zone = layoutZones[i];
+            log(`Zone: ${zone.x}/${zone.y}/${zone.width}/${zone.height} contains: ${x}, ${y}`);
+            if (zone.contains(x, y)) {
+                this.moveWindow(focusedWindow, zone.innerX, zone.innerY, zone.innerWidth, zone.innerHeight);
+                this.tabManager[monitorIndex]?.layoutWindows();
+                return;
+            }
+        }
+
+    }
+
+    private moveWindow(window: Window, x: number, y: number, width: number, height: number) {
+        log(`moveWindow moving to x:${x}, y:${y}`);
+        if (getBoolSetting(SETTINGS.ANIMATIONS_ENABLED)) {
+            const windowActor = window.get_compositor_private();
+            windowActor.remove_all_transitions();
+            Main.wm._prepareAnimationInfo(
+                global.window_manager,
+                windowActor,
+                window.get_frame_rect().copy(),
+                MetaSizeChange.MAXIMIZE
+            );
+        }
+        window.move_frame(true, x, y);
+        window.move_resize_frame(true, x, y, width, height);
     }
 
     private getWorkspaceMonitorSettings(workspaceIdx: number): Array<WorkspaceMonitorSettings> {
