@@ -509,30 +509,33 @@ class App {
         let x = frameRect.x + (frameRect.width / 2);
         let y = frameRect.y + (frameRect.height / 2);
 
+        // add/remove 2 to avoid zone not being recognized due to rounding errors
         switch (direction) {
             case MoveDirection.Up:
-                y = frameRect.y - (1 + zoneManager.margin);
+                y = frameRect.y - (2 + zoneManager.margin);
                 break;
             case MoveDirection.Down:
-                y = frameRect.y + frameRect.height + (1 + zoneManager.margin);
+                y = frameRect.y + frameRect.height + (2 + zoneManager.margin);
                 break;
             case MoveDirection.Left:
-                x = frameRect.x - (1 + zoneManager.margin);
+                x = frameRect.x - (2 + zoneManager.margin);
                 break;
             case MoveDirection.Right:
-                x = frameRect.x + frameRect.width + (1 + zoneManager.margin);
+                x = frameRect.x + frameRect.width + (2 + zoneManager.margin);
                 break;
         }
 
         let layoutZones = zoneManager.recursiveChildren();
         for (let i = 0; i < layoutZones.length; i++) {
             let zone = layoutZones[i];
+            log(`Zone: ${zone.x}/${zone.y}/${zone.width}/${zone.height} contains: ${x}, ${y}`);
             if (zone.contains(x, y)) {
                 this.moveWindow(focusedWindow, zone.x, zone.y, zone.width, zone.height);
+                this.tabManager[monitorIndex]?.layoutWindows();
+                return;
             }
         }
 
-        this.tabManager[monitorIndex]?.layoutWindows();
     }
 
     private moveWindow(window: Window, x: number, y: number, width: number, height: number) {
