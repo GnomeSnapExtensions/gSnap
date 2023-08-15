@@ -72,45 +72,45 @@ export class ZoneBase {
         return this.height - (this.margin * 2);
     }
 
-    public get x(): number {
+    public get x() : number {
         return this._x;
     }
 
-    public set x(v: number) {
-        if (this._x !== v) {
+    public set x(v : number) {
+        if(this._x !== v) {
             this._x = v;
             this.positionChanged();
         }
     }
 
-    public get y(): number {
+    public get y() : number {
         return this._y;
     }
-
-    public set y(v: number) {
-        if (this._y !== v) {
+    
+    public set y(v : number) {
+        if(this._y !== v) {
             this._y = v;
             this.positionChanged();
         }
     }
 
-    public get width(): number {
+    public get width() : number {
         return this._width;
     }
 
-    public set width(v: number) {
-        if (this._width !== v) {
+    public set width(v : number) {
+        if(this._width !== v) {
             this._width = v;
             this.sizeChanged();
         }
     }
 
-    public get height(): number {
+    public get height() : number {
         return this._height;
     }
 
-    public set height(v: number) {
-        if (this._height !== v) {
+    public set height(v : number) {
+        if(this._height !== v) {
             this._height = v;
             this.sizeChanged();
         }
@@ -265,13 +265,13 @@ export class SelectionZone extends Zone {
 
         // if both position and widths are not changed
         // then there is nothing to move o  r resize
-        if (newX == this.x &&
+        if (newX == this.x && 
             newY == this.y &&
             newWidth == this.width &&
             newHeight == this.height) {
             return;
         }
-
+        
         // if the zone was never shown before, start the animation from cursor's coordinates
         if (this.innerWidth <= 0) {
             let [x, y] = global.get_pointer();
@@ -373,7 +373,7 @@ export class TabbedZone extends Zone {
 
             let midX = outerRect.x + (outerRect.width / 2);
             let midY = outerRect.y + (outerRect.height / 2);
-
+            
             if (this.contains(midX, midY)) {
                 let zoneTab = new ZoneTab(this, metaWindow);
                 zoneTab.buttonWidget.height = this.tabHeight - (this.margin * 2);
@@ -440,12 +440,12 @@ export class EditableZone extends Zone {
     }
     positionChanged() {
         super.positionChanged();
-        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length, 2)}%)`;
+        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
     }
 
     sizeChanged() {
         super.sizeChanged();
-        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length, 2)}%)`;
+        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
     }
 
     // the CSS class "tile-preview" is declared by GNOME shell. It is used by
@@ -514,8 +514,8 @@ export class ZoneGroup extends ZoneBase {
         zone.layoutItem.items = [];
 
         const layoutType = this.layoutItem.type == 1 ? 0 : 1;
-        if (layoutType === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
-        if (layoutType === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
+        if(layoutType === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
+        if(layoutType === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
 
         zone.layoutItem.type = layoutType;
         zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
@@ -525,8 +525,8 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public split(zone: Zone) {
-        if (zone.layoutItem.type === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
-        if (zone.layoutItem.type === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
+        if(zone.layoutItem.type === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
+        if(zone.layoutItem.type === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
 
         let index = this.children.indexOf(zone);
 
