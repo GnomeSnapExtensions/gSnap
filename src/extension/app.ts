@@ -4,7 +4,7 @@ declare var global: any;
 import { log } from './logging';
 import { ShellVersion } from './shellversion';
 import { bind as bindHotkeys, unbind as unbindHotkeys, Bindings } from './hotkeys';
-import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager, MoveDirection } from "./editor";
+import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager, MoveDirection, ZoneBase } from "./editor";
 
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
@@ -12,6 +12,7 @@ const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 import {
     Display,
+    MetaSizeChange,
     Rectangle,
     Window,
     WindowType,
@@ -191,6 +192,7 @@ class App {
     private modifiersManager: ModifiersManager;
     private layoutsUtils: LayoutsUtils;
     private isGrabbing: boolean = false;
+    private minimizedWindows: Window[];
 
     private currentLayoutIdxPerMonitor: number[];
     public layouts: LayoutsSettings = {
@@ -220,6 +222,7 @@ class App {
         this.currentLayoutIdxPerMonitor = new Array<number>(monitors);
         this.modifiersManager = new ModifiersManager();
         this.layoutsUtils = new LayoutsUtils();
+        this.minimizedWindows = new Array<Window>();
     }
 
     private restackConnection: any;
@@ -249,10 +252,12 @@ class App {
         this.tabManager[monitorIndex]?.destroy();
         this.tabManager[monitorIndex] = null;
 
+        const animationsEnabled = getBoolSetting(SETTINGS.ANIMATIONS_ENABLED);
+
         if (gridSettings[SETTINGS.SHOW_TABS]) {
-            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new TabbedZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN], animationsEnabled);
         } else {
-            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN]);
+            this.tabManager[monitorIndex] = new ZoneManager(activeMonitors()[monitorIndex], this.layouts.definitions[layoutIndex], gridSettings[SETTINGS.WINDOW_MARGIN], animationsEnabled);
         }
 
         this.tabManager[monitorIndex]?.layoutWindows();
@@ -279,8 +284,8 @@ class App {
      *  and it is not possible to span multiple zones in "tab" mode */
     canSpanMultipleZones() {
         return !getBoolSetting(SETTINGS.SHOW_TABS) &&
-                getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES) &&
-                this.modifiersManager.isHolding(MODIFIERS_ENUM.ALT);
+            getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES) &&
+            this.modifiersManager.isHolding(MODIFIERS_ENUM.ALT);
     }
 
     enable() {
@@ -322,6 +327,7 @@ class App {
 
         });
 
+
         global.display.connect('grab-op-begin', (_display: Display, win: Window) => {
             // only start isGrabbing if is a valid window to avoid conflict 
             // with dash-to-panel/appIcons.js:1021 where are emitting a grab-op-begin
@@ -336,7 +342,7 @@ class App {
             if (useModifier &&
                 !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL))
                 return;
-            
+
             activeMonitors().forEach(m => {
                 this.tabManager[m.index]?.allow_multiple_zones_selection(spanMultipleZones);
                 this.tabManager[m.index]?.show();
@@ -357,16 +363,15 @@ class App {
                     if (!trackedWindows.includes(win)) {
                         trackedWindows.push(win);
                     }
-                    
+
                     if (!selection) { // ensure window is moved one time only
                         selection = this.tabManager[m.index]?.getSelectionRect();
                         // may be undefined if there are no zones selected in this monitor
                         if (selection) {
-                            win.move_frame(true, selection.x, selection.y);
-                            win.move_resize_frame(true, selection.x, selection.y, selection.width, selection.height);
+                            this.moveWindow(win, selection.x, selection.y, selection.width, selection.height);
                         }
                     }
-                    
+
                     this.tabManager[m.index]?.hide(); // hide zones after the window was moved
                     this.tabManager[m.index]?.layoutWindows();
                     return;
@@ -484,14 +489,59 @@ class App {
 
         const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
         if (useModifier) {
-            const trackedWindows = global.trackedWindows;
             if (!trackedWindows.includes(focusedWindow)) {
                 trackedWindows.push(focusedWindow);
             }
         }
 
-        this.tabManager[monitorIndex]?.moveWindowAtDirection(focusedWindow, direction);
+        let zoneManager = this.tabManager[monitorIndex];
+        if (!zoneManager) return;
+
+        let frameRect = focusedWindow.get_frame_rect();
+        // get window center position
+        let x = frameRect.x + (frameRect.width / 2);
+        let y = frameRect.y + (frameRect.height / 2);
+
+        switch (direction) {
+            case MoveDirection.Up:
+                y = frameRect.y - (1 + zoneManager.margin);
+                break;
+            case MoveDirection.Down:
+                y = frameRect.y + frameRect.height + (1 + zoneManager.margin);
+                break;
+            case MoveDirection.Left:
+                x = frameRect.x - (1 + zoneManager.margin);
+                break;
+            case MoveDirection.Right:
+                x = frameRect.x + frameRect.width + (1 + zoneManager.margin);
+                break;
+        }
+
+        let layoutZones = zoneManager.recursiveChildren();
+        for (let i = 0; i < layoutZones.length; i++) {
+            let zone = layoutZones[i];
+            if (zone.contains(x, y)) {
+                this.moveWindow(focusedWindow, zone.x, zone.y, zone.width, zone.height);
+            }
+        }
+
         this.tabManager[monitorIndex]?.layoutWindows();
+    }
+
+    private moveWindow(window: Window, x: number, y: number, width: number, height: number) {
+        log(`moveWindow moving to x:${x}, y:${y}`);
+        if (getBoolSetting(SETTINGS.ANIMATIONS_ENABLED)) {
+            const windowActor = window.get_compositor_private();
+            windowActor.remove_all_transitions();
+            Main.wm._prepareAnimationInfo(
+                global.window_manager,
+                windowActor,
+                window.get_frame_rect().copy(),
+                MetaSizeChange.MAXIMIZE
+            );
+        }
+        window.move_frame(true, x, y);
+        window.move_resize_frame(true, x, y, width, height);
     }
 
     private getWorkspaceMonitorSettings(workspaceIdx: number): Array<WorkspaceMonitorSettings> {
@@ -515,6 +565,21 @@ class App {
         if (workspaceMonitorSettings[monitorIdx]) {
             workspaceMonitorSettings[monitorIdx].current = currentLayout;
         }
+    }
+
+    minimizeAllWindows() {
+        // we need to know what windows have been minimized by the user
+        // so we don't accidentally restore them when calling unminimizeAllWindows()
+        this.minimizedWindows = WorkspaceManager
+            .get_active_workspace()
+            .list_windows()
+            .filter(x => !x.minimized);
+        this.minimizedWindows.forEach(w => w.minimize());
+    }
+
+    unminimizeAllWindows() {
+        this.minimizedWindows.forEach(w => w.unminimize());
+        this.minimizedWindows = [];
     }
 
     reloadMenu() {
@@ -615,10 +680,7 @@ class App {
                 this.editor[m.index]?.show();
             });
 
-            var windows = WorkspaceManager.get_active_workspace().list_windows();
-            for (let i = 0; i < windows.length; i++) {
-                windows[i].minimize();
-            }
+            this.minimizeAllWindows();
             this.reloadMenu();
         });
 
@@ -656,10 +718,7 @@ class App {
                 this.editor[m.index] = null;
             });
 
-            var windows = WorkspaceManager.get_active_workspace().list_windows();
-            for (let i = 0; i < windows.length; i++) {
-                windows[i].unminimize();
-            }
+            this.unminimizeAllWindows();
             this.reloadMenu();
         });
     }
@@ -698,11 +757,7 @@ class App {
         });
 
         this.layoutsUtils.saveSettings(this.layouts);
-
-        var windows = WorkspaceManager.get_active_workspace().list_windows();
-        for (let i = 0; i < windows.length; i++) {
-            windows[i].unminimize();
-        }
+        this.unminimizeAllWindows();
     }
 
     disable() {

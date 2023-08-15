@@ -5,6 +5,7 @@
 
 // Valid boolean settings
 export type BoolSettingName = (
+    "animations-enabled" |
     "debug" |
     "global-presets" |
     "moveresize-enabled" |
@@ -68,6 +69,7 @@ export type StringSettingName = (
 
 // Any valid setting name.
 export type AnySettingName = (
+    "animations-enabled" |
     "debug" |
     "global-presets" |
     "insets-primary-bottom" |
@@ -120,6 +122,9 @@ export type AnySettingName = (
     "window-margin");
 
 export class ParsedSettings {
+    /** Enable or disable animations when hovering and selecting zones */
+    ["animations-enabled"]: boolean = true;
+
     /** Put debug lines into global.log. To see, run journalctl /usr/bin/gnome-shell -f in terminal */
     ["debug"]: boolean = false;
 
@@ -271,6 +276,7 @@ export class ParsedSettings {
     ["window-margin"]: number = 0;
 }
 
+export const ANIMATIONS_ENABLED = "animations-enabled";
 export const DEBUG = "debug";
 export const GLOBAL_PRESETS = "global-presets";
 export const INSETS_PRIMARY_BOTTOM = "insets-primary-bottom";

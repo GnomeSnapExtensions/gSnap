@@ -23,6 +23,8 @@ const GObject = imports.gi.GObject;
 const Clutter = imports.gi.Clutter;
 const ModalDialog = imports.ui.modalDialog;
 
+const ANIMATION_SPEED = 100; // animation speed of zones' fade-in, fade-out, position and size changes
+
 export enum MoveDirection {
     Up,
     Down,
@@ -77,45 +79,45 @@ export class ZoneBase {
         return this.height - (this.margin * 2);
     }
 
-    public get x() : number {
+    public get x(): number {
         return this._x;
     }
 
-    public set x(v : number) {
-        if(this._x !== v) {
+    public set x(v: number) {
+        if (this._x !== v) {
             this._x = v;
             this.positionChanged();
         }
     }
 
-    public get y() : number {
+    public get y(): number {
         return this._y;
     }
-    
-    public set y(v : number) {
-        if(this._y !== v) {
+
+    public set y(v: number) {
+        if (this._y !== v) {
             this._y = v;
             this.positionChanged();
         }
     }
 
-    public get width() : number {
+    public get width(): number {
         return this._width;
     }
 
-    public set width(v : number) {
-        if(this._width !== v) {
+    public set width(v: number) {
+        if (this._width !== v) {
             this._width = v;
             this.sizeChanged();
         }
     }
 
-    public get height() : number {
+    public get height(): number {
         return this._height;
     }
 
-    public set height(v : number) {
-        if(this._height !== v) {
+    public set height(v: number) {
+        if (this._height !== v) {
             this._height = v;
             this.sizeChanged();
         }
@@ -196,7 +198,9 @@ export class Zone extends ZoneBase {
         this.stage.add_child(this.widget);
     }
 
-    public createWidget(styleClass: string = 'grid-preview') {
+    // the CSS class "tile-preview" is declared by GNOME shell. It is used by
+    // GNOME edge-tiling system. More info here: https://github.com/GNOME/gnome-shell/blob/7c4b1d4ae62cfc6c5b0637819d465ce8968bd944/js/ui/windowManager.js#L388
+    public createWidget(styleClass: string = 'tile-preview grid-preview') {
         this.widget = new St.BoxLayout({ style_class: styleClass });
         this.widget.visible = false;
     }
@@ -215,34 +219,27 @@ export class Zone extends ZoneBase {
 
     public hide() {
         this._selected = false;
-        this.widget.visible = false;
+        (this.widget as any).ease({
+            opacity: 0,
+            duration: ANIMATION_SPEED,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => this.widget.visible = false
+        });
         this.widget.remove_style_pseudo_class('activate');
     }
 
     public show() {
         this.widget.visible = true;
+        (this.widget as any).ease({
+            opacity: 255,
+            duration: ANIMATION_SPEED,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        });
         this.widget.add_style_pseudo_class('activate');
     }
 
-    public set hover(hovering: boolean) {
-        if (!this.widget) return;
-
-        // this is needed to highlight windows on hover
-        // while dragging a window in the zone
-        hovering
-            ? this.widget.add_style_pseudo_class('hover')
-            : this.widget.remove_style_pseudo_class('hover');
-    }
-
     public set selected(value: boolean) {
-        if (!this.widget) return;
-
         this._selected = value;
-        // this is needed to highlight the selected zone
-        // while dragging the window in other zones
-        value
-            ? this.widget.add_style_class_name('selected')
-            : this.widget.remove_style_class_name('selected');
     }
 
     public get selected() {
@@ -252,6 +249,83 @@ export class Zone extends ZoneBase {
     public destroy() {
         this.hide();
         this.stage.remove_child(this.widget);
+    }
+}
+
+export class SelectionZone extends Zone {
+    private animationRunning: boolean = false;
+
+    constructor(layoutItem: LayoutItem, parent: ZoneGroup | null, stage: ClutterActor) {
+        super(layoutItem, parent, stage);
+        const color = this.widget.get_theme_node().get_background_color();
+        let newAlpha = Math.min(color.alpha + 35, 255);
+        // since an alpha value lower than 160 is not so much visible, enforce a minimum value of 160
+        if (newAlpha < 160) newAlpha = 160;
+        // The final alpha value is divided by 255 since CSS needs a value from 0 to 1, but ClutterColor expresses alpha from 0 to 255
+        this.widget.set_style(`
+            background-color: rgba(${color.red}, ${color.green}, ${color.blue}, ${newAlpha / 255}) !important;
+        `);
+    }
+
+    public move(newX: number, newY: number, newWidth: number, newHeight: number, ease: boolean = true) {
+        if (this.animationRunning) return; // if the animation is still running, do not animate again
+
+        // if both position and widths are not changed
+        // then there is nothing to move o  r resize
+        if (newX == this.x &&
+            newY == this.y &&
+            newWidth == this.width &&
+            newHeight == this.height) {
+            return;
+        }
+
+        // if the zone was never shown before, start the animation from cursor's coordinates
+        if (this.innerWidth <= 0) {
+            let [x, y] = global.get_pointer();
+            this.widget.x = x;
+            this.widget.y = y;
+            this.widget.width = 0;
+            this.widget.height = 0;
+        }
+
+        // update location
+        this.x = newX;
+        this.y = newY;
+        // update sizes
+        this.width = newWidth;
+        this.height = newHeight;
+
+        this.widget.visible = true;
+        if (ease) { // animate with easing
+            this.animationRunning = true;
+            (this.widget as any).ease({
+                duration: ANIMATION_SPEED,
+                x: Math.max(0, this.innerX),
+                y: Math.max(0, this.innerY),
+                width: Math.max(0, this.innerWidth),
+                height: Math.max(0, this.innerHeight),
+                opacity: 255,
+                transition: Clutter.AnimationMode.EASE_OUT_QUAD,
+                onComplete: () => this.animationRunning = false
+            });
+        } else { // do not animate
+            this.widget.x = Math.max(0, this.innerX);
+            this.widget.y = Math.max(0, this.innerY);
+            this.widget.width = Math.max(0, this.innerWidth);
+            this.widget.height = Math.max(0, this.innerHeight);
+            this.widget.opacity = 255;
+            this.animationRunning = false;
+        }
+    }
+
+    // avoid updating position automatically. Call easeMove method instead
+    positionChanged() {
+
+    }
+
+    // avoid updating sizes automatically. Call easeMove method instead
+    sizeChanged() {
+
     }
 }
 
@@ -274,7 +348,9 @@ export class TabbedZone extends Zone {
         return super.innerHeight;
     }
 
-    createWidget(styleClass: string = 'grid-preview') {
+    // the CSS class "tile-preview" is declared by GNOME shell. It is used by
+    // GNOME edge-tiling system. More info here: https://github.com/GNOME/gnome-shell/blob/7c4b1d4ae62cfc6c5b0637819d465ce8968bd944/js/ui/windowManager.js#L388
+    createWidget(styleClass: string = 'tile-preview grid-preview') {
         this.widget = new St.BoxLayout({ style_class: styleClass });
         this.widget.visible = false;
     }
@@ -304,7 +380,7 @@ export class TabbedZone extends Zone {
 
             let midX = outerRect.x + (outerRect.width / 2);
             let midY = outerRect.y + (outerRect.height / 2);
-            
+
             if (this.contains(midX, midY)) {
                 let zoneTab = new ZoneTab(this, metaWindow);
                 zoneTab.buttonWidget.height = this.tabHeight - (this.margin * 2);
@@ -371,15 +447,17 @@ export class EditableZone extends Zone {
     }
     positionChanged() {
         super.positionChanged();
-        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
+        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length, 2)}%)`;
     }
 
     sizeChanged() {
         super.sizeChanged();
-        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
+        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length, 2)}%)`;
     }
 
-    createWidget(styleClass: string = 'grid-preview') {
+    // the CSS class "tile-preview" is declared by GNOME shell. It is used by
+    // GNOME edge-tiling system. More info here: https://github.com/GNOME/gnome-shell/blob/7c4b1d4ae62cfc6c5b0637819d465ce8968bd944/js/ui/windowManager.js#L388
+    createWidget(styleClass: string = 'tile-preview grid-preview') {
         this.widget = new St.Button({ style_class: styleClass });
         this.widget.connect('button-press-event', (_actor: ClutterActor, event: any) => {
             var btn = event.get_button();
@@ -443,8 +521,8 @@ export class ZoneGroup extends ZoneBase {
         zone.layoutItem.items = [];
 
         const layoutType = this.layoutItem.type == 1 ? 0 : 1;
-        if(layoutType === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
-        if(layoutType === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
+        if (layoutType === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
+        if (layoutType === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
 
         zone.layoutItem.type = layoutType;
         zone.layoutItem.items.push({ type: 0, length: 50, items: [] });
@@ -454,8 +532,8 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public split(zone: Zone) {
-        if(zone.layoutItem.type === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
-        if(zone.layoutItem.type === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
+        if (zone.layoutItem.type === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
+        if (zone.layoutItem.type === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
 
         let index = this.children.indexOf(zone);
 
@@ -626,11 +704,11 @@ export class ZoneAnchor {
 
     public adjustSizes() {
         if (this.zoneGroup.layoutItem.type == 0) {
-            this.widget.x = Math.floor(this.zoneA.x + this.zoneA.width - (this.widget.width/2));
+            this.widget.x = Math.floor(this.zoneA.x + this.zoneA.width - (this.widget.width / 2));
             this.widget.y = Math.floor(this.zoneA.y + (this.zoneA.height / 2) - (this.widget.height / 2));
         } else {
-            this.widget.y = Math.floor(this.zoneA.y + this.zoneA.height - (this.widget.height/2));
-            this.widget.x = Math.floor(this.zoneA.x + (this.zoneA.width / 2) - (this.widget.width/2));
+            this.widget.y = Math.floor(this.zoneA.y + this.zoneA.height - (this.widget.height / 2));
+            this.widget.x = Math.floor(this.zoneA.x + (this.zoneA.width / 2) - (this.widget.width / 2));
         }
     }
 
@@ -653,22 +731,22 @@ export class ZoneAnchor {
         if (this.isMoving) {
             if (this.zoneGroup.layoutItem.type == 0) {
                 let delta = x - this.startX;
-                if(delta < 0) {
-                    if(this.zoneA.width + delta < this.zoneA.minWidth) { return; }
+                if (delta < 0) {
+                    if (this.zoneA.width + delta < this.zoneA.minWidth) { return; }
                 } else {
-                    if(this.zoneB.width - delta < this.zoneB.minWidth) { return; }
+                    if (this.zoneB.width - delta < this.zoneB.minWidth) { return; }
                 }
                 this.zoneA.sizeRight(delta);
                 this.zoneB.sizeLeft(delta);
                 this.startX = x;
             } else {
                 let delta = y - this.startY;
-                if(delta < 0) {
-                    if(this.zoneA.height + delta < this.zoneA.minHeight) { return; }
+                if (delta < 0) {
+                    if (this.zoneA.height + delta < this.zoneA.minHeight) { return; }
                 } else {
-                    if(this.zoneB.height - delta < this.zoneB.minHeight) { return; }
+                    if (this.zoneB.height - delta < this.zoneB.minHeight) { return; }
                 }
-                
+
                 this.zoneA.sizeBottom(delta);
                 this.zoneB.sizeTop(delta);
                 this.startY = y;
@@ -712,61 +790,8 @@ export class ZoneDisplay extends ZoneGroup {
 
     public destroy() {
         super.destroy();
-        if(Main.uiGroup.get_children().indexOf(this.stage) >= 0) {
+        if (Main.uiGroup.get_children().indexOf(this.stage) >= 0) {
             Main.uiGroup.remove_child(this.stage);
-        }
-    }
-
-    public getSelectionRect(): Rectangle | undefined {
-        let [x, y] = global.get_pointer();
-        let children = this.recursiveChildren();
-        let smallestX = x, smallestY = y, biggestX = x, biggestY = y;
-        for (let i = 0; i < children.length; i++) {
-            let zone = (children[i] as Zone);
-            if (!zone.selected) continue;
-            
-            if (zone.innerX < smallestX) smallestX = zone.innerX;
-            if (zone.innerY < smallestY) smallestY = zone.innerY;
-
-            if (zone.innerX + zone.innerWidth > biggestX)  
-                biggestX  = zone.innerX + zone.innerWidth;
-            if (zone.innerY + zone.innerHeight > biggestY) 
-                biggestY  = zone.innerY + zone.innerHeight;
-        }
-        // no zones selected
-        if (biggestX - smallestX == 0) return undefined;
-        
-        return { x : smallestX, y: smallestY, width: biggestX - smallestX, height: biggestY - smallestY };
-    }
-
-    public moveWindowAtDirection(win: Window, dir: MoveDirection) {
-        let frameRect = win.get_frame_rect();
-        // get window center position
-        let x = frameRect.x + (frameRect.width / 2);
-        let y = frameRect.y + (frameRect.height / 2);
-
-        switch (dir) {
-            case MoveDirection.Up:
-                y = frameRect.y - (1 + this.margin);
-                break;
-            case MoveDirection.Down:
-                y = frameRect.y + frameRect.height + (1 + this.margin);
-                break;
-            case MoveDirection.Left:
-                x = frameRect.x - (1 + this.margin);
-                break;
-            case MoveDirection.Right:
-                x = frameRect.x + frameRect.width + (1 + this.margin);
-                break;
-        }
-
-        let c = this.recursiveChildren();
-        for (let i = 0; i < c.length; i++) {
-            if (c[i].contains(x, y)) {
-                log(`moveWindowAtDirection moving to x:${c[i].innerX}, y:${c[i].innerY}`);
-                win.move_frame(true, c[i].innerX, c[i].innerY);
-                win.move_resize_frame(true, c[i].innerX, c[i].innerY, c[i].innerWidth, c[i].innerHeight);
-            }
         }
     }
 
@@ -818,7 +843,7 @@ export class ZoneDisplay extends ZoneGroup {
         super.show();
         this.stage.visible = true;
     }
-    
+
     public hide(): void {
         super.hide();
         this.stage.visible = false;
@@ -926,9 +951,14 @@ export class ZoneManager extends ZoneDisplay {
     private trackCursorTimeoutId: number | null = null;
     private isShowing: boolean = false;
     private _select_multiple_zones: boolean = false;
+    private _last_selection_zone: SelectionZone;
+    private animationsEnabled: boolean = true;
 
-    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
+    constructor(monitor: Monitor, layout: LayoutItem, margin: number, animationsEnabled: boolean) {
         super(monitor, layout, margin);
+        this._last_selection_zone = new SelectionZone(layout, this.parent, this.stage);
+        this._last_selection_zone.margin = this.margin;
+        this.animationsEnabled = animationsEnabled;
     }
 
     adjustLayout(root: ZoneDisplay) {
@@ -945,15 +975,59 @@ export class ZoneManager extends ZoneDisplay {
         }
     }
 
+    public getSelectionRect(): Rectangle | undefined {
+        let [x, y] = global.get_pointer();
+        // if the cursor is not inside the last selected zone,
+        // then no zones have been selected since the last
+        // selection were performed
+        if (!this._last_selection_zone.contains(x, y))
+            return undefined;
+
+        return {
+            x: this._last_selection_zone.innerX,
+            y: this._last_selection_zone.innerY,
+            width: this._last_selection_zone.innerWidth,
+            height: this._last_selection_zone.innerHeight
+        } as Rectangle;
+    }
+
     public highlightZonesUnderCursor() {
         let [x, y] = global.get_pointer();
-        var children = this.recursiveChildren();
-        for (const zone of children) {
+        let children = this.recursiveChildren();
+        let smallestX = x, smallestY = y, biggestX = x, biggestY = y;
+        for (let i = 0; i < children.length; i++) {
+            let zone = (children[i] as Zone);
             let contained = zone.contains(x, y);
-            
-            (zone as Zone).hover = contained; // hover the one on which the cursor is
-            (zone as Zone).selected = contained || (this._select_multiple_zones && (zone as Zone).selected);
+            zone.selected = contained || (this._select_multiple_zones && (zone as Zone).selected);
+            if (!zone.selected) continue;
+
+            if (zone.x < smallestX) smallestX = zone.x;
+            if (zone.y < smallestY) smallestY = zone.y;
+
+            if (zone.x + zone.width > biggestX)
+                biggestX = zone.x + zone.width;
+            if (zone.y + zone.height > biggestY)
+                biggestY = zone.y + zone.height;
         }
+
+        if (biggestX - smallestX == 0 || biggestY - smallestY == 0) {
+            return;
+        }
+
+        this._last_selection_zone.move(
+            smallestX,
+            smallestY,
+            biggestX - smallestX,
+            biggestY - smallestY,
+            this.animationsEnabled
+        );
+    }
+
+    reset_selection_zone() {
+        this._last_selection_zone.x = 0;
+        this._last_selection_zone.y = 0;
+        this._last_selection_zone.width = 0;
+        this._last_selection_zone.height = 0;
     }
 
     public show() {
@@ -987,6 +1061,8 @@ export class ZoneManager extends ZoneDisplay {
         if (this.trackCursorTimeoutId) {
             GLib.Source.remove(this.trackCursorTimeoutId);
             this.trackCursorTimeoutId = null;
+            this.reset_selection_zone();
+            this._last_selection_zone.hide();
         }
     }
 
@@ -996,8 +1072,8 @@ export class ZoneManager extends ZoneDisplay {
 }
 
 export class TabbedZoneManager extends ZoneManager {
-    constructor(monitor: Monitor, layout: LayoutItem, margin: number) {
-        super(monitor, layout, margin);
+    constructor(monitor: Monitor, layout: LayoutItem, margin: number, animationsEnabled: boolean) {
+        super(monitor, layout, margin, animationsEnabled);
     }
 
     public createZone(layout: LayoutItem, parent: ZoneGroup) {
@@ -1020,7 +1096,7 @@ class EntryDialogClass extends ModalDialog.ModalDialog {
             throw e;
         }
     }
-    
+
     constructor(params: any) {
         super(params);
         log(JSON.stringify(params));
