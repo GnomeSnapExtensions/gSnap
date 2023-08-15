@@ -25,13 +25,6 @@ const ModalDialog = imports.ui.modalDialog;
 
 const ANIMATION_SPEED = 100; // animation speed of zones' fade-in, fade-out, position and size changes
 
-export enum MoveDirection {
-    Up,
-    Down,
-    Left,
-    Right
-}
-
 export class ZoneBase {
     private _x: number = 0;
     private _y: number = 0;
