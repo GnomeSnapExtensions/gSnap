@@ -530,7 +530,7 @@ class App {
             let zone = layoutZones[i];
             log(`Zone: ${zone.x}/${zone.y}/${zone.width}/${zone.height} contains: ${x}, ${y}`);
             if (zone.contains(x, y)) {
-                this.moveWindow(focusedWindow, zone.x, zone.y, zone.width, zone.height);
+                this.moveWindow(focusedWindow, zone.innerX, zone.innerY, zone.innerWidth, zone.innerHeight);
                 this.tabManager[monitorIndex]?.layoutWindows();
                 return;
             }
