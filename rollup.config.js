@@ -18,19 +18,35 @@ function genBuildConfig(gnomeVersion) {
             input: `${buildDir}/extension/app.js`,
             output: {
                 file: `${distDir}/extension.js`,
-                format: "cjs",
-                esModule: false,
+                // format: "cjs",
+                esModule: true,
             },
             plugins: [
                 stripExports(),
+            ],
+            external: [
+                'gi://St',
+                'gi://GLib',
+                'gi://Gio',
+                'gi://Gtk',
+                'gi://GObject',
+                'gi://Clutter',
+                'resource:///org/gnome/shell/ui/main.js',
+                'resource:///org/gnome/shell/ui/panelMenu.js',
+                'resource:///org/gnome/shell/ui/popupMenu.js',
+                'resource:///org/gnome/shell/ui/modalDialog.js',
+                'gi://Meta',
+                'gi://Shell',
+                'resource:///org/gnome/shell/extensions/extension.js',
+                'resource:///org/gnome/shell/misc/config.js',
             ]
         },
         {
             input: `${buildDir}/extension/prefs_builder.js`,
             output: {
                 file: `${distDir}/prefs.js`,
-                format: "cjs",
-                esModule: false,
+                // format: "cjs",
+                esModule: true,
             },
             plugins: [
                 stripExports(),
@@ -45,6 +61,22 @@ function genBuildConfig(gnomeVersion) {
                         { src: 'src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml', dest: `${distDir}/schemas` },
                     ]
                 })
+            ],
+            external: [
+                'gi://St',
+                'gi://GLib',
+                'gi://Gio',
+                'gi://Gtk',
+                'gi://GObject',
+                'gi://Clutter',
+                'resource:///org/gnome/shell/ui/main.js',
+                'resource:///org/gnome/shell/ui/panelMenu.js',
+                'resource:///org/gnome/shell/ui/popupMenu.js',
+                'resource:///org/gnome/shell/ui/modalDialog.js',
+                'gi://Meta',
+                'gi://Shell',
+                'resource:///org/gnome/shell/extensions/extension.js',
+                'resource:///org/gnome/shell/misc/config.js',
             ]
         }
     ]

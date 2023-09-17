@@ -1000,11 +1000,6 @@ class EntryDialogClass extends ModalDialog.ModalDialog {
         let box = new St.BoxLayout({ vertical: true });
         this.contentLayout.add(box);
 
-        // const MySelf = ExtensionUtils.getCurrentExtension();
-        // let gicon = new Gio.FileIcon({file: Gio.file_new_for_path(MySelf.path + "/icons/icon.png")});
-        // let icon = new St.Icon({gicon: gicon});
-        // box.add(icon);
-
         this.label = new St.Label({ text: "" });
         box.add(this.label);
         box.add(this.entry = new St.Entry({ text: "" }));

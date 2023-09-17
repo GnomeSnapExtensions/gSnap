@@ -1,12 +1,11 @@
 import {
     GLib,
     ExtensionUtils,
-    ByteArray
+    DecodeText
 } from "../gnome/imports";
 
 import { LayoutsSettings } from "./layouts";
 import { log } from "./logging";
-import { ShellVersion } from "./shellversion";
 
 const Me = ExtensionUtils.getCurrentExtension();
 
@@ -67,13 +66,7 @@ export class LayoutsUtils {
             if (ok) {
                 log(`Found in ${filePath}`);
 
-                let contentsString = '';
-                if(ShellVersion.defaultVersion().version_at_least_41()) {
-                    const decoder = new TextDecoder('utf-8');
-                    contentsString = decoder.decode(contents);
-                } else {
-                    contentsString = ByteArray.toString(contents);
-                }
+                let contentsString = DecodeText(contents);
 
                 return JSON.parse(contentsString);
             }
