@@ -1,9 +1,9 @@
-declare var imports: any;
 declare var global: any;
 
 import { log } from './logging';
 
-const GLib = imports.gi.GLib;
+// @ts-ignore
+import GLib from 'gi://GLib';
 
 export enum MODIFIERS_ENUM {
     SHIFT,

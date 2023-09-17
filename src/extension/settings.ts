@@ -1,11 +1,8 @@
 // GJS import system
-declare var imports: any;
 
 import * as SETTINGS from './settings_data';
 
 import { log, setLoggingEnabled } from "./logging";
-
-const ExtensionUtils = imports.misc.extensionUtils;
 
 export const gridSettings = new SETTINGS.ParsedSettings();
 
@@ -21,11 +18,11 @@ export interface SettingsObject {
     disconnect(c: any): void;
 };
 
-let settings: SettingsObject;
-let settingsConnection: any = null;
+let _settings: SettingsObject;
+let _settingsConnection: any = null;
 
 export function getBoolSetting(settingName: SETTINGS.BoolSettingName): boolean {
-    const value = settings.get_boolean(settingName);
+    const value = _settings.get_boolean(settingName);
     if (value === undefined) {
         log("Undefined settings " + settingName);
         return false;
@@ -34,7 +31,7 @@ export function getBoolSetting(settingName: SETTINGS.BoolSettingName): boolean {
 }
 
 export function getIntSetting(settingsValue: SETTINGS.NumberSettingName) {
-    let iss = settings.get_int(settingsValue);
+    let iss = _settings.get_int(settingsValue);
     if (iss === undefined) {
         log("Undefined settings " + settingsValue);
         return 0;
@@ -43,9 +40,9 @@ export function getIntSetting(settingsValue: SETTINGS.NumberSettingName) {
     }
 }
 
-export function initSettings(changed_settings: () => void) {
-    settings = ExtensionUtils.getSettings();
-    settingsConnection = settings.connect('changed', changed_settings);
+export function initSettings(settings: SettingsObject, changed_settings: () => void) {
+    _settings = settings;
+    _settingsConnection = _settings.connect('changed', changed_settings);
     setLoggingEnabled(getBoolSetting(SETTINGS.DEBUG));
 
     log("Init settings");
@@ -57,5 +54,5 @@ export function initSettings(changed_settings: () => void) {
 }
 
 export function deinitSettings() {
-    settings.disconnect(settingsConnection);
+    _settings.disconnect(_settingsConnection);
 }

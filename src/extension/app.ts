@@ -1,15 +1,25 @@
 // GJS import system
-declare var imports: any;
 declare var global: any;
+// @ts-ignore
+import Gio from 'gi://Gio';
+// @ts-ignore
+import St from 'gi://St';
+// @ts-ignore
+import GObject from 'gi://GObject';
+// @ts-ignore
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+// @ts-ignore
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+// @ts-ignore
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+// @ts-ignore
+import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
 import { log } from './logging';
 import { ShellVersion } from './shellversion';
 import { bind as bindHotkeys, unbind as unbindHotkeys, Bindings } from './hotkeys';
 import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager } from "./editor";
 
-const Gio = imports.gi.Gio;
-const St = imports.gi.St;
-const Gettext = imports.gettext;
-const _ = Gettext.gettext;
 import {
     Display,
     MetaSizeChange,
@@ -26,6 +36,7 @@ import {
 } from './monitors';
 
 import {
+    SettingsObject,
     deinitSettings,
     getBoolSetting,
     gridSettings,
@@ -50,23 +61,10 @@ import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
 
  ******************************************************************/
 
-/*****************************************************************
- CONST & VARS
- *****************************************************************/
-
-// Library imports
-const Main = imports.ui.main;
-const GObject = imports.gi.GObject;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
 // Getter for accesing "get_active_workspace" on GNOME <=2.28 and >= 2.30
 const WorkspaceManager: WorkspaceManagerInterface = (
     global.screen || global.workspace_manager);
 
-let launcher: GSnapStatusButtonClass | null;
 let enabled = false;
 let monitorsChangedConnect: any = false;
 const trackedWindows: Window[] = global.trackedWindows = [];
@@ -80,119 +78,10 @@ enum MoveDirection {
     Right
 }
 
-const keyBindings: Bindings = new Map([
-    [SETTINGS.MOVE_FOCUSED_UP, () => {
-        globalApp.moveFocusedWindow(MoveDirection.Up)
-    }],
-    [SETTINGS.MOVE_FOCUSED_DOWN, () => {
-        globalApp.moveFocusedWindow(MoveDirection.Down)
-    }],
-    [SETTINGS.MOVE_FOCUSED_LEFT, () => {
-        globalApp.moveFocusedWindow(MoveDirection.Left)
-    }],
-    [SETTINGS.MOVE_FOCUSED_RIGHT, () => {
-        globalApp.moveFocusedWindow(MoveDirection.Right)
-    }],
-]);
-
-const key_bindings_presets: Bindings = new Map([
-    [SETTINGS.PRESET_RESIZE_1, () => {
-        globalApp.setLayout(0);
-    }],
-    [SETTINGS.PRESET_RESIZE_2, () => {
-        globalApp.setLayout(1);
-    }],
-    [SETTINGS.PRESET_RESIZE_3, () => {
-        globalApp.setLayout(2);
-    }],
-    [SETTINGS.PRESET_RESIZE_4, () => {
-        globalApp.setLayout(3);
-    }],
-    [SETTINGS.PRESET_RESIZE_5, () => {
-        globalApp.setLayout(4);
-    }],
-    [SETTINGS.PRESET_RESIZE_6, () => {
-        globalApp.setLayout(5);
-    }],
-    [SETTINGS.PRESET_RESIZE_7, () => {
-        globalApp.setLayout(6);
-    }],
-    [SETTINGS.PRESET_RESIZE_8, () => {
-        globalApp.setLayout(7);
-    }],
-    [SETTINGS.PRESET_RESIZE_9, () => {
-        globalApp.setLayout(8);
-    }],
-    [SETTINGS.PRESET_RESIZE_10, () => {
-        globalApp.setLayout(9);
-    }],
-    [SETTINGS.PRESET_RESIZE_11, () => {
-        globalApp.setLayout(10);
-    }],
-    [SETTINGS.PRESET_RESIZE_12, () => {
-        globalApp.setLayout(11);
-    }],
-    [SETTINGS.PRESET_RESIZE_13, () => {
-        globalApp.setLayout(12);
-    }],
-    [SETTINGS.PRESET_RESIZE_14, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_15, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_16, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_17, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_18, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_19, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_20, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_21, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_22, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_23, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_24, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_25, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_26, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_27, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_28, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_29, () => {
-
-    }],
-    [SETTINGS.PRESET_RESIZE_30, () => {
-
-    }],
-]);
-
-const keyBindingGlobalResizes: Bindings = new Map([
-
-]);
-
-class App {
+export default class App extends Extension {
+    private metadata: any;
+    private settings: SettingsObject | null = null;
+    private indicator: PanelMenu.Button;
     private editor: (ZoneEditor | null)[];
     private preview: (ZonePreview | null)[];
     private tabManager: (ZoneManager | null)[];
@@ -221,15 +110,130 @@ class App {
         ]
     };
 
-    constructor() {
+
+    private keyBindings: Bindings = new Map([
+        [SETTINGS.MOVE_FOCUSED_UP, () => {
+            this.moveFocusedWindow(MoveDirection.Up)
+        }],
+        [SETTINGS.MOVE_FOCUSED_DOWN, () => {
+            this.moveFocusedWindow(MoveDirection.Down)
+        }],
+        [SETTINGS.MOVE_FOCUSED_LEFT, () => {
+            this.moveFocusedWindow(MoveDirection.Left)
+        }],
+        [SETTINGS.MOVE_FOCUSED_RIGHT, () => {
+            this.moveFocusedWindow(MoveDirection.Right)
+        }],
+    ]);
+    
+    private key_bindings_presets: Bindings = new Map([
+        [SETTINGS.PRESET_RESIZE_1, () => {
+            this.setLayout(0);
+        }],
+        [SETTINGS.PRESET_RESIZE_2, () => {
+            this.setLayout(1);
+        }],
+        [SETTINGS.PRESET_RESIZE_3, () => {
+            this.setLayout(2);
+        }],
+        [SETTINGS.PRESET_RESIZE_4, () => {
+            this.setLayout(3);
+        }],
+        [SETTINGS.PRESET_RESIZE_5, () => {
+            this.setLayout(4);
+        }],
+        [SETTINGS.PRESET_RESIZE_6, () => {
+            this.setLayout(5);
+        }],
+        [SETTINGS.PRESET_RESIZE_7, () => {
+            this.setLayout(6);
+        }],
+        [SETTINGS.PRESET_RESIZE_8, () => {
+            this.setLayout(7);
+        }],
+        [SETTINGS.PRESET_RESIZE_9, () => {
+            this.setLayout(8);
+        }],
+        [SETTINGS.PRESET_RESIZE_10, () => {
+            this.setLayout(9);
+        }],
+        [SETTINGS.PRESET_RESIZE_11, () => {
+            this.setLayout(10);
+        }],
+        [SETTINGS.PRESET_RESIZE_12, () => {
+            this.setLayout(11);
+        }],
+        [SETTINGS.PRESET_RESIZE_13, () => {
+            this.setLayout(12);
+        }],
+        [SETTINGS.PRESET_RESIZE_14, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_15, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_16, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_17, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_18, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_19, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_20, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_21, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_22, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_23, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_24, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_25, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_26, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_27, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_28, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_29, () => {
+    
+        }],
+        [SETTINGS.PRESET_RESIZE_30, () => {
+    
+        }],
+    ]);
+    
+    private keyBindingGlobalResizes: Bindings = new Map([
+    
+    ]);
+
+    constructor(metadata: any) {
+        super(metadata);
         const monitors = activeMonitors().length;
         this.editor = new Array<ZoneEditor>(monitors);
         this.preview = new Array<ZonePreview>(monitors);
         this.tabManager = new Array<ZoneManager>(monitors);
         this.currentLayoutIdxPerMonitor = new Array<number>(monitors);
         this.modifiersManager = new ModifiersManager();
-        this.layoutsUtils = new LayoutsUtils();
+        this.layoutsUtils = new LayoutsUtils(super.path);
         this.minimizedWindows = new Array<Window>();
+        this.metadata = metadata;
     }
 
     private restackConnection: any;
@@ -296,6 +300,11 @@ class App {
     }
 
     enable() {
+        this.settings = super.getSettings() as SettingsObject;
+        initSettings(this.settings, this.changed_settings);
+        log("Extension enable begin");
+        SHELL_VERSION.print_version();
+
         this.layouts = this.layoutsUtils.loadLayoutSettings();
         log(JSON.stringify(this.layouts));
         if (this.refreshLayouts()) {
@@ -444,19 +453,14 @@ class App {
             });
         });
 
-        launcher = new GSnapStatusButton('tiling-icon') as GSnapStatusButtonClass;
-        launcher.label = "Layouts";
-        if (gridSettings[SETTINGS.SHOW_ICON]) {
-            Main.panel.addToStatusArea("GSnapStatusButton", launcher);
-            this.reloadMenu();
-        }
+        this.createIndicator()
 
-        bindHotkeys(keyBindings);
+        bindHotkeys(this.keyBindings, this.settings);
         if (gridSettings[SETTINGS.GLOBAL_PRESETS]) {
-            bindHotkeys(key_bindings_presets);
+            bindHotkeys(this.key_bindings_presets, this.settings);
         }
         if (gridSettings[SETTINGS.MOVERESIZE_ENABLED]) {
-            bindHotkeys(keyBindingGlobalResizes);
+            bindHotkeys(this.keyBindingGlobalResizes, this.settings);
         }
 
         this.modifiersManager.enable();
@@ -464,6 +468,15 @@ class App {
         enabled = true;
 
         log("Extension enable completed");
+    }
+
+    changed_settings() {
+        log("changed_settings");
+        if (enabled) {
+            this.disable();
+            this.enable();
+        }
+        log("changed_settings complete");
     }
 
     refreshLayouts(): boolean {
@@ -592,9 +605,22 @@ class App {
         this.minimizedWindows = [];
     }
 
+    createIndicator() {
+        this.indicator = new PanelMenu.Button(0.0, this.metadata.name, false);
+        this.indicator.label = "Layouts";
+        let icon = new St.Icon({ style_class: 'tiling-icon' });
+        icon.gicon = Gio.icon_new_for_string(`${super.path}/images/tray.svg`);
+        this.indicator.add_child(icon);
+
+        if (gridSettings[SETTINGS.SHOW_ICON]) {
+            Main.panel.addToStatusArea("GSnapStatusButton", this.indicator);
+            this.reloadMenu();
+        }
+    }
+
     reloadMenu() {
-        if (launcher == null) return;
-        launcher.menu.removeAll();
+        if (this.indicator == null) return;
+        this.indicator.menu.removeAll();
         let resetLayoutButton = new PopupMenu.PopupMenuItem(_("Reset Layout"));
         let editLayoutButton = new PopupMenu.PopupMenuItem(_("Edit Layout"));
         let saveLayoutButton = new PopupMenu.PopupMenuItem(_("Save Layout"));
@@ -607,35 +633,35 @@ class App {
 
         let currentMonitorIndex = getCurrentMonitorIndex();
         if (this.editor[currentMonitorIndex] != null) {
-            launcher.menu.addMenuItem(resetLayoutButton);
-            launcher.menu.addMenuItem(saveLayoutButton);
-            launcher.menu.addMenuItem(cancelEditingButton);
+            this.indicator.menu.addMenuItem(resetLayoutButton);
+            this.indicator.menu.addMenuItem(saveLayoutButton);
+            this.indicator.menu.addMenuItem(cancelEditingButton);
         } else {
             const monitorsCount = activeMonitors().length;
             for (let mI = 0; mI < monitorsCount; mI++) {
                 if (monitorsCount > 1) {
                     let monitorName = new PopupMenu.PopupSubMenuMenuItem(_(`Monitor ${mI}`));
-                    launcher.menu.addMenuItem(monitorName);
+                    this.indicator.menu.addMenuItem(monitorName);
 
                     this.createLayoutMenuItems(mI).forEach(i =>
                         (<any>monitorName).menu.addMenuItem(i));
                 } else {
                     this.createLayoutMenuItems(mI).forEach(i =>
-                        launcher?.menu.addMenuItem(i));
+                        this.indicator?.menu.addMenuItem(i));
                 }
             }
 
             let sep = new PopupMenu.PopupSeparatorMenuItem();
-            launcher.menu.addMenuItem(sep);
-            launcher.menu.addMenuItem(editLayoutButton);
-            launcher.menu.addMenuItem(renameLayoutButton);
-            launcher.menu.addMenuItem(newLayoutButton);
+            this.indicator.menu.addMenuItem(sep);
+            this.indicator.menu.addMenuItem(editLayoutButton);
+            this.indicator.menu.addMenuItem(renameLayoutButton);
+            this.indicator.menu.addMenuItem(newLayoutButton);
 
             // Add an entry-point for more settings
-            launcher.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            const settingsButton = launcher.menu.addAction('Settings',
-                () => ExtensionUtils.openPrefs());
-            launcher.menu.addMenuItem(settingsButton);
+            this.indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            const settingsButton = this.indicator.menu.addAction('Settings',
+                () => super.openPreferences());
+            this.indicator.menu.addMenuItem(settingsButton);
         }
 
 
@@ -772,6 +798,8 @@ class App {
 
     disable() {
         log("Extension disable begin");
+        deinitSettings();
+        this.settings = null;
         enabled = false;
         this.modifiersManager.destroy();
         this.preview?.forEach(p => { p?.destroy(); p = null });
@@ -797,12 +825,12 @@ class App {
             this.workareasChangedConnect = false;
         }
 
-        unbindHotkeys(keyBindings);
-        unbindHotkeys(key_bindings_presets);
-        unbindHotkeys(keyBindingGlobalResizes);
+        unbindHotkeys(this.keyBindings);
+        unbindHotkeys(this.key_bindings_presets);
+        unbindHotkeys(this.keyBindingGlobalResizes);
 
-        launcher?.destroy();
-        launcher = null;
+        this.indicator?.destroy();
+        this.indicator = null;
     }
 
 
@@ -811,8 +839,6 @@ class App {
      */
     onFocus() { }
 
-    showMenu() { }
-
     private setToCurrentWorkspace() {
         let currentWorkspaceIdx = WorkspaceManager.get_active_workspace().index();
         activeMonitors().forEach(m => {
@@ -820,51 +846,4 @@ class App {
             this.setLayout(currentLayoutIdx, m.index);
         });
     }
-}
-
-const globalApp = new App();
-
-class GSnapStatusButtonClass extends PanelMenu.Button {
-    _init() {
-        super._init(0.0, "gSnap", false);
-
-        this._icon = new St.Icon({ style_class: 'tiling-icon' });
-        this._icon.gicon = Gio.icon_new_for_string(`${Me.path}/images/tray.svg`);
-        this.add_actor(this._icon);
-        this.connect('button-press-event', this._onButtonPress);
-        log("GSnapStatusButton _init done");
-    }
-
-
-    _onButtonPress(_actor: any, _event: any) {
-        log(`_onButtonPress Click Toggle Status on system panel ${this}`);
-        globalApp.showMenu();
-    }
-}
-
-const GSnapStatusButton = GObject.registerClass({
-    GTypeName: 'GSnapStatusButton',
-}, GSnapStatusButtonClass
-);
-
-function changed_settings() {
-    log("changed_settings");
-    if (enabled) {
-        disable();
-        enable();
-    }
-    log("changed_settings complete");
-}
-
-export function enable() {
-    initSettings(changed_settings);
-    log("Extension enable begin");
-    SHELL_VERSION.print_version();
-
-    globalApp.enable();
-}
-
-export function disable() {
-    deinitSettings();
-    globalApp.disable();
 }

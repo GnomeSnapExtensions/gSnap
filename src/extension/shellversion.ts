@@ -4,15 +4,12 @@
 
 import {log} from './logging';
 
-declare var imports: any;
-
 interface ConfigObject {
     PACKAGE_VERSION: string;
 }
 
-function getConfig(): ConfigObject {
-    return imports.misc.config;
-}
+// @ts-ignore
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 
 interface Version {
     major: number;
@@ -49,7 +46,7 @@ export class ShellVersion {
     }
 
     public static defaultVersion(): ShellVersion {
-        return ShellVersion.parse(getConfig().PACKAGE_VERSION);
+        return ShellVersion.parse(Config.PACKAGE_VERSION);
     }
 
     public static parse(version: string): ShellVersion {
