@@ -1,8 +1,13 @@
-// Library imports
-declare var imports: any;
-const GObject = imports.gi.GObject;
-const Gtk = imports.gi.Gtk;
-const Gio = imports.gi.Gio;
+// @ts-ignore
+import Gio from 'gi://Gio';
+// @ts-ignore
+import Gtk from 'gi://Gtk';
+// @ts-ignore
+import GObject from 'gi://GObject';
+// @ts-ignore
+import Adw from 'gi://Adw';
+// @ts-ignore
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import * as SETTINGS from "./settings_data";
 
@@ -26,33 +31,86 @@ const pretty_names = {
     [SETTINGS.MOVE_FOCUSED_RIGHT]: 'Move focused window right',
 }
 
-function set_child(widget: any, child: any) {
-    if (Gtk.get_major_version() >= 4) {
-        widget.set_child(child);
-    } else {
-        widget.add(child);
-    }
-}
+export default class GSnapPreferences extends ExtensionPreferences {
+    private settings: any;
 
-function box_append(box: any, child: any) {
-    if (Gtk.get_major_version() >= 4) {
-        box.append(child);
-    } else {
-        box.add(child);
-    }
-}
+    fillPreferencesWindow(window: any) {
+        this.settings = super.getSettings();
+        window._settings = this.settings;
 
-class PrefsBuilder {
-    accel_tab(notebook: any) {
-        let settings = imports.misc.extensionUtils.getSettings();
-        let ks_grid = new Gtk.Grid({
-            column_spacing: 10,
-            orientation: Gtk.Orientation.VERTICAL,
-            row_spacing: 10,
+        // Create a preferences page and group
+        const page = new Adw.PreferencesPage();
+
+        page.add(this.basics());
+        page.add(this.margins());
+        page.add(this.shortcuts());
+        page.add(this.info());
+
+        // Add our page to the window
+        window.add(page);
+    }
+
+    basics() {
+        const group = new Adw.PreferencesGroup({
+            title: 'Basics'
         });
 
-        ks_grid.set_margin_start(24);
-        ks_grid.set_margin_top(24);
+        this.add_check(group, SETTINGS.SHOW_ICON, "Show icon");
+        const show_tabs_check = this.add_check(group, SETTINGS.SHOW_TABS, 
+            "Show tabs",
+            "This feature is not supported if you have the \"Hold ALT to span multiple zones\" feature enabled");
+
+        this.add_check(group, SETTINGS.MOVERESIZE_ENABLED, "Enable accelerators for moving and resizing windows");
+        this.add_check(group, SETTINGS.USE_MODIFIER, "Hold CTRL to snap windows");
+        const span_multiple_zones_check = this.add_check(group, SETTINGS.SPAN_MULTIPLE_ZONES,
+             "Hold ALT to span multiple zones",
+             "This feature is not supported if you have the \"Show tabs\" feature enabled");
+
+        // disable "Span multiple zones" setting if "Show tabs" setting was already enabled
+        if (this.settings.get_boolean(SETTINGS.SHOW_TABS)) {
+            span_multiple_zones_check.set_sensitive(false);
+        // disable "Show tabs" setting if "Span multiple zones" setting was already enabled
+        } else if (this.settings.get_boolean(SETTINGS.SPAN_MULTIPLE_ZONES)) {
+            show_tabs_check.set_sensitive(false);
+        }
+
+        // Watch for changes to the setting SETTINGS.SHOW_TABS
+        this.settings.connect(`changed::${SETTINGS.SHOW_TABS}`, (settings: any, changed_key: string) => {
+            // disable "Span multiple zones" setting if "Show tabs" setting is enabled by the user
+            span_multiple_zones_check.set_sensitive(!settings.get_boolean(changed_key));
+        });
+
+        // Watch for changes to the setting SETTINGS.SPAN_MULTIPLE_ZONES
+        this.settings.connect(`changed::${SETTINGS.SPAN_MULTIPLE_ZONES}`, (settings: any, changed_key: string) => {
+            // disable "Show tabs" setting if "Span multiple zones" setting is enabled by the user
+            show_tabs_check.set_sensitive(!settings.get_boolean(changed_key));
+        });
+
+        this.add_check(group, SETTINGS.ANIMATIONS_ENABLED, "Enable animations");
+        this.add_check(group, SETTINGS.DEBUG,
+            "Debug",
+            "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f");
+
+        return group;
+    }
+
+    margins() {
+        const group = new Adw.PreferencesGroup({
+            title: 'Margins'
+        });
+
+        this.add_int(group, SETTINGS.WINDOW_MARGIN,
+            "Window margin",
+            0, 32, 1,
+            "Window margins and invisible borders around screen.",
+        );
+        return group;
+    }
+
+    shortcuts() {
+        const group = new Adw.PreferencesGroup({
+            title: 'Shortcuts'
+        });
 
         let model = new Gtk.ListStore();
 
@@ -64,35 +122,25 @@ class PrefsBuilder {
         ]);
 
         for (let key in pretty_names) {
-            this.append_hotkey(model, settings, key, (pretty_names as any)[key]);
+            this.add_hotkey(model, key, (pretty_names as any)[key]);
         }
 
-        let treeview = new Gtk.TreeView({
-            'model': model,
-            'hexpand': true
+        const titleRenderer = new Gtk.CellRendererText();
+        const titleColumn = new Gtk.TreeViewColumn({
+            title: 'Shortcut',
+            expand: true
         });
 
-        let col;
-        let cellrend;
+        titleColumn.pack_start(titleRenderer, true);
+        titleColumn.add_attribute(titleRenderer, 'text', 1);
 
-        cellrend = new Gtk.CellRendererText();
-
-        col = new Gtk.TreeViewColumn({
-            'title': 'Keybinding',
-            'expand': true
-        });
-
-        col.pack_start(cellrend, true);
-        col.add_attribute(cellrend, 'text', 1);
-
-        treeview.append_column(col);
-
-        cellrend = new Gtk.CellRendererAccel({
-            'editable': true,
+        const keybindingsCellRenderer = new Gtk.CellRendererAccel({
+            editable: true,
             'accel-mode': Gtk.CellRendererAccelMode.GTK
         });
 
-        cellrend.connect('accel-cleared', function (_rend: any, str_iter: string) {
+        const _settings = this.settings as any;
+        keybindingsCellRenderer.connect('accel-cleared', function (_rend: any, str_iter: string) {
             let [success, iter] = model.get_iter_from_string(str_iter);
 
             if (!success) {
@@ -101,297 +149,106 @@ class PrefsBuilder {
 
             let name = model.get_value(iter, 0);
             model.set(iter, [3], [0]);
-            settings.set_strv(name, ['']);
+            _settings.set_strv(name, ['']);
         });
 
-        cellrend.connect('accel-edited', function (rend: any, str_iter: string, key: any, mods: any) {
+        keybindingsCellRenderer.connect('accel-edited', function (rend: any, str_iter: string, key: any, mods: any) {
             let value = Gtk.accelerator_name(key, mods);
-
-
             let [success, iter] = model.get_iter_from_string(str_iter);
-
-
             if (!success) {
                 throw new Error("Something be broken, yo.");
             }
 
             let name = model.get_value(iter, 0);
-
             model.set(iter, [2, 3], [mods, key]);
-
-            settings.set_strv(name, [value]);
+            _settings.set_strv(name, [value]);
         });
 
-        col = new Gtk.TreeViewColumn({
-            'title': 'Accel'
+        const keybindingsColumn = new Gtk.TreeViewColumn({
+            title: 'Keybindings'
         });
+        keybindingsColumn.pack_end(keybindingsCellRenderer, false);
+        keybindingsColumn.add_attribute(keybindingsCellRenderer, 'accel-mods', 2);
+        keybindingsColumn.add_attribute(keybindingsCellRenderer, 'accel-key', 3);
 
-        col.pack_end(cellrend, false);
-        col.add_attribute(cellrend, 'accel-mods', 2);
-        col.add_attribute(cellrend, 'accel-key', 3);
-
-        treeview.append_column(col);
-
-        let text = "Keyboard shortcuts. Arrows are used to move window and are not re-assignable.";
-        ks_grid.attach_next_to(new Gtk.Label({
-            label: text,
-            halign: Gtk.Align.START,
-            justify: Gtk.Justification.LEFT,
-            use_markup: false,
-            wrap: true,
-        }), null, Gtk.PositionType.BOTTOM, 1, 1);
-        ks_grid.attach_next_to(treeview, null, Gtk.PositionType.BOTTOM, 1, 1);
-
-        let ks_window = new Gtk.ScrolledWindow({ 'vexpand': true });
-        set_child(ks_window, ks_grid)
-        let ks_label = new Gtk.Label({
-            label: "Accelerators",
-            halign: Gtk.Align.START,
-            use_markup: false,
+        const treeview = new Gtk.TreeView({
+            model,
+            hexpand: true
         });
-        notebook.append_page(ks_window, ks_label);
+        treeview.append_column(titleColumn);
+        treeview.append_column(keybindingsColumn);
+        group.add(treeview);
+        return group;
     }
 
-    basics_tab(notebook: any) {
-        let settings = imports.misc.extensionUtils.getSettings();
 
-        let bs_grid = new Gtk.Grid({
-            column_spacing: 10,
-            orientation: Gtk.Orientation.VERTICAL,
-            row_spacing: 10,
+    info() {
+        const group = new Adw.PreferencesGroup({
+            title: 'Useful links'
         });
 
-        bs_grid.set_margin_start(24);
-        bs_grid.set_margin_top(24);
+        this.add_linkbutton(
+            group,
+            'Contribute to the project',
+            'https://github.com/GnomeSnapExtensions/gSnap');
+        this.add_linkbutton(
+            group,
+            'Report a bug',
+            'https://github.com/GnomeSnapExtensions/gSnap/issues');
 
-
-        this.add_check("Show icon", SETTINGS.SHOW_ICON, bs_grid, settings);
-        const show_tabs_check = this.add_check("Show tabs", SETTINGS.SHOW_TABS, bs_grid, settings);
-        this.add_label(
-            "This feature is not supported if you have the \"Hold ALT to span multiple zones\" feature enabled", 
-            bs_grid);
-        this.add_check("Enable accelerators for moving and resizing windows", SETTINGS.MOVERESIZE_ENABLED, bs_grid, settings);
-        this.add_check("Hold CTRL to snap windows", SETTINGS.USE_MODIFIER, bs_grid, settings);
-        const span_multiple_zones_check = this.add_check("Hold ALT to span multiple zones", SETTINGS.SPAN_MULTIPLE_ZONES, bs_grid, settings);
-        this.add_label(
-            "This feature is not supported if you have the \"Show tabs\" feature enabled", 
-            bs_grid);
-        // disable "Span multiple zones" setting if "Show tabs" setting was already enabled
-        if (settings.get_boolean(SETTINGS.SHOW_TABS)) {
-            span_multiple_zones_check.set_sensitive(false);
-        // disable "Show tabs" setting if "Span multiple zones" setting was already enabled
-        } else if (settings.get_boolean(SETTINGS.SPAN_MULTIPLE_ZONES)) {
-            show_tabs_check.set_sensitive(false);
-        }
-
-        this.add_check("Enable animations", SETTINGS.ANIMATIONS_ENABLED, bs_grid, settings);
-
-        this.add_check("Debug", SETTINGS.DEBUG, bs_grid, settings);
-        this.add_label("To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f", bs_grid);
-
-        let bs_window = new Gtk.ScrolledWindow({ 'vexpand': true });
-        set_child(bs_window, bs_grid);
-        let bs_label = new Gtk.Label({
-            label: "Basic",
-            halign: Gtk.Align.START,
-            use_markup: false,
-        });
-        notebook.append_page(bs_window, bs_label);
-        
-        // Watch for changes to the setting SETTINGS.SHOW_TABS
-        settings.connect(`changed::${SETTINGS.SHOW_TABS}`, (settings: any, changed_key: string) => {
-            // disable "Span multiple zones" setting if "Show tabs" setting is enabled by the user
-            span_multiple_zones_check.set_sensitive(!settings.get_boolean(changed_key));
-        });
-
-        // Watch for changes to the setting SETTINGS.SPAN_MULTIPLE_ZONES
-        settings.connect(`changed::${SETTINGS.SPAN_MULTIPLE_ZONES}`, (settings: any, changed_key: string) => {
-            // disable "Show tabs" setting if "Span multiple zones" setting is enabled by the user
-            show_tabs_check.set_sensitive(!settings.get_boolean(changed_key));
-        });
+        return group;
     }
 
-    margins_tab(notebook: any) {
-        let settings = imports.misc.extensionUtils.getSettings();
-        let mg_grid = new Gtk.Grid({
-            column_spacing: 10,
-            orientation: Gtk.Orientation.VERTICAL,
-            row_spacing: 10,
+    add_check(group: any, setting: string, title: string, subtitle: string | null = null) {
+        const toggle = new Gtk.Switch({
+            active: this.settings.get_boolean(setting),
+            valign: Gtk.Align.CENTER,
         });
+        this.settings.bind(setting, toggle, 'active', Gio.SettingsBindFlags.DEFAULT);
 
-        mg_grid.set_margin_start(24);
-        mg_grid.set_margin_top(24);
-
-        let text = "Window margins and invisible borders around screen.";
-        mg_grid.attach_next_to(new Gtk.Label({
-            label: text,
-            halign: Gtk.Align.START,
-            justify: Gtk.Justification.LEFT,
-            use_markup: false,
-            wrap: true,
-        }), null, Gtk.PositionType.BOTTOM, 1, 1)
-
-        this.add_int("Window margin", SETTINGS.WINDOW_MARGIN, mg_grid, settings, 0, 240, 1, 10);
-
-        let mg_window = new Gtk.ScrolledWindow({ 'vexpand': true });
-        set_child(mg_window, mg_grid);
-        let mg_label = new Gtk.Label({
-            label: "Margins",
-            halign: Gtk.Align.START,
-            use_markup: false,
+        const row = new Adw.ActionRow({
+            title,
+            subtitle,
+            activatable_widget: toggle,
         });
-        notebook.append_page(mg_window, mg_label);
+        row.add_suffix(toggle);
+        group.add(row);
+        return toggle;
     }
 
-    help_tab(notebook: any) {
-        let weblink = 'https://github.com/micahosborne/gSnap/blob/master/README.md';
-        let hl_link = new Gtk.LinkButton({
-            label: weblink,
-            uri: weblink,
+    add_int(group: any, setting: string, title: string, lower: number, upper: number, step_increment: number, subtitle: string | null = null) {
+        const spin = Gtk.SpinButton.new_with_range(lower, upper, step_increment);
+        spin.set_valign(Gtk.Align.CENTER);
+        this.settings.bind(setting, spin.get_adjustment(), 'value', Gio.SettingsBindFlags.DEFAULT);
+
+        const row = new Adw.ActionRow({
+            title,
+            subtitle,
+            activatableWidget: spin
+        });
+        row.add_suffix(spin);
+        group.add(row);
+    }
+
+    add_linkbutton(group: any, title: string, uri: string) {
+        let button = new Gtk.LinkButton({
+            uri: uri,
             halign: Gtk.Align.CENTER,
             valign: Gtk.Align.CENTER,
         });
-        let hl_label = new Gtk.Label({
-            label: "Help",
-            halign: Gtk.Align.START,
-            use_markup: false,
+        const row = new Adw.ActionRow({
+            title,
+            activatable_widget: button,
         });
-        notebook.append_page(hl_link, hl_label);
+        row.add_suffix(button);
+        group.add(row);
     }
 
-    public build() {
-        let notebook = new Gtk.Notebook();
+    add_hotkey(model: any, name: string, pretty_name: string) {
+        // ignore ok as failure treated as disabled
+        const [_ok, key, mods] = Gtk.accelerator_parse(this.settings.get_strv(name)[0]);
 
-        this.basics_tab(notebook);
-        this.accel_tab(notebook);
-        //presets_tab(notebook);
-        this.margins_tab(notebook);
-        this.help_tab(notebook);
-
-        let main_vbox = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            spacing: 10
-        });
-
-        if (Gtk.get_major_version() >= 4) {
-            main_vbox.prepend(notebook, true, true, 0);
-        } else {
-            main_vbox.pack_start(notebook, true, true, 0);
-            main_vbox.show_all();
-        }
-
-        return main_vbox;
-    }
-
-    add_check(check_label: string, SETTINGS: string, grid: any, settings: any) {
-        let check = new Gtk.CheckButton({ label: check_label, margin_top: 6 });
-        settings.bind(SETTINGS, check, 'active', Gio.SettingsBindFlags.DEFAULT);
-        grid.attach_next_to(check, null, Gtk.PositionType.BOTTOM, 1, 1);
-        return check;
-    }
-
-    add_int(int_label: string, SETTINGS: string, grid: any, settings: any, minv: number, maxv: number, incre: number, page: number) {
-        let item = new IntSelect(int_label);
-        item.set_args(minv, maxv, incre, page);
-        settings.bind(SETTINGS, item.spin, 'value', Gio.SettingsBindFlags.DEFAULT);
-        grid.attach_next_to(item.actor, null, Gtk.PositionType.BOTTOM, 1, 1);
-    }
-
-    add_text(text_label: string, SETTINGS: string, grid:any, settings:any, width: number) {
-        let item = new TextEntry(text_label);
-        item.set_args(width);
-        settings.bind(SETTINGS, item.textentry, 'text', Gio.SettingsBindFlags.DEFAULT);
-        grid.attach_next_to(item.actor, null, Gtk.PositionType.BOTTOM, 1, 1);
-    }
-
-    add_label(label: string, grid: any) {
-        let text = "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f";
-        let gtk_label = new Gtk.Label({
-            label: label,
-            halign: Gtk.Align.START,
-            justify: Gtk.Justification.LEFT,
-            use_markup: false,
-            wrap: true,
-        });
-        grid.attach_next_to(gtk_label, null, Gtk.PositionType.BOTTOM, 1, 1);
-
-        return gtk_label;
-    }
-
-    append_hotkey(model: any, settings: any, name: string, pretty_name: string) {
-        let _ok, key, mods;
-    
-        if (Gtk.get_major_version() >= 4) {
-            // ignore ok as failure treated as disabled
-            [_ok, key, mods] = Gtk.accelerator_parse(settings.get_strv(name)[0]);
-        } else {
-            [key, mods] = Gtk.accelerator_parse(settings.get_strv(name)[0]);
-        }
-    
         let row = model.insert(-1);
-    
         model.set(row, [0, 1, 2, 3], [name, pretty_name, mods, key]);
     }
-}
-
-// grabbed from sysmonitor code
-class IntSelect {
-    label: any; //Gtk.Label
-    spin: any;  //Gtk.SpinButton
-    actor: any; //Gtk.Box
-    
-    constructor(name: string) {
-        this.label = new Gtk.Label({
-            label: name + ":",
-            halign: Gtk.Align.START
-        });
-        this.spin = new Gtk.SpinButton({
-            halign: Gtk.Align.END
-        });
-        this.actor = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, spacing: 10 });
-        this.actor.set_homogeneous(true);
-        box_append(this.actor, this.label)
-        box_append(this.actor, this.spin)
-        this.spin.set_numeric(true);
-    }
-
-    set_args(minv: number, maxv: number, incre: number, page: number) {
-        this.spin.set_range(minv, maxv);
-        this.spin.set_increments(incre, page);
-    }
-
-    set_value(value: number) {
-        this.spin.set_value(value);
-    }
-}
-
-class TextEntry {
-    label: any;     //Gtk.Label
-    textentry: any; //Gtk.Entry
-    actor: any;     //Gtk.Box
-
-    constructor(name: string) {
-        this.label = new Gtk.Label({ label: name + ":" });
-        this.textentry = new Gtk.Entry();
-        this.actor = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, spacing: 10 });
-        this.actor.set_homogeneous(true);
-        box_append(this.actor, this.label);
-        box_append(this.actor, this.textentry);
-        this.textentry.set_text("");
-    }
-    set_args(width: number) {
-        this.textentry.set_width_chars(width);
-    }
-    set_value(value: string) {
-        this.textentry.set_text(value);
-    }
-}
-
-export function init() {
-
-}
-
-export function buildPrefsWidget() {
-    let builder = new PrefsBuilder();
-    return builder.build();
 }

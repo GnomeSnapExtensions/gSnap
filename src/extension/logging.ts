@@ -4,10 +4,6 @@
 
 let debug: boolean = false;
 
-declare const global: {
-    log(message: string): void
-};
-
 /**
  * If called with a false argument, log statements are suppressed.
  */
@@ -24,6 +20,6 @@ export function setLoggingEnabled(enabled: boolean): void {
  */
 export function log(message: string): void {
     if(debug) {
-        global.log("gSnap " + message);
+        console.warn("gSnap " + message);
     }
 }

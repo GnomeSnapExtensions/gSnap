@@ -15,8 +15,10 @@ const externalImports = [
     'resource:///org/gnome/shell/ui/modalDialog.js',
     'gi://Meta',
     'gi://Shell',
+    'gi://Adw',
     'resource:///org/gnome/shell/extensions/extension.js',
     'resource:///org/gnome/shell/misc/config.js',
+    'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js'
 ]
 
 export default defineConfig([

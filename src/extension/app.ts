@@ -5,8 +5,6 @@ import Gio from 'gi://Gio';
 // @ts-ignore
 import St from 'gi://St';
 // @ts-ignore
-import GObject from 'gi://GObject';
-// @ts-ignore
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 // @ts-ignore
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -301,7 +299,7 @@ export default class App extends Extension {
 
     enable() {
         this.settings = super.getSettings() as SettingsObject;
-        initSettings(this.settings, this.changed_settings);
+        initSettings(this.settings, () => this.changed_settings());
         log("Extension enable begin");
         SHELL_VERSION.print_version();
 
