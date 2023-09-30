@@ -38,16 +38,24 @@ export default class GSnapPreferences extends ExtensionPreferences {
         this.settings = super.getSettings();
         window._settings = this.settings;
 
-        // Create a preferences page and group
-        const page = new Adw.PreferencesPage();
+        const basicsPage = new Adw.PreferencesPage();
+        basicsPage.add(this.basics());
+        basicsPage.add(this.miscSettings());
+        basicsPage.set_title("Preferences");
+        basicsPage.set_icon_name("preferences-system-symbolic");
+        window.add(basicsPage);
 
-        page.add(this.basics());
-        page.add(this.margins());
-        page.add(this.shortcuts());
-        page.add(this.info());
+        const shortcutsPage = new Adw.PreferencesPage();
+        shortcutsPage.add(this.shortcuts());
+        shortcutsPage.set_title("Shortcuts");
+        shortcutsPage.set_icon_name("preferences-desktop-keyboard-symbolic");
+        window.add(shortcutsPage);
 
-        // Add our page to the window
-        window.add(page);
+        const aboutPage = new Adw.PreferencesPage();
+        aboutPage.add(this.about());
+        aboutPage.set_title("About");
+        aboutPage.set_icon_name("help-about-symbolic");
+        window.add(aboutPage);
     }
 
     basics() {
@@ -87,23 +95,25 @@ export default class GSnapPreferences extends ExtensionPreferences {
         });
 
         this.add_check(group, SETTINGS.ANIMATIONS_ENABLED, "Enable animations");
-        this.add_check(group, SETTINGS.DEBUG,
-            "Debug",
-            "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f");
-
-        return group;
-    }
-
-    margins() {
-        const group = new Adw.PreferencesGroup({
-            title: 'Margins'
-        });
 
         this.add_int(group, SETTINGS.WINDOW_MARGIN,
             "Window margin",
             0, 32, 1,
             "Window margins and invisible borders around screen.",
         );
+
+        return group;
+    }
+
+    miscSettings() {
+        const group = new Adw.PreferencesGroup({
+            title: 'Miscellaneous'
+        });
+
+        this.add_check(group, SETTINGS.DEBUG,
+            "Debug",
+            "To see debug messages, in terminal run journalctl /usr/bin/gnome-shell -f");
+
         return group;
     }
 
@@ -182,9 +192,9 @@ export default class GSnapPreferences extends ExtensionPreferences {
     }
 
 
-    info() {
+    about() {
         const group = new Adw.PreferencesGroup({
-            title: 'Useful links'
+            title: 'About'
         });
 
         this.add_linkbutton(
