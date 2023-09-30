@@ -38,23 +38,27 @@ export default class GSnapPreferences extends ExtensionPreferences {
         this.settings = super.getSettings();
         window._settings = this.settings;
 
-        const basicsPage = new Adw.PreferencesPage();
-        basicsPage.add(this.basics());
-        basicsPage.add(this.miscSettings());
-        basicsPage.set_title("Preferences");
-        basicsPage.set_icon_name("preferences-system-symbolic");
-        window.add(basicsPage);
+        const preferencesPage = new Adw.PreferencesPage({
+            title: "Preferences",
+            icon_name: "emblem-system-symbolic"
+        });
+        preferencesPage.add(this.basics());
+        preferencesPage.add(this.miscSettings());
+        window.add(preferencesPage);
 
-        const shortcutsPage = new Adw.PreferencesPage();
+        const shortcutsPage = new Adw.PreferencesPage({
+            title: "Shortcuts",
+            icon_name: "preferences-desktop-keyboard-symbolic"
+        });
         shortcutsPage.add(this.shortcuts());
-        shortcutsPage.set_title("Shortcuts");
-        shortcutsPage.set_icon_name("preferences-desktop-keyboard-symbolic");
         window.add(shortcutsPage);
 
-        const aboutPage = new Adw.PreferencesPage();
+        const aboutPage = new Adw.PreferencesPage({
+            title: "About",
+            icon_name: "help-about-symbolic"
+        });
         aboutPage.add(this.about());
-        aboutPage.set_title("About");
-        aboutPage.set_icon_name("help-about-symbolic");
+        aboutPage.add(this.aboutLinks());
         window.add(aboutPage);
     }
 
@@ -191,10 +195,44 @@ export default class GSnapPreferences extends ExtensionPreferences {
         return group;
     }
 
-
     about() {
+        const group = new Adw.PreferencesGroup();
+
+        var logo = new Gtk.Image({
+            width_request: 150,
+            height_request: 150,
+        });
+        logo.set_from_file(`${super.path}/images/icon.png`);
+
+        const nameLabel = new Gtk.Label({
+            label: `<b>gSnap</b>`,
+            xalign: .5,
+            margin_top: 10,
+            margin_bottom: 5,
+            hexpand: true,
+            halign: Gtk.Align.CENTER,
+            use_markup: true
+        });
+
+
+        const descriptionLabel = new Gtk.Label({
+            label: `Organize windows in customizable snap zones like FancyZones on Windows.`,
+            xalign: .5,
+            margin_bottom: 20,
+            hexpand: true,
+            halign: Gtk.Align.CENTER,
+            use_markup: true
+        });
+
+        group.add(logo);
+        group.add(nameLabel);
+        group.add(descriptionLabel);
+        return group;
+    }
+
+    aboutLinks() {
         const group = new Adw.PreferencesGroup({
-            title: 'About'
+            title: 'Useful links'
         });
 
         this.add_linkbutton(
