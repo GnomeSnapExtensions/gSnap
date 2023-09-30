@@ -2,7 +2,7 @@
   "uuid": "gSnap@micahosborne",
   "name": "gSnap",
   "description": "Organize windows in customizable snap zones like FancyZones on Windows.",
-  "version": 99999,
+  "version": 17,
   "shell-version": ["45"],
   "url": "https://github.com/GnomeSnapExtensions/gSnap",
   "settings-schema": "org.gnome.shell.extensions.gsnap",
