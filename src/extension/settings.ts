@@ -4,7 +4,7 @@ import * as SETTINGS from './settings_data';
 
 import { log, setLoggingEnabled } from "./logging";
 
-export const gridSettings = new SETTINGS.ParsedSettings();
+export var gridSettings: SETTINGS.ParsedSettings;
 
 export interface SettingsObject {
     get_boolean(name: SETTINGS.BoolSettingName): boolean | undefined;
@@ -46,6 +46,7 @@ export function initSettings(settings: SettingsObject, changed_settings: () => v
     setLoggingEnabled(getBoolSetting(SETTINGS.DEBUG));
 
     log("Init settings");
+    gridSettings = new SETTINGS.ParsedSettings();
     gridSettings[SETTINGS.SHOW_ICON] = getBoolSetting(SETTINGS.SHOW_ICON);
     gridSettings[SETTINGS.SHOW_TABS] = getBoolSetting(SETTINGS.SHOW_TABS);
     gridSettings[SETTINGS.WINDOW_MARGIN] = getIntSetting(SETTINGS.WINDOW_MARGIN);
