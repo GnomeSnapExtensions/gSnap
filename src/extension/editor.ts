@@ -1,6 +1,17 @@
-// GJS import system
-declare var imports: any;
 declare var global: any;
+// @ts-ignore
+import St from 'gi://St';
+// @ts-ignore
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+// @ts-ignore
+import GLib from 'gi://GLib';
+// @ts-ignore
+import GObject from 'gi://GObject';
+// @ts-ignore
+import Clutter from 'gi://Clutter';
+// @ts-ignore
+import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
+
 import { log } from './logging';
 
 import {
@@ -14,14 +25,6 @@ import {
 import { areEqual, getWorkAreaByMonitor, getTrackedWindowsOfMonitor, Monitor, WorkArea } from './monitors';
 
 import { Layout, LayoutItem } from './layouts';
-
-// Library imports
-const St = imports.gi.St;
-const Main = imports.ui.main;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-const Clutter = imports.gi.Clutter;
-const ModalDialog = imports.ui.modalDialog;
 
 const ANIMATION_SPEED = 100; // animation speed of zones' fade-in, fade-out, position and size changes
 
@@ -1098,22 +1101,17 @@ class EntryDialogClass extends ModalDialog.ModalDialog {
     public _init() {
 
         super._init({});
-        this.setButtons([{
+        super.setButtons([{
             label: "OK",
             action: () => {
                 this.onOkay(this.entry.text);
-                this.close(global.get_current_time());
+                super.close(global.get_current_time());
             },
             key: Clutter.Escape
         }]);
 
         let box = new St.BoxLayout({ vertical: true });
-        this.contentLayout.add(box);
-
-        // const MySelf = ExtensionUtils.getCurrentExtension();
-        // let gicon = new Gio.FileIcon({file: Gio.file_new_for_path(MySelf.path + "/icons/icon.png")});
-        // let icon = new St.Icon({gicon: gicon});
-        // box.add(icon);
+        super.contentLayout.add(box);
 
         this.label = new St.Label({ text: "" });
         box.add(this.label);

@@ -1,13 +1,14 @@
+// @ts-ignore
+import GLib from 'gi://GLib';
+
 import { LayoutsSettings } from "./layouts";
 import { log } from "./logging";
-import { ShellVersion } from "./shellversion";
-
-// GJS import system
-declare var imports: any;
-const GLib = imports.gi.GLib;
-const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 export class LayoutsUtils {
+    constructor(private basePath: string) {
+
+    }
+
     get configPath() {
         return GLib.build_pathv('/', [GLib.get_user_config_dir(), 'gSnap']);
     }
@@ -50,7 +51,7 @@ export class LayoutsUtils {
     }
 
     private _loadLayoutsV1FromExtensionDir(): LayoutsSettings | null {
-        const oldLayoutsPath = GLib.build_filenamev([Me.path, 'layouts.json']);
+        const oldLayoutsPath = GLib.build_filenamev([this.basePath, 'layouts.json']);
         return this._loadFromJsonFile(oldLayoutsPath);
     }
 
@@ -63,16 +64,8 @@ export class LayoutsUtils {
 
             if (ok) {
                 log(`Found in ${filePath}`);
-
-                let contentsString = '';
-                if(ShellVersion.defaultVersion().version_at_least_41()) {
-                    const decoder = new TextDecoder('utf-8');
-                    contentsString = decoder.decode(contents);
-                } else {
-                    const ByteArray = imports.byteArray;
-                    contentsString = ByteArray.toString(contents);
-                }
-
+                const decoder = new TextDecoder('utf-8');
+                let contentsString = decoder.decode(contents);
                 return JSON.parse(contentsString);
             }
         } catch (exception) {

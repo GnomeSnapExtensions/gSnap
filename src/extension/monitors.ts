@@ -2,7 +2,8 @@
 declare var imports: any;
 declare var global: any;
 
-const Main = imports.ui.main;
+// @ts-ignore
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {
     Window,
     WindowType,

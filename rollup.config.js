@@ -1,24 +1,43 @@
 import { defineConfig } from 'rollup';
 import copy from 'rollup-plugin-copy'
 
+// Let Rollup know that these libraries are known and it should not complain about them,
+const externalImports = [
+    'gi://St',
+    'gi://GLib',
+    'gi://Gio',
+    'gi://Gtk',
+    'gi://GObject',
+    'gi://Clutter',
+    'resource:///org/gnome/shell/ui/main.js',
+    'resource:///org/gnome/shell/ui/panelMenu.js',
+    'resource:///org/gnome/shell/ui/popupMenu.js',
+    'resource:///org/gnome/shell/ui/modalDialog.js',
+    'gi://Meta',
+    'gi://Shell',
+    'gi://Adw',
+    'resource:///org/gnome/shell/extensions/extension.js',
+    'resource:///org/gnome/shell/misc/config.js',
+    'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js'
+]
+
 export default defineConfig([
     {
         input: "build/app.js",
         output: {
             file: "dist/extension.js",
-            format: "cjs",
-            esModule: false,
+            esModule: true,
         },
         plugins: [
             stripExports(),
-        ]
+        ],
+        external: externalImports
     },
     {
         input: "build/prefs_builder.js",
         output: {
             file: "dist/prefs.js",
-            format: "cjs",
-            esModule: false,
+            esModule: true,
         },
         plugins: [
             stripExports(),
@@ -33,7 +52,8 @@ export default defineConfig([
                     { src: 'src/schemas/org.gnome.shell.extensions.gsnap.gschema.xml', dest: 'dist/schemas' },
                 ]
             })
-        ]
+        ],
+        external: externalImports
     }
 ]);
 

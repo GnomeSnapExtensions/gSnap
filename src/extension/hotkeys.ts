@@ -5,13 +5,13 @@ declare const imports: any;
 declare const global: any;
 
 // Library imports
-const Main = imports.ui.main;
-const Meta = imports.gi.Meta;
-const Shell = imports.gi.Shell;
+// @ts-ignore
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+// @ts-ignore
+import Meta from 'gi://Meta';
+// @ts-ignore
+import Shell from 'gi://Shell';
 
-// Extension imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const ExtensionUtils = imports.misc.extensionUtils;
 /**
  * Bindings is a dictionary that maps a hotkey name to a function that handles
  * the press of the key that is bound to that action.
@@ -20,9 +20,7 @@ export type Bindings = Map<KeyBindingSettingName, () => void>;
 
 export type BindingsOld = {[name in KeyBindingSettingName]: () => void};
 
-export function bind(keyBindings: Bindings) {
-    // Globals
-    let settings = ExtensionUtils.getSettings();
+export function bind(keyBindings: Bindings, settings: any) {
     log("Binding keys");
     keyBindings.forEach((callback: () => void, key: KeyBindingSettingName) => {
         //const key = keyString as KeyBindingSettingName;
