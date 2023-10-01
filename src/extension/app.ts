@@ -63,8 +63,6 @@ import ModifiersManager, { MODIFIERS_ENUM } from './modifiers';
 const WorkspaceManager: WorkspaceManagerInterface = (
     global.screen || global.workspace_manager);
 
-let enabled = false;
-let monitorsChangedConnect: any = false;
 const trackedWindows: Window[] = global.trackedWindows = [];
 
 const SHELL_VERSION = ShellVersion.defaultVersion();
@@ -87,6 +85,12 @@ export default class App extends Extension {
     private layoutsUtils: LayoutsUtils;
     private isGrabbing: boolean = false;
     private minimizedWindows: Window[];
+    private isEnabled: boolean = false;
+    private monitorsChangedConnect: any = false;
+    private restackConnection: any;
+    private workspaceSwitchedConnect: any;
+    private workareasChangedConnect: any;
+
 
     private currentLayoutIdxPerMonitor: number[];
     public layouts: LayoutsSettings = {
@@ -234,10 +238,6 @@ export default class App extends Extension {
         this.metadata = metadata;
     }
 
-    private restackConnection: any;
-    private workspaceSwitchedConnect: any;
-    private workareasChangedConnect: any;
-
     setLayout(layoutIndex: number, monitorIndex = -1) {
         if (this.layouts.definitions.length <= layoutIndex) {
             return;
@@ -310,7 +310,7 @@ export default class App extends Extension {
         }
 
         this.setToCurrentWorkspace();
-        monitorsChangedConnect = Main.layoutManager.connect(
+        this.monitorsChangedConnect = Main.layoutManager.connect(
             'monitors-changed', () => {
                 activeMonitors().forEach(m => {
                     this.tabManager[m.index]?.layoutWindows();
@@ -463,14 +463,14 @@ export default class App extends Extension {
 
         this.modifiersManager.enable();
 
-        enabled = true;
+        this.isEnabled = true;
 
         log("Extension enable completed");
     }
 
     changed_settings() {
         log("changed_settings");
-        if (enabled) {
+        if (this.isEnabled) {
             this.disable();
             this.enable();
         }
@@ -798,7 +798,7 @@ export default class App extends Extension {
         log("Extension disable begin");
         deinitSettings();
         this.settings = null;
-        enabled = false;
+        this.isEnabled = false;
         this.modifiersManager.destroy();
         this.preview?.forEach(p => { p?.destroy(); p = null });
         this.editor?.forEach(e => { e?.destroy(); e = null; });
@@ -812,10 +812,10 @@ export default class App extends Extension {
             global.display.disconnect(this.restackConnection);
             this.restackConnection = false;
         }
-        if (monitorsChangedConnect) {
+        if (this.monitorsChangedConnect) {
             log("Disconnecting monitors-changed");
-            Main.layoutManager.disconnect(monitorsChangedConnect);
-            monitorsChangedConnect = false;
+            Main.layoutManager.disconnect(this.monitorsChangedConnect);
+            this.monitorsChangedConnect = false;
         }
 
         if (this.workareasChangedConnect) {
