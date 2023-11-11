@@ -149,6 +149,10 @@
 			<default>false</default>
 			<summary>Hold CTRL to snap windows</summary>
 		</key>
+		<key type = "b" name="prevent-snapping">
+			<default>false</default>
+			<summary>Hold Super to prevent snapping windows</summary>
+		</key>
 		<key type = "b" name="span-multiple-zones">
 			<default>false</default>
 			<summary>Hold ALT to span multiple zones</summary>

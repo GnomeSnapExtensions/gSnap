@@ -351,10 +351,15 @@ export default class App extends Extension {
             const spanMultipleZones = this.canSpanMultipleZones();
 
             const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+            const preventSnapping = getBoolSetting(SETTINGS.PREVENT_SNAPPING);
             this.isGrabbing = true;
 
             if (useModifier &&
                 !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL))
+                return;
+
+            if (preventSnapping &&
+                this.modifiersManager.isHolding(MODIFIERS_ENUM.SUPER))
                 return;
             
             activeMonitors().forEach(m => {
@@ -398,7 +403,8 @@ export default class App extends Extension {
             });
         });
 
-        if (getBoolSetting(SETTINGS.USE_MODIFIER) || getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES)) {
+        if (getBoolSetting(SETTINGS.USE_MODIFIER) || getBoolSetting(SETTINGS.SPAN_MULTIPLE_ZONES)
+            || getBoolSetting(SETTINGS.PREVENT_SNAPPING)) {
             // callback run when a modifier change state (e.g from not pressed to pressed)
             this.modifiersManager.connect("changed", () => {
                 if (!this.isGrabbing) {
@@ -413,15 +419,21 @@ export default class App extends Extension {
                     });
                 }
 
-                if (!getBoolSetting(SETTINGS.USE_MODIFIER)) return;
 
-                if (this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
+                const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+                if (useModifier && this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
                     activeMonitors().forEach(m => {
                         this.tabManager[m.index]?.show()
                     });
-                } else {
-                    activeMonitors().forEach(m => this.tabManager[m.index]?.hide());
+                    return;
                 }
+
+                const preventSnapping = getBoolSetting(SETTINGS.PREVENT_SNAPPING);
+                if(preventSnapping && !this.modifiersManager.isHolding(MODIFIERS_ENUM.SUPER)) {
+                    return
+                }
+
+                activeMonitors().forEach(m => this.tabManager[m.index]?.hide());
             });
         }
 
