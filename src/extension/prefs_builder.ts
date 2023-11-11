@@ -77,6 +77,7 @@ export default class GSnapPreferences extends ExtensionPreferences {
         const span_multiple_zones_check = this.add_check(group, SETTINGS.SPAN_MULTIPLE_ZONES,
              "Hold ALT to span multiple zones",
              "This feature is not supported if you have the \"Show tabs\" feature enabled");
+        this.add_check(group, SETTINGS.PREVENT_SNAPPING, "Hold Super to prevent snapping windows");
 
         // disable "Span multiple zones" setting if "Show tabs" setting was already enabled
         if (this.settings.get_boolean(SETTINGS.SHOW_TABS)) {
