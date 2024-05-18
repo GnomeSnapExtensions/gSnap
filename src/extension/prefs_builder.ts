@@ -73,11 +73,15 @@ export default class GSnapPreferences extends ExtensionPreferences {
             "This feature is not supported if you have the \"Hold ALT to span multiple zones\" feature enabled");
 
         this.add_check(group, SETTINGS.MOVERESIZE_ENABLED, "Enable accelerators for moving and resizing windows");
-        this.add_check(group, SETTINGS.USE_MODIFIER, "Hold CTRL to snap windows");
+        const use_modifier_check = this.add_check(group, SETTINGS.USE_MODIFIER, 
+            "Hold CTRL to snap windows",
+            "This feature is not supported if you have the \"Hold Super to prevent snapping windows\" feature enabled");
         const span_multiple_zones_check = this.add_check(group, SETTINGS.SPAN_MULTIPLE_ZONES,
              "Hold ALT to span multiple zones",
              "This feature is not supported if you have the \"Show tabs\" feature enabled");
-        this.add_check(group, SETTINGS.PREVENT_SNAPPING, "Hold Super to prevent snapping windows");
+        const prevent_snapping_check = this.add_check(group, SETTINGS.PREVENT_SNAPPING, 
+            "Hold Super to prevent snapping windows",
+            "This feature is not supported if you have the \"Hold CTRL to snap windows\" feature enabled");
 
         // disable "Span multiple zones" setting if "Show tabs" setting was already enabled
         if (this.settings.get_boolean(SETTINGS.SHOW_TABS)) {
@@ -85,6 +89,14 @@ export default class GSnapPreferences extends ExtensionPreferences {
         // disable "Show tabs" setting if "Span multiple zones" setting was already enabled
         } else if (this.settings.get_boolean(SETTINGS.SPAN_MULTIPLE_ZONES)) {
             show_tabs_check.set_sensitive(false);
+        }
+
+        // disable "Prevent snapping" setting if "Hold CTRL to snap windows" setting was already enabled
+        if (this.settings.get_boolean(SETTINGS.USE_MODIFIER)) {
+            prevent_snapping_check.set_sensitive(false);
+        // disable "Hold CTRL to snap windows" setting if "Prevent snapping" setting was already enabled
+        } else if (this.settings.get_boolean(SETTINGS.PREVENT_SNAPPING)) {
+            use_modifier_check.set_sensitive(false);
         }
 
         // Watch for changes to the setting SETTINGS.SHOW_TABS
@@ -97,6 +109,14 @@ export default class GSnapPreferences extends ExtensionPreferences {
         this.settings.connect(`changed::${SETTINGS.SPAN_MULTIPLE_ZONES}`, (settings: any, changed_key: string) => {
             // disable "Show tabs" setting if "Span multiple zones" setting is enabled by the user
             show_tabs_check.set_sensitive(!settings.get_boolean(changed_key));
+        });
+
+        this.settings.connect(`changed::${SETTINGS.USE_MODIFIER}`, (settings: any, changed_key: string) => {
+            prevent_snapping_check.set_sensitive(!settings.get_boolean(changed_key));
+        });
+
+        this.settings.connect(`changed::${SETTINGS.PREVENT_SNAPPING}`, (settings: any, changed_key: string) => {
+            use_modifier_check.set_sensitive(!settings.get_boolean(changed_key));
         });
 
         this.add_check(group, SETTINGS.ANIMATIONS_ENABLED, "Enable animations");
