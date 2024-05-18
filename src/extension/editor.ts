@@ -6,11 +6,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 // @ts-ignore
 import GLib from 'gi://GLib';
 // @ts-ignore
-import GObject from 'gi://GObject';
-// @ts-ignore
 import Clutter from 'gi://Clutter';
-// @ts-ignore
-import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
 
 import { log } from './logging';
 
@@ -1076,51 +1072,3 @@ export class TabbedZoneManager extends ZoneManager {
         return new TabbedZone(layout, parent, this.stage);
     }
 }
-
-class EntryDialogClass extends ModalDialog.ModalDialog {
-
-    public entry: any | null;
-    public label: any | null;
-    public onOkay: any | null;
-
-    public _onClose() {
-
-        try {
-            this.onOkay(this.entry.text);
-        } catch (e) {
-
-            throw e;
-        }
-    }
-    
-    constructor(params: any) {
-        super(params);
-        log(JSON.stringify(params));
-    }
-
-    public _init() {
-
-        super._init({});
-        super.setButtons([{
-            label: "OK",
-            action: () => {
-                this.onOkay(this.entry.text);
-                super.close(global.get_current_time());
-            },
-            key: Clutter.Escape
-        }]);
-
-        let box = new St.BoxLayout({ vertical: true });
-        super.contentLayout.add(box);
-
-        this.label = new St.Label({ text: "" });
-        box.add(this.label);
-        box.add(this.entry = new St.Entry({ text: "" }));
-
-    }
-}
-
-export const EntryDialog = GObject.registerClass({
-    GTypeName: 'EntryDialogClass',
-}, EntryDialogClass
-);

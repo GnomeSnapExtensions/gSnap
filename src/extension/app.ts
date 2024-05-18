@@ -16,7 +16,8 @@ import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/
 import { log } from './logging';
 import { ShellVersion } from './shellversion';
 import { bind as bindHotkeys, unbind as unbindHotkeys, Bindings } from './hotkeys';
-import { ZoneEditor, ZonePreview, TabbedZoneManager, EntryDialog, ZoneManager } from "./editor";
+import { ZoneEditor, ZonePreview, TabbedZoneManager, ZoneManager } from "./editor";
+import { LayoutNameDialog } from "./dialogs";
 
 import {
     Display,
@@ -678,40 +679,40 @@ export default class App extends Extension {
         renameLayoutButton.connect('activate', () => {
             const currentMonitorLayoutIdx = this.currentLayoutIdxPerMonitor[getCurrentMonitorIndex()];
             const currentMonitorLayout = this.layouts.definitions[currentMonitorLayoutIdx];
-            let dialog = new EntryDialog({
-                label: "test"
-            });
-            dialog.label.text = "Rename Layout " + currentMonitorLayout.name;
-            dialog.entry.text = currentMonitorLayout.name;
-            dialog.onOkay = (text: string) => {
-                currentMonitorLayout.name = text;
-                this.saveLayouts();
-                this.reloadMenu();
-            }
-            dialog.open(global.get_current_time());
+
+            let dialog = new LayoutNameDialog(
+                `Rename Layout ${currentMonitorLayout.name}`,
+                currentMonitorLayout.name,
+                (text: string) => {
+                    currentMonitorLayout.name = text;
+                    this.saveLayouts();
+                    this.reloadMenu();
+                });
+            dialog.open();
         });
 
         newLayoutButton.connect('activate', () => {
-            let dialog = new EntryDialog();
-            dialog.label.text = "Create New Layout";
-            dialog.onOkay = (text: string) => {
-                this.layouts.definitions.push({
-                    name: text,
-                    type: 0,
-                    length: 100,
-                    items: [
-                        {
-                            type: 0,
-                            length: 100,
-                            items: []
-                        }
-                    ]
+            let dialog = new LayoutNameDialog(
+                `Create new layout`,
+                'New Layout',
+                (text: string) => {
+                    this.layouts.definitions.push({
+                        name: text,
+                        type: 0,
+                        length: 100,
+                        items: [
+                            {
+                                type: 0,
+                                length: 100,
+                                items: []
+                            }
+                        ]
+                    });
+                    this.setLayout(this.layouts.definitions.length - 1);
+                    this.saveLayouts();
+                    this.reloadMenu();
                 });
-                this.setLayout(this.layouts.definitions.length - 1);
-                this.saveLayouts();
-                this.reloadMenu();
-            }
-            dialog.open(global.get_current_time());
+            dialog.open();
         });
 
         editLayoutButton.connect('activate', () => {
