@@ -430,6 +430,9 @@ export default class App extends Extension {
 
                 const preventSnapping = getBoolSetting(SETTINGS.PREVENT_SNAPPING);
                 if(preventSnapping && !this.modifiersManager.isHolding(MODIFIERS_ENUM.SUPER)) {
+                    activeMonitors().forEach(m => {
+                        this.tabManager[m.index]?.show()
+                    });
                     return
                 }
 
