@@ -56,4 +56,6 @@ export function initSettings(settings: SettingsObject, changed_settings: () => v
 
 export function deinitSettings() {
     _settings.disconnect(_settingsConnection);
+    // @ts-ignore deinitSettings is called on extension disable, so it's required to set gridSettings to null
+    gridSettings = null;
 }
