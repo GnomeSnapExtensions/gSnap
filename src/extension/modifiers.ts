@@ -65,7 +65,7 @@ export default class ModifiersManager {
 
         this.modifiers = [];
 
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 7; i++) {
             if (this.state & 1 << i && MODIFIERS[i] !== undefined) {
                 this.modifiers.push(MODIFIERS[i]);
             }

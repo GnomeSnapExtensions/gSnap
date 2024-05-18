@@ -9,6 +9,7 @@ export type BoolSettingName = (
     "debug" |
     "global-presets" |
     "moveresize-enabled" |
+    "prevent-snapping" |
     "show-icon" |
     "show-tabs" |
     "span-multiple-zones" |
@@ -115,6 +116,7 @@ export type AnySettingName = (
     "preset-resize-7" |
     "preset-resize-8" |
     "preset-resize-9" |
+    "prevent-snapping" |
     "show-icon" |
     "show-tabs" |
     "span-multiple-zones" |
@@ -260,6 +262,9 @@ export class ParsedSettings {
     /** Preset resize 9. */
     ["preset-resize-9"]: string[] = ['<Super><Alt>KP_9'];
 
+    /** Hold Super to prevent snapping windows */
+    ["prevent-snapping"]: boolean = false;
+
     /** Show gSnap icon on a panel. */
     ["show-icon"]: boolean = true;
 
@@ -322,6 +327,7 @@ export const PRESET_RESIZE_6 = "preset-resize-6";
 export const PRESET_RESIZE_7 = "preset-resize-7";
 export const PRESET_RESIZE_8 = "preset-resize-8";
 export const PRESET_RESIZE_9 = "preset-resize-9";
+export const PREVENT_SNAPPING = "prevent-snapping";
 export const SHOW_ICON = "show-icon";
 export const SHOW_TABS = "show-tabs";
 export const SPAN_MULTIPLE_ZONES = "span-multiple-zones";
