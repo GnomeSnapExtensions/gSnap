@@ -370,6 +370,8 @@ export default class App extends Extension {
 
         global.display.connect('grab-op-end', (_display: Display, win: Window) => {
             const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
+            const preventSnapping = getBoolSetting(SETTINGS.PREVENT_SNAPPING);
+
             this.isGrabbing = false;
 
             if (!validWindow(win)) {
@@ -378,7 +380,9 @@ export default class App extends Extension {
 
             let selection: Rectangle | undefined;
             activeMonitors().forEach(m => {
-                if (!useModifier || this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) {
+                if((!useModifier && !preventSnapping) ||
+                   (useModifier && this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) ||
+                   (preventSnapping && !this.modifiersManager.isHolding(MODIFIERS_ENUM.SUPER))) {
                     if (!trackedWindows.includes(win)) {
                         trackedWindows.push(win);
                     }
@@ -397,7 +401,9 @@ export default class App extends Extension {
                 }
 
                 this.tabManager[m.index]?.hide();
-                if (useModifier && !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL) && trackedWindows.includes(win)) {
+                if (trackedWindows.includes(win) && (
+                    (useModifier && !this.modifiersManager.isHolding(MODIFIERS_ENUM.CONTROL)) ||
+                    (preventSnapping && this.modifiersManager.isHolding(MODIFIERS_ENUM.SUPER)))) {
                     trackedWindows.splice(trackedWindows.indexOf(win), 1);
                 }
             });
@@ -521,7 +527,8 @@ export default class App extends Extension {
         log(`Move ${focusedWindow.title} ${direction}`);
 
         const useModifier = getBoolSetting(SETTINGS.USE_MODIFIER);
-        if (useModifier) {
+        const preventSnapping = getBoolSetting(SETTINGS.PREVENT_SNAPPING);
+        if (useModifier || preventSnapping) {
             if (!trackedWindows.includes(focusedWindow)) {
                 trackedWindows.push(focusedWindow);
             }
