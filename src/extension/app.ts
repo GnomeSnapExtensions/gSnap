@@ -513,6 +513,15 @@ export default class App extends Extension {
             changed = true;
         }
 
+        // A monitor could have been added, cycle each workspace and push a new monitor if needed
+        for (let i = 0; i < this.layouts.workspaces.length; i++) {
+            let workspace = this.layouts.workspaces[i];
+            while (workspace.length < nMonitors) {
+                workspace.push({ current: 0 });
+                changed = true;
+            }
+        }
+
         return changed;
     }
 
