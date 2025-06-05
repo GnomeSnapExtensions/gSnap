@@ -331,15 +331,14 @@ export default class App extends Extension {
         });
 
         global.display.connect('in-fullscreen-changed', (_display: Display) => {
-            if (global.display.get_monitor_in_fullscreen(0)) {
-                activeMonitors().forEach(m => {
+            activeMonitors().forEach(m => {
+                if (global.display.get_monitor_in_fullscreen(m.index)) {
                     this.tabManager[m.index]?.destroy();
                     this.tabManager[m.index] = null;
-                });
-            } else {
-                this.setToCurrentWorkspace();
-            }
-
+                } else {
+                    this.setToCurrentWorkspace(m.index);
+                }
+            });
         });
     
 
@@ -869,11 +868,16 @@ export default class App extends Extension {
      */
     onFocus() { }
 
-    private setToCurrentWorkspace() {
+    private setToCurrentWorkspace(monitorIndex?: number) {
         let currentWorkspaceIdx = WorkspaceManager.get_active_workspace().index();
-        activeMonitors().forEach(m => {
-            let currentLayoutIdx = this.getWorkspaceMonitorCurrentLayoutOrDefault(currentWorkspaceIdx, m.index);
-            this.setLayout(currentLayoutIdx, m.index);
-        });
+        if (monitorIndex !== undefined) {
+            let currentLayoutIdx = this.getWorkspaceMonitorCurrentLayoutOrDefault(currentWorkspaceIdx, monitorIndex);
+            this.setLayout(currentLayoutIdx, monitorIndex);
+        } else {
+            activeMonitors().forEach(m => {
+                let currentLayoutIdx = this.getWorkspaceMonitorCurrentLayoutOrDefault(currentWorkspaceIdx, m.index);
+                this.setLayout(currentLayoutIdx, m.index);
+            });
+        }
     }
 }
