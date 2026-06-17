@@ -25,6 +25,7 @@ export type NumberSettingName = (
     "insets-secondary-left" |
     "insets-secondary-right" |
     "insets-secondary-top" |
+    "overlap-strategy" |
     "window-margin");
 
 // A setting for a key binding i.e. a 'preset' in the app.ts code.
@@ -86,6 +87,7 @@ export type AnySettingName = (
     "move-focused-right" |
     "move-focused-up" |
     "moveresize-enabled" |
+    "overlap-strategy" |
     "preset-resize-1" |
     "preset-resize-10" |
     "preset-resize-11" |
@@ -171,6 +173,9 @@ export class ParsedSettings {
 
     /** Enables shortcuts for moving and resizing the current window. */
     ["moveresize-enabled"]: boolean = true;
+
+    /** Overlap Snapping Strategy */
+    ["overlap-strategy"]: number = 0;
 
     /** Preset resize 1. */
     ["preset-resize-1"]: string[] = ['<Super><Alt>KP_1'];
@@ -297,6 +302,7 @@ export const MOVE_FOCUSED_LEFT = "move-focused-left";
 export const MOVE_FOCUSED_RIGHT = "move-focused-right";
 export const MOVE_FOCUSED_UP = "move-focused-up";
 export const MOVERESIZE_ENABLED = "moveresize-enabled";
+export const OVERLAP_STRATEGY = "overlap-strategy";
 export const PRESET_RESIZE_1 = "preset-resize-1";
 export const PRESET_RESIZE_10 = "preset-resize-10";
 export const PRESET_RESIZE_11 = "preset-resize-11";

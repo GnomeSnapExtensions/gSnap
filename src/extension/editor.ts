@@ -21,6 +21,8 @@ import {
 import { areEqual, getWorkAreaByMonitor, getTrackedWindowsOfMonitor, Monitor, WorkArea } from './monitors';
 
 import { Layout, LayoutItem } from './layouts';
+import { gridSettings } from './settings';
+import * as SETTINGS from './settings_data';
 
 const ANIMATION_SPEED = 100; // animation speed of zones' fade-in, fade-out, position and size changes
 
@@ -1289,9 +1291,44 @@ export class ZoneManager extends ZoneDisplay {
         let [x, y] = global.get_pointer();
         let children = this.recursiveChildren();
         let smallestX = x, smallestY = y, biggestX = x, biggestY = y;
+
+        let chosenZone: Zone | null = null;
+        if (this.layoutItem.type === 2) {
+            let matchingZones: Zone[] = [];
+            for (let i = 0; i < children.length; i++) {
+                let zone = (children[i] as Zone);
+                if (zone.contains(x, y)) {
+                    matchingZones.push(zone);
+                }
+            }
+            if (matchingZones.length > 0) {
+                const strategy = gridSettings[SETTINGS.OVERLAP_STRATEGY] ?? 0;
+                if (strategy === 1) { // Closest to Center
+                    let minDistance = Infinity;
+                    for (let zone of matchingZones) {
+                        let centerX = zone.x + zone.width / 2;
+                        let centerY = zone.y + zone.height / 2;
+                        let dist = Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            chosenZone = zone;
+                        }
+                    }
+                } else { // First Match
+                    chosenZone = matchingZones[0];
+                }
+            }
+        }
+
         for (let i = 0; i < children.length; i++) {
             let zone = (children[i] as Zone);
-            let contained = zone.contains(x, y);
+            let contained = false;
+            if (this.layoutItem.type === 2) {
+                contained = (zone === chosenZone);
+            } else {
+                contained = zone.contains(x, y);
+            }
+
             zone.selected = contained || (this._select_multiple_zones && (zone as Zone).selected);
             if (!zone.selected) continue;
 
