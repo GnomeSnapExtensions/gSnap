@@ -39,9 +39,6 @@ export class ZoneBase {
     }
 
     public contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
-        if (this.layoutItem.blank) {
-            return false;
-        }
         return (
             this.x <= x &&
             this.y <= y &&
@@ -231,10 +228,6 @@ export class Zone extends ZoneBase {
     }
 
     public show() {
-        if (this.layoutItem.blank) {
-            this.widget.visible = false;
-            return;
-        }
         this.widget.visible = true;
         (this.widget as any).ease({
             opacity: 255,
@@ -493,11 +486,7 @@ export class EditableZone extends Zone {
             pctText = `(${toRoundedString(this.layoutItem.length, 2)}%)`;
         }
 
-        if (this.layoutItem.blank) {
-            this.widget.label = `[Spacer]\n${sizeText}\n${pctText}`;
-        } else {
-            this.widget.label = `${sizeText}\n${pctText}`;
-        }
+        this.widget.label = `${sizeText}\n${pctText}`;
     }
 
     private handleDragMotion() {
@@ -571,8 +560,6 @@ export class EditableZone extends Zone {
 
         if (!this.hasMovedSignificantDistance) {
             if (isShift || isCtrl) {
-                this.layoutItem.blank = !this.layoutItem.blank;
-                this.parent?.root.reinit();
                 return;
             }
 
@@ -596,10 +583,6 @@ export class EditableZone extends Zone {
 
     createWidget(styleClass: string = 'tile-preview grid-preview') {
         this.widget = new St.Button({ style_class: styleClass });
-        if (this.layoutItem.blank) {
-            this.widget.set_style('background-color: rgba(239, 68, 68, 0.2); border: 2px dashed rgba(239, 68, 68, 0.6);');
-        }
-
         this.widget.cursor_type = Clutter.CursorType.POINTER;
 
         this.widget.connect('motion-event', (_actor: ClutterActor, event: any) => {
@@ -672,8 +655,6 @@ export class EditableZone extends Zone {
                 });
             } else {
                 if (isShift || isCtrl) {
-                    this.layoutItem.blank = !this.layoutItem.blank;
-                    this.parent?.root.reinit();
                     return true;
                 }
 

@@ -48,7 +48,6 @@ To edit a layout, click **"Edit Layout"** (this will edit the currently applied 
 * **Drag zone edges or corners** to resize it.
 * **Double-Click in empty space** to create a new zone.
 * **Right-Click** a zone to remove it.
-* **Shift + Click** or **Ctrl + Click** a zone to toggle it between an active snapping zone and a blank spacer zone (rendered with a dashed red outline as `[Spacer]`).
 * **Left-Click** a zone to split it vertically.
 * **Middle-Click** a zone to split it horizontally.
 

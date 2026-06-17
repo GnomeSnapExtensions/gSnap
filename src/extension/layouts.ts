@@ -9,8 +9,7 @@ export interface LayoutItem {
     x?: number,
     y?: number,
     w?: number,
-    h?: number,
-    blank?: boolean
+    h?: number
 };
 
 export interface Layout extends LayoutItem {
