@@ -712,6 +712,7 @@ export interface StWidget extends ClutterActor {
     // set_hover(hover): someTYpe;
     // set_label_actor(label): someTYpe;
     set_style(style: string): void;
+    cursor_type: number;
     // set_style_class_name(style_class_list): someTYpe;
     // set_style_pseudo_class(pseudo_class_list): someTYpe;
     // set_track_hover(track_hover): someTYpe;

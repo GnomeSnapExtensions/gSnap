@@ -701,6 +701,7 @@ export default class App extends Extension {
             let dialog = new LayoutNameDialog(
                 `Rename Layout ${currentMonitorLayout.name}`,
                 currentMonitorLayout.name,
+                false,
                 (text: string) => {
                     currentMonitorLayout.name = text;
                     this.saveLayouts();
@@ -713,19 +714,39 @@ export default class App extends Extension {
             let dialog = new LayoutNameDialog(
                 `Create new layout`,
                 'New Layout',
-                (text: string) => {
-                    this.layouts.definitions.push({
-                        name: text,
-                        type: 0,
-                        length: 100,
-                        items: [
-                            {
-                                type: 0,
-                                length: 100,
-                                items: []
-                            }
-                        ]
-                    });
+                true,
+                (text: string, isCanvas: boolean) => {
+                    if (isCanvas) {
+                        this.layouts.definitions.push({
+                            name: text,
+                            type: 2,
+                            length: 100,
+                            items: [
+                                {
+                                    type: 0,
+                                    length: 100,
+                                    x: 20,
+                                    y: 20,
+                                    w: 60,
+                                    h: 60,
+                                    items: []
+                                }
+                            ]
+                        });
+                    } else {
+                        this.layouts.definitions.push({
+                            name: text,
+                            type: 0,
+                            length: 100,
+                            items: [
+                                {
+                                    type: 0,
+                                    length: 100,
+                                    items: []
+                                }
+                            ]
+                        });
+                    }
                     this.setLayout(this.layouts.definitions.length - 1);
                     this.saveLayouts();
                     this.reloadMenu();
@@ -741,7 +762,6 @@ export default class App extends Extension {
 
                 this.editor[m.index]?.destroy();
                 this.editor[m.index] = new ZoneEditor(activeMonitors()[m.index], editLayout, gridSettings[SETTINGS.WINDOW_MARGIN]);
-                this.editor[m.index]?.init();
                 this.editor[m.index]?.show();
             });
 

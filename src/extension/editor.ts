@@ -448,25 +448,134 @@ function toRoundedString(val: number, places = 0) {
 }
 
 export class EditableZone extends Zone {
+    private dragMode: string | null = null;
+    private startMouseX: number = 0;
+    private startMouseY: number = 0;
+    private startZoneX: number = 0;
+    private startZoneY: number = 0;
+    private startZoneW: number = 0;
+    private startZoneH: number = 0;
+    private hasMovedSignificantDistance: boolean = false;
+    private motionId: number = 0;
+    private releaseId: number = 0;
+
     constructor(layoutItem: LayoutItem, parent: ZoneGroup | null, stage: ClutterActor) {
         super(layoutItem, parent, stage);
     }
+
+    public show() {
+        this.widget.visible = true;
+        (this.widget as any).ease({
+            opacity: 255,
+            duration: ANIMATION_SPEED,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        });
+        this.widget.add_style_pseudo_class('activate');
+    }
+
     positionChanged() {
         super.positionChanged();
-        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
+        this.updateLabel();
     }
 
     sizeChanged() {
         super.sizeChanged();
-        this.widget.label = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}\n(${toRoundedString(this.layoutItem.length,2)}%)`;
+        this.updateLabel();
     }
 
-    // the CSS class "tile-preview" is declared by GNOME shell. It is used by
-    // GNOME edge-tiling system. More info here: https://github.com/GNOME/gnome-shell/blob/7c4b1d4ae62cfc6c5b0637819d465ce8968bd944/js/ui/windowManager.js#L388
-    createWidget(styleClass: string = 'tile-preview grid-preview') {
-        this.widget = new St.Button({ style_class: styleClass });
-        this.widget.connect('button-press-event', (_actor: ClutterActor, event: any) => {
-            var btn = event.get_button();
+    private updateLabel() {
+        let sizeText = `${toRoundedString(this.innerWidth)}x${toRoundedString(this.innerHeight)}`;
+        let pctText = '';
+        if (this.parent && this.parent.layoutItem.type === 2) {
+            let item = this.layoutItem;
+            pctText = `x:${toRoundedString(item.x ?? 0)}% y:${toRoundedString(item.y ?? 0)}%\nw:${toRoundedString(item.w ?? 100)}% h:${toRoundedString(item.h ?? 100)}%`;
+        } else {
+            pctText = `(${toRoundedString(this.layoutItem.length, 2)}%)`;
+        }
+
+        if (this.layoutItem.blank) {
+            this.widget.label = `[Spacer]\n${sizeText}\n${pctText}`;
+        } else {
+            this.widget.label = `${sizeText}\n${pctText}`;
+        }
+    }
+
+    private handleDragMotion() {
+        let [mouseX, mouseY] = global.get_pointer();
+        let dx = mouseX - this.startMouseX;
+        let dy = mouseY - this.startMouseY;
+
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            this.hasMovedSignificantDistance = true;
+        }
+
+        if (!this.dragMode) return;
+
+        if (this.dragMode === 'move') {
+            this.x = this.startZoneX + dx;
+            this.y = this.startZoneY + dy;
+        } else {
+            if (this.dragMode.indexOf('left') !== -1) {
+                let maxDx = this.startZoneW - this.minWidth;
+                if (dx > maxDx) {
+                    this.startMouseX = mouseX - maxDx;
+                    dx = maxDx;
+                }
+                this.x = this.startZoneX + dx;
+                this.width = this.startZoneW - dx;
+            } else if (this.dragMode.indexOf('right') !== -1) {
+                let minDx = this.minWidth - this.startZoneW;
+                if (dx < minDx) {
+                    this.startMouseX = mouseX - minDx;
+                    dx = minDx;
+                }
+                this.width = this.startZoneW + dx;
+            }
+
+            if (this.dragMode.indexOf('top') !== -1) {
+                let maxDy = this.startZoneH - this.minHeight;
+                if (dy > maxDy) {
+                    this.startMouseY = mouseY - maxDy;
+                    dy = maxDy;
+                }
+                this.y = this.startZoneY + dy;
+                this.height = this.startZoneH - dy;
+            } else if (this.dragMode.indexOf('bottom') !== -1) {
+                let minDy = this.minHeight - this.startZoneH;
+                if (dy < minDy) {
+                    this.startMouseY = mouseY - minDy;
+                    dy = minDy;
+                }
+                this.height = this.startZoneH + dy;
+            }
+        }
+
+        this.applyPercentages();
+        if (this.parent) {
+            this.parent.adjustLayout(this.parent.root);
+        }
+    }
+
+    private handleDragRelease(btn: number, isShift: boolean, isCtrl: boolean) {
+        if (this.motionId) {
+            global.stage.disconnect(this.motionId);
+            this.motionId = 0;
+        }
+        if (this.releaseId) {
+            this.widget.disconnect(this.releaseId);
+            this.releaseId = 0;
+        }
+
+        this.dragMode = null;
+        this.widget.cursor_type = Clutter.CursorType.POINTER;
+
+        if (!this.hasMovedSignificantDistance) {
+            if (isShift || isCtrl) {
+                this.layoutItem.blank = !this.layoutItem.blank;
+                this.parent?.root.reinit();
+                return;
+            }
+
             if (btn == 1) {
                 log("Splitting");
                 this.parent?.split(this);
@@ -479,6 +588,110 @@ export class EditableZone extends Zone {
             if (btn == 3) {
                 this.parent?.remove(this);
             }
+        } else {
+            this.applyPercentages();
+            this.parent?.root.reinit();
+        }
+    }
+
+    createWidget(styleClass: string = 'tile-preview grid-preview') {
+        this.widget = new St.Button({ style_class: styleClass });
+        if (this.layoutItem.blank) {
+            this.widget.set_style('background-color: rgba(239, 68, 68, 0.2); border: 2px dashed rgba(239, 68, 68, 0.6);');
+        }
+
+        this.widget.cursor_type = Clutter.CursorType.POINTER;
+
+        this.widget.connect('motion-event', (_actor: ClutterActor, event: any) => {
+            if (this.dragMode) return false;
+
+            let [mouseX, mouseY] = global.get_pointer();
+            let nearLeft = (mouseX - this.x) < 25;
+            let nearRight = ((this.x + this.width) - mouseX) < 25;
+            let nearTop = (mouseY - this.y) < 25;
+            let nearBottom = ((this.y + this.height) - mouseY) < 25;
+
+            let cursor = Clutter.CursorType.POINTER;
+            if (this.parent && this.parent.layoutItem.type === 2) {
+                if ((nearTop && nearLeft) || (nearBottom && nearRight)) {
+                    cursor = Clutter.CursorType.NWSE_RESIZE;
+                } else if ((nearTop && nearRight) || (nearBottom && nearLeft)) {
+                    cursor = Clutter.CursorType.NESW_RESIZE;
+                } else if (nearTop || nearBottom) {
+                    cursor = Clutter.CursorType.NS_RESIZE;
+                } else if (nearLeft || nearRight) {
+                    cursor = Clutter.CursorType.EW_RESIZE;
+                } else {
+                    cursor = Clutter.CursorType.MOVE;
+                }
+            }
+            this.widget.cursor_type = cursor;
+            return false;
+        });
+
+        this.widget.connect('button-press-event', (_actor: ClutterActor, event: any) => {
+            var btn = event.get_button();
+            let state = event.get_state();
+            let isShift = (state & 1) !== 0;
+            let isCtrl = (state & 4) !== 0;
+
+            if (this.parent && this.parent.layoutItem.type === 2) {
+                let [mouseX, mouseY] = global.get_pointer();
+                this.startMouseX = mouseX;
+                this.startMouseY = mouseY;
+                this.startZoneX = this.x;
+                this.startZoneY = this.y;
+                this.startZoneW = this.width;
+                this.startZoneH = this.height;
+                this.hasMovedSignificantDistance = false;
+
+                let nearLeft = (mouseX - this.x) < 25;
+                let nearRight = ((this.x + this.width) - mouseX) < 25;
+                let nearTop = (mouseY - this.y) < 25;
+                let nearBottom = ((this.y + this.height) - mouseY) < 25;
+
+                let mode = '';
+                if (nearTop) mode += 'top';
+                else if (nearBottom) mode += 'bottom';
+
+                if (nearLeft) mode += 'left';
+                else if (nearRight) mode += 'right';
+
+                if (mode === '') {
+                    mode = 'move';
+                }
+                this.dragMode = mode;
+
+                this.motionId = global.stage.connect('motion-event', () => {
+                    this.handleDragMotion();
+                    return true;
+                });
+                this.releaseId = this.widget.connect('button-release-event', () => {
+                    this.handleDragRelease(btn, isShift, isCtrl);
+                    return true;
+                });
+            } else {
+                if (isShift || isCtrl) {
+                    this.layoutItem.blank = !this.layoutItem.blank;
+                    this.parent?.root.reinit();
+                    return true;
+                }
+
+                if (btn == 1) {
+                    log("Splitting");
+                    this.parent?.split(this);
+                }
+
+                if (btn == 2) {
+                    log("Splitting other direction");
+                    this.parent?.splitOtherDirection(this);
+                }
+
+                if (btn == 3) {
+                    this.parent?.remove(this);
+                }
+            }
+            return true;
         });
     }
 }
@@ -524,6 +737,29 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public splitOtherDirection(zone: Zone) {
+        if (this.layoutItem.type == 2) {
+            let index = this.children.indexOf(zone);
+            let item = zone.layoutItem;
+            let currentW = item.w ?? 100;
+            let currentH = item.h ?? 100;
+            let currentX = item.x ?? 0;
+            let currentY = item.y ?? 0;
+
+            item.h = currentH / 2;
+
+            this.layoutItem.items.splice(index + 1, 0, {
+                type: 0,
+                length: 50,
+                x: currentX,
+                y: currentY + currentH / 2,
+                w: currentW,
+                h: currentH / 2,
+                items: []
+            });
+            this.root.reinit();
+            return;
+        }
+
         zone.layoutItem.items = [];
 
         const layoutType = this.layoutItem.type == 1 ? 0 : 1;
@@ -538,6 +774,29 @@ export class ZoneGroup extends ZoneBase {
     }
 
     public split(zone: Zone) {
+        if (this.layoutItem.type == 2) {
+            let index = this.children.indexOf(zone);
+            let item = zone.layoutItem;
+            let currentW = item.w ?? 100;
+            let currentH = item.h ?? 100;
+            let currentX = item.x ?? 0;
+            let currentY = item.y ?? 0;
+
+            item.w = currentW / 2;
+
+            this.layoutItem.items.splice(index + 1, 0, {
+                type: 0,
+                length: 50,
+                x: currentX + currentW / 2,
+                y: currentY,
+                w: currentW / 2,
+                h: currentH,
+                items: []
+            });
+            this.root.reinit();
+            return;
+        }
+
         if(zone.layoutItem.type === 0 && Math.floor(zone.width / 2) < zone.minWidth) return;
         if(zone.layoutItem.type === 1 && Math.floor(zone.height / 2) < zone.minHeight) return;
 
@@ -821,6 +1080,12 @@ export class ZoneDisplay extends ZoneGroup {
 
         this.width = this.workArea.width - (this.margin * 2);
         this.height = this.workArea.height - (this.margin * 2);
+
+        this.stage.x = 0;
+        this.stage.y = 0;
+        this.stage.width = this.workArea.x + this.workArea.width;
+        this.stage.height = this.workArea.y + this.workArea.height;
+
         this.applyLayout(this);
         this.adjustLayout(this);
     }
@@ -861,6 +1126,8 @@ export class ZoneEditor extends ZoneDisplay {
     public motionConnection = null;
     public anchors: ZoneAnchor[];
     public isMoving: boolean = false;
+    public stageClickId: number = 0;
+    public lastClickTime: number = 0;
 
 
     public createZone(layout: LayoutItem, parent: ZoneGroup) {
@@ -889,10 +1156,46 @@ export class ZoneEditor extends ZoneDisplay {
             }
             this.apply();
         });
+
+        if (this.layoutItem.type === 2) {
+            this.stage.reactive = true;
+            this.stageClickId = this.stage.connect('button-press-event', (_actor: any, event: any) => {
+                let btn = event.get_button();
+                let clickTime = event.get_time();
+                let diff = clickTime - this.lastClickTime;
+                this.lastClickTime = clickTime;
+                if (btn === 1 && diff < 250) {
+                    let [mouseX, mouseY] = global.get_pointer();
+                    if (this.workArea) {
+                        let w = 20; // Default size: 20% of work area
+                        let h = 20;
+                        let x = ((mouseX - this.margin - this.workArea.x) / this.width) * 100 - w / 2;
+                        let y = ((mouseY - this.margin - this.workArea.y) / this.height) * 100 - h / 2;
+
+                        this.layoutItem.items.push({
+                            type: 0,
+                            length: 50,
+                            x: Math.max(0, Math.min(100 - w, x)),
+                            y: Math.max(0, Math.min(100 - h, y)),
+                            w: w,
+                            h: h,
+                            items: []
+                        });
+                        this.reinit();
+                    }
+                    return true;
+                }
+                return false;
+            });
+        }
     }
 
     public destroy() {
         global.stage.disconnect(this.motionConnection);
+        if (this.stageClickId) {
+            this.stage.disconnect(this.stageClickId);
+            this.stageClickId = 0;
+        }
         for (let i = 0; i < this.anchors.length; i++) {
             this.anchors[i].destroy();
         }
