@@ -51,6 +51,7 @@ export function initSettings(settings: SettingsObject, changed_settings: () => v
     gridSettings[SETTINGS.SHOW_TABS] = getBoolSetting(SETTINGS.SHOW_TABS);
     gridSettings[SETTINGS.WINDOW_MARGIN] = getIntSetting(SETTINGS.WINDOW_MARGIN);
     gridSettings[SETTINGS.ANIMATIONS_ENABLED] = getBoolSetting(SETTINGS.ANIMATIONS_ENABLED);
+    gridSettings[SETTINGS.OVERLAP_STRATEGY] = getIntSetting(SETTINGS.OVERLAP_STRATEGY);
     log("Init complete");
 }
 

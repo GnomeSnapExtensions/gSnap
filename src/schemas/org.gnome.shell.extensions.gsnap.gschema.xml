@@ -205,6 +205,11 @@
 			<default>0</default>
 			<summary>Bottom gap around border of screen for secondary monitor</summary>
 		</key>
+		<key type = "i" name="overlap-strategy">
+			<default>0</default>
+			<summary>Overlap Snapping Strategy</summary>
+			<description>0 for First Match, 1 for Closest to Center</description>
+		</key>
 		<key type = "b" name="debug">
 			<default>false</default>
 			<summary>Put debug lines into global.log. To see, run journalctl /usr/bin/gnome-shell -f in terminal</summary>

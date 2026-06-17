@@ -5,7 +5,11 @@ export interface WorkspaceMonitorSettings {
 export interface LayoutItem {
     type: number,
     length: number,
-    items: LayoutItem[]
+    items: LayoutItem[],
+    x?: number,
+    y?: number,
+    w?: number,
+    h?: number
 };
 
 export interface Layout extends LayoutItem {
@@ -20,17 +24,14 @@ export interface LayoutsSettings {
 
 export function cloneLayoutItem(layoutItem: LayoutItem) : LayoutItem {
     return {
-        type: layoutItem.type,
-        length: layoutItem.length,
+        ...layoutItem,
         items: layoutItem.items?.map(x => cloneLayoutItem(x)) ?? [],
     };
 }
 
 export function cloneLayout(layout: Layout) : Layout {
     return {
-        name: layout.name,
-        type: layout.type,
-        length: layout.length,
+        ...layout,
         items: layout.items?.map(x => cloneLayoutItem(x)) ?? [],
     };
 }

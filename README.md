@@ -35,13 +35,23 @@ For configuration, please use the built-in preferences dialog (Gnome Tweak Tool 
   * You can set the margins between the windows as well
    
 ## Edit Layouts:
-To edit a layout follow the instructions below
-* Click "Edit Layout" (will edit the currently applied layout).
-* Left-Click to split the region
-* Middle-Click to split with opposite orientation
-* Right-Click to remove
+To edit a layout, click **"Edit Layout"** (this will edit the currently applied layout).
 
-When done click "Stop Editing"
+### Grid Layouts
+* **Left-Click** a zone to split it vertically.
+* **Middle-Click** a zone to split it horizontally.
+* **Right-Click** a zone to remove it.
+* **Shift + Click** or **Ctrl + Click** a zone to toggle it between an active snapping zone and a blank spacer zone (invisible during normal snapping).
+
+### Canvas / Overlapping Layouts
+* **Drag and drop** any zone to move it.
+* **Drag zone edges or corners** to resize it.
+* **Double-Click in empty space** to create a new zone.
+* **Right-Click** a zone to remove it.
+* **Left-Click** a zone to split it vertically.
+* **Middle-Click** a zone to split it horizontally.
+
+When done, click **"Save Layout"** or **"Cancel Editing"**.
 
 Layouts are stored in the default config dir (usually `~/.config/gSnap`). This directory 
 should be user-writable, to save the layouts changes.

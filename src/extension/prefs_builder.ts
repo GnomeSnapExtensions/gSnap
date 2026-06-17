@@ -127,6 +127,12 @@ export default class GSnapPreferences extends ExtensionPreferences {
             "Window margins and invisible borders around screen.",
         );
 
+        this.add_combo(group, SETTINGS.OVERLAP_STRATEGY,
+            "Overlap Snapping Strategy",
+            ["First Match", "Closest Center"],
+            "Decides which overlapping canvas zone a window snaps to when dropped."
+        );
+
         return group;
     }
 
@@ -297,6 +303,18 @@ export default class GSnapPreferences extends ExtensionPreferences {
         });
         row.add_suffix(spin);
         group.add(row);
+    }
+
+    add_combo(group: any, setting: string, title: string, options: string[], subtitle: string | null = null) {
+        const stringList = Gtk.StringList.new(options);
+        const combo = new Adw.ComboRow({
+            title,
+            subtitle,
+            model: stringList,
+        });
+        this.settings.bind(setting, combo, 'selected', Gio.SettingsBindFlags.DEFAULT);
+        group.add(combo);
+        return combo;
     }
 
     add_linkbutton(group: any, title: string, uri: string) {
