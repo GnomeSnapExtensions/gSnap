@@ -39,6 +39,9 @@ export class ZoneBase {
     }
 
     public contains(x: number, y: number, width: number = 1, height: number = 1): boolean {
+        if (this.layoutItem.blank) {
+            return false;
+        }
         return (
             this.x <= x &&
             this.y <= y &&
@@ -125,7 +128,14 @@ export class ZoneBase {
 
     public applyPercentages() {
         if (this.parent) {
-            if (this.parent.layoutItem.type == 0) {
+            if (this.parent.layoutItem.type == 2) {
+                let parentW = this.parent.width || 1;
+                let parentH = this.parent.height || 1;
+                this.layoutItem.x = ((this.x - this.parent.x) / parentW) * 100;
+                this.layoutItem.y = ((this.y - this.parent.y) / parentH) * 100;
+                this.layoutItem.w = (this.width / parentW) * 100;
+                this.layoutItem.h = (this.height / parentH) * 100;
+            } else if (this.parent.layoutItem.type == 0) {
                 let factor = this.parent.width / this.width;
                 this.layoutItem.length = 100 / factor;
             } else {
@@ -221,6 +231,10 @@ export class Zone extends ZoneBase {
     }
 
     public show() {
+        if (this.layoutItem.blank) {
+            this.widget.visible = false;
+            return;
+        }
         this.widget.visible = true;
         (this.widget as any).ease({
             opacity: 255,
@@ -547,40 +561,41 @@ export class ZoneGroup extends ZoneBase {
         for (let i = 0; i < this.children.length; i++) {
             let child = this.children[i];
             let item = child.layoutItem;
-            let factor = this.layoutItem.type == 0 ? this.width : this.height;
-            let length = (factor / 100) * item.length;
-
-            let w = 0;
-            let h = 0;
-            if (this.layoutItem.type == 0) {
-                w = length;
-                h = this.height;
+            let cx: number, cy: number, cw: number, ch: number;
+            if (this.layoutItem.type == 2) {
+                cx = this.x + (this.width / 100) * (item.x ?? 0);
+                cy = this.y + (this.height / 100) * (item.y ?? 0);
+                cw = (this.width / 100) * (item.w ?? 100);
+                ch = (this.height / 100) * (item.h ?? 100);
             } else {
-                h = length;
-                w = this.width;
+                let factor = this.layoutItem.type == 0 ? this.width : this.height;
+                let length = (factor / 100) * item.length;
+                cx = x;
+                cy = y;
+                if (this.layoutItem.type == 0) {
+                    cw = length;
+                    ch = this.height;
+                    x += length;
+                } else {
+                    ch = length;
+                    cw = this.width;
+                    y += length;
+                }
             }
             if (child instanceof ZoneGroup) {
                 child.layoutItem = item;
-                child.x = x;
-                child.y = y;
-                child.width = w;
-                child.height = h;
+                child.x = cx;
+                child.y = cy;
+                child.width = cw;
+                child.height = ch;
                 (<ZoneGroup>child).adjustLayout(root);
             } else {
-                child.x = x;
-                child.y = y;
-                child.width = w;
-                child.height = h;
-            }
-
-            if (this.layoutItem.type == 0) {
-                x += length;
-            } else {
-                y += length;
+                child.x = cx;
+                child.y = cy;
+                child.width = cw;
+                child.height = ch;
             }
         }
-
-
     }
 
     public applyLayout(root: ZoneDisplay) {
@@ -892,6 +907,9 @@ export class ZoneEditor extends ZoneDisplay {
 
     protected zoneGroupCreated(z: ZoneGroup) {
         super.zoneGroupCreated(z);
+        if (z.layoutItem.type === 2) {
+            return;
+        }
         //
         if (this.anchors == null) {
             this.anchors = [];
